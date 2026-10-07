@@ -1,0 +1,344 @@
+<?xml version='1.0' encoding='utf-8'?>
+<nmaprun scanner="nmap" args="nmap -sV -oX scan.xml 10.0.0.0/16">
+  <host>
+    <status state="up" reason="echo-reply" />
+    <address addr="10.0.1.10" addrtype="ipv4" />
+    <hostnames>
+      <hostname name="web-01" type="PTR" />
+    </hostnames>
+    <ports>
+      <port protocol="tcp" portid="443">
+        <state state="open" reason="syn-ack" />
+        <service name="https" product="nginx" version="1.18.0" />
+      </port>
+      <port protocol="tcp" portid="80">
+        <state state="open" reason="syn-ack" />
+        <service name="http" product="nginx" version="1.18.0" />
+      </port>
+      <port protocol="tcp" portid="22">
+        <state state="closed" reason="syn-ack" />
+        <service name="ssh" product="OpenSSH" version="8.2p1" />
+      </port>
+    </ports>
+  </host>
+  <host>
+    <status state="up" reason="echo-reply" />
+    <address addr="10.0.1.11" addrtype="ipv4" />
+    <hostnames>
+      <hostname name="web-02" type="PTR" />
+    </hostnames>
+    <ports>
+      <port protocol="tcp" portid="443">
+        <state state="open" reason="syn-ack" />
+        <service name="https" product="Apache httpd" version="2.4.49" />
+      </port>
+      <port protocol="tcp" portid="80">
+        <state state="open" reason="syn-ack" />
+        <service name="http" product="Apache httpd" version="2.4.49" />
+      </port>
+    </ports>
+  </host>
+  <host>
+    <status state="up" reason="echo-reply" />
+    <address addr="10.0.1.5" addrtype="ipv4" />
+    <hostnames>
+      <hostname name="vpn-01" type="PTR" />
+    </hostnames>
+    <ports>
+      <port protocol="tcp" portid="443">
+        <state state="open" reason="syn-ack" />
+        <service name="https" product="Fortinet FortiOS" version="6.0.4" />
+      </port>
+      <port protocol="udp" portid="500">
+        <state state="open" reason="syn-ack" />
+        <service name="isakmp" />
+      </port>
+    </ports>
+  </host>
+  <host>
+    <status state="up" reason="echo-reply" />
+    <address addr="10.0.1.20" addrtype="ipv4" />
+    <hostnames>
+      <hostname name="mail-01" type="PTR" />
+    </hostnames>
+    <ports>
+      <port protocol="tcp" portid="443">
+        <state state="open" reason="syn-ack" />
+        <service name="https" product="Microsoft Exchange" version="15.1" />
+      </port>
+      <port protocol="tcp" portid="25">
+        <state state="open" reason="syn-ack" />
+        <service name="smtp" product="Microsoft Exchange" version="15.1" />
+      </port>
+    </ports>
+  </host>
+  <host>
+    <status state="up" reason="echo-reply" />
+    <address addr="10.0.1.30" addrtype="ipv4" />
+    <hostnames>
+      <hostname name="proxy-01" type="PTR" />
+    </hostnames>
+    <ports>
+      <port protocol="tcp" portid="8080">
+        <state state="open" reason="syn-ack" />
+        <service name="http-proxy" product="Squid" version="4.10" />
+      </port>
+    </ports>
+  </host>
+  <host>
+    <status state="up" reason="echo-reply" />
+    <address addr="10.0.2.15" addrtype="ipv4" />
+    <hostnames>
+      <hostname name="ws-hr-01" type="PTR" />
+    </hostnames>
+    <ports>
+      <port protocol="tcp" portid="3389">
+        <state state="open" reason="syn-ack" />
+        <service name="ms-wbt-server" product="Microsoft Terminal Services" />
+      </port>
+      <port protocol="tcp" portid="445">
+        <state state="open" reason="syn-ack" />
+        <service name="microsoft-ds" product="Windows SMB" />
+      </port>
+    </ports>
+  </host>
+  <host>
+    <status state="up" reason="echo-reply" />
+    <address addr="10.0.2.16" addrtype="ipv4" />
+    <hostnames>
+      <hostname name="ws-hr-02" type="PTR" />
+    </hostnames>
+    <ports>
+      <port protocol="tcp" portid="445">
+        <state state="open" reason="syn-ack" />
+        <service name="microsoft-ds" product="Windows SMB" />
+      </port>
+    </ports>
+  </host>
+  <host>
+    <status state="up" reason="echo-reply" />
+    <address addr="10.0.2.21" addrtype="ipv4" />
+    <hostnames>
+      <hostname name="ws-fin-01" type="PTR" />
+    </hostnames>
+    <ports>
+      <port protocol="tcp" portid="3389">
+        <state state="open" reason="syn-ack" />
+        <service name="ms-wbt-server" product="Microsoft Terminal Services" />
+      </port>
+      <port protocol="tcp" portid="445">
+        <state state="open" reason="syn-ack" />
+        <service name="microsoft-ds" product="Windows SMB" />
+      </port>
+    </ports>
+  </host>
+  <host>
+    <status state="up" reason="echo-reply" />
+    <address addr="10.0.2.31" addrtype="ipv4" />
+    <hostnames>
+      <hostname name="ws-it-01" type="PTR" />
+    </hostnames>
+    <ports>
+      <port protocol="tcp" portid="22">
+        <state state="open" reason="syn-ack" />
+        <service name="ssh" product="OpenSSH" version="8.2p1" />
+      </port>
+      <port protocol="tcp" portid="445">
+        <state state="open" reason="syn-ack" />
+        <service name="microsoft-ds" product="Windows SMB" />
+      </port>
+    </ports>
+  </host>
+  <host>
+    <status state="up" reason="echo-reply" />
+    <address addr="10.0.2.41" addrtype="ipv4" />
+    <hostnames>
+      <hostname name="ws-dev-01" type="PTR" />
+    </hostnames>
+    <ports>
+      <port protocol="tcp" portid="22">
+        <state state="open" reason="syn-ack" />
+        <service name="ssh" product="OpenSSH" version="8.2p1" />
+      </port>
+      <port protocol="tcp" portid="3000">
+        <state state="open" reason="syn-ack" />
+        <service name="http" product="Node.js Express" />
+      </port>
+    </ports>
+  </host>
+  <host>
+    <status state="up" reason="echo-reply" />
+    <address addr="10.0.3.20" addrtype="ipv4" />
+    <hostnames>
+      <hostname name="app-01" type="PTR" />
+    </hostnames>
+    <ports>
+      <port protocol="tcp" portid="8080">
+        <state state="open" reason="syn-ack" />
+        <service name="http-proxy" product="Apache Tomcat" version="9.0.50" />
+      </port>
+    </ports>
+  </host>
+  <host>
+    <status state="up" reason="echo-reply" />
+    <address addr="10.0.3.21" addrtype="ipv4" />
+    <hostnames>
+      <hostname name="app-02" type="PTR" />
+    </hostnames>
+    <ports>
+      <port protocol="tcp" portid="8080">
+        <state state="open" reason="syn-ack" />
+        <service name="http-proxy" product="Apache Tomcat" version="8.5.0" />
+      </port>
+      <port protocol="tcp" portid="8009">
+        <state state="closed" reason="syn-ack" />
+        <service name="ajp13" />
+      </port>
+    </ports>
+  </host>
+  <host>
+    <status state="up" reason="echo-reply" />
+    <address addr="10.0.3.30" addrtype="ipv4" />
+    <hostnames>
+      <hostname name="db-01" type="PTR" />
+    </hostnames>
+    <ports>
+      <port protocol="tcp" portid="5432">
+        <state state="open" reason="syn-ack" />
+        <service name="postgresql" product="PostgreSQL DB" version="13.4" />
+      </port>
+    </ports>
+  </host>
+  <host>
+    <status state="up" reason="echo-reply" />
+    <address addr="10.0.3.31" addrtype="ipv4" />
+    <hostnames>
+      <hostname name="db-02" type="PTR" />
+    </hostnames>
+    <ports>
+      <port protocol="tcp" portid="3306">
+        <state state="open" reason="syn-ack" />
+        <service name="mysql" product="MySQL" version="5.7.30" />
+      </port>
+    </ports>
+  </host>
+  <host>
+    <status state="up" reason="echo-reply" />
+    <address addr="10.0.3.5" addrtype="ipv4" />
+    <hostnames>
+      <hostname name="dc-01" type="PTR" />
+    </hostnames>
+    <ports>
+      <port protocol="tcp" portid="445">
+        <state state="open" reason="syn-ack" />
+        <service name="microsoft-ds" product="Windows SMB" version="SMBv1" />
+      </port>
+      <port protocol="tcp" portid="389">
+        <state state="open" reason="syn-ack" />
+        <service name="ldap" product="Microsoft AD LDAP" />
+      </port>
+      <port protocol="tcp" portid="88">
+        <state state="open" reason="syn-ack" />
+        <service name="kerberos-sec" product="Microsoft Kerberos" />
+      </port>
+    </ports>
+  </host>
+  <host>
+    <status state="up" reason="echo-reply" />
+    <address addr="10.0.3.6" addrtype="ipv4" />
+    <hostnames>
+      <hostname name="dc-02" type="PTR" />
+    </hostnames>
+    <ports>
+      <port protocol="tcp" portid="445">
+        <state state="open" reason="syn-ack" />
+        <service name="microsoft-ds" product="Windows SMB" />
+      </port>
+      <port protocol="tcp" portid="389">
+        <state state="open" reason="syn-ack" />
+        <service name="ldap" product="Microsoft AD LDAP" />
+      </port>
+    </ports>
+  </host>
+  <host>
+    <status state="up" reason="echo-reply" />
+    <address addr="10.0.3.40" addrtype="ipv4" />
+    <hostnames>
+      <hostname name="file-01" type="PTR" />
+    </hostnames>
+    <ports>
+      <port protocol="tcp" portid="445">
+        <state state="open" reason="syn-ack" />
+        <service name="microsoft-ds" product="Windows SMB" />
+      </port>
+      <port protocol="tcp" portid="2049">
+        <state state="open" reason="syn-ack" />
+        <service name="nfs" />
+      </port>
+    </ports>
+  </host>
+  <host>
+    <status state="up" reason="echo-reply" />
+    <address addr="10.0.3.50" addrtype="ipv4" />
+    <hostnames>
+      <hostname name="vcenter-01" type="PTR" />
+    </hostnames>
+    <ports>
+      <port protocol="tcp" portid="443">
+        <state state="open" reason="syn-ack" />
+        <service name="https" product="VMware vCenter" version="6.7" />
+      </port>
+    </ports>
+  </host>
+  <host>
+    <status state="up" reason="echo-reply" />
+    <address addr="10.0.3.60" addrtype="ipv4" />
+    <hostnames>
+      <hostname name="jenkins-01" type="PTR" />
+    </hostnames>
+    <ports>
+      <port protocol="tcp" portid="8080">
+        <state state="open" reason="syn-ack" />
+        <service name="http" product="Jenkins" version="2.263" />
+      </port>
+    </ports>
+  </host>
+  <host>
+    <status state="up" reason="echo-reply" />
+    <address addr="10.0.3.61" addrtype="ipv4" />
+    <hostnames>
+      <hostname name="git-01" type="PTR" />
+    </hostnames>
+    <ports>
+      <port protocol="tcp" portid="443">
+        <state state="open" reason="syn-ack" />
+        <service name="https" product="GitLab" version="13.10" />
+      </port>
+      <port protocol="tcp" portid="22">
+        <state state="open" reason="syn-ack" />
+        <service name="ssh" product="OpenSSH" version="8.2p1" />
+      </port>
+    </ports>
+  </host>
+  <host>
+    <status state="down" reason="echo-reply" />
+    <address addr="10.0.3.99" addrtype="ipv4" />
+    <hostnames>
+      <hostname name="old-print-01" type="PTR" />
+    </hostnames>
+    <ports />
+  </host>
+  <host>
+    <status state="up" reason="echo-reply" />
+    <address addr="10.0.3.98" addrtype="ipv4" />
+    <hostnames>
+      <hostname name="spare-01" type="PTR" />
+    </hostnames>
+    <ports>
+      <port protocol="tcp" portid="23">
+        <state state="closed" reason="syn-ack" />
+        <service name="telnet" />
+      </port>
+    </ports>
+  </host>
+</nmaprun>

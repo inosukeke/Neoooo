@@ -1,0 +1,266 @@
+[
+  {
+    "asset_ip": "10.0.1.10",
+    "port": 443,
+    "protocol": "tcp",
+    "name": "https",
+    "product": "nginx",
+    "version": "1.18.0"
+  },
+  {
+    "asset_ip": "10.0.1.10",
+    "port": 80,
+    "protocol": "tcp",
+    "name": "http",
+    "product": "nginx",
+    "version": "1.18.0"
+  },
+  {
+    "asset_ip": "10.0.1.11",
+    "port": 443,
+    "protocol": "tcp",
+    "name": "https",
+    "product": "Apache httpd",
+    "version": "2.4.49"
+  },
+  {
+    "asset_ip": "10.0.1.11",
+    "port": 80,
+    "protocol": "tcp",
+    "name": "http",
+    "product": "Apache httpd",
+    "version": "2.4.49"
+  },
+  {
+    "asset_ip": "10.0.1.5",
+    "port": 443,
+    "protocol": "tcp",
+    "name": "https",
+    "product": "Fortinet FortiOS",
+    "version": "6.0.4"
+  },
+  {
+    "asset_ip": "10.0.1.5",
+    "port": 500,
+    "protocol": "udp",
+    "name": "isakmp",
+    "product": null,
+    "version": null
+  },
+  {
+    "asset_ip": "10.0.1.20",
+    "port": 443,
+    "protocol": "tcp",
+    "name": "https",
+    "product": "Microsoft Exchange",
+    "version": "15.1"
+  },
+  {
+    "asset_ip": "10.0.1.20",
+    "port": 25,
+    "protocol": "tcp",
+    "name": "smtp",
+    "product": "Microsoft Exchange",
+    "version": "15.1"
+  },
+  {
+    "asset_ip": "10.0.1.30",
+    "port": 8080,
+    "protocol": "tcp",
+    "name": "http-proxy",
+    "product": "Squid",
+    "version": "4.10"
+  },
+  {
+    "asset_ip": "10.0.2.15",
+    "port": 3389,
+    "protocol": "tcp",
+    "name": "ms-wbt-server",
+    "product": "Microsoft Terminal Services",
+    "version": null
+  },
+  {
+    "asset_ip": "10.0.2.15",
+    "port": 445,
+    "protocol": "tcp",
+    "name": "microsoft-ds",
+    "product": "Windows SMB",
+    "version": null
+  },
+  {
+    "asset_ip": "10.0.2.16",
+    "port": 445,
+    "protocol": "tcp",
+    "name": "microsoft-ds",
+    "product": "Windows SMB",
+    "version": null
+  },
+  {
+    "asset_ip": "10.0.2.21",
+    "port": 3389,
+    "protocol": "tcp",
+    "name": "ms-wbt-server",
+    "product": "Microsoft Terminal Services",
+    "version": null
+  },
+  {
+    "asset_ip": "10.0.2.21",
+    "port": 445,
+    "protocol": "tcp",
+    "name": "microsoft-ds",
+    "product": "Windows SMB",
+    "version": null
+  },
+  {
+    "asset_ip": "10.0.2.31",
+    "port": 22,
+    "protocol": "tcp",
+    "name": "ssh",
+    "product": "OpenSSH",
+    "version": "8.2p1"
+  },
+  {
+    "asset_ip": "10.0.2.31",
+    "port": 445,
+    "protocol": "tcp",
+    "name": "microsoft-ds",
+    "product": "Windows SMB",
+    "version": null
+  },
+  {
+    "asset_ip": "10.0.2.41",
+    "port": 22,
+    "protocol": "tcp",
+    "name": "ssh",
+    "product": "OpenSSH",
+    "version": "8.2p1"
+  },
+  {
+    "asset_ip": "10.0.2.41",
+    "port": 3000,
+    "protocol": "tcp",
+    "name": "http",
+    "product": "Node.js Express",
+    "version": null
+  },
+  {
+    "asset_ip": "10.0.3.20",
+    "port": 8080,
+    "protocol": "tcp",
+    "name": "http-proxy",
+    "product": "Apache Tomcat",
+    "version": "9.0.50"
+  },
+  {
+    "asset_ip": "10.0.3.21",
+    "port": 8080,
+    "protocol": "tcp",
+    "name": "http-proxy",
+    "product": "Apache Tomcat",
+    "version": "8.5.0"
+  },
+  {
+    "asset_ip": "10.0.3.30",
+    "port": 5432,
+    "protocol": "tcp",
+    "name": "postgresql",
+    "product": "PostgreSQL DB",
+    "version": "13.4"
+  },
+  {
+    "asset_ip": "10.0.3.31",
+    "port": 3306,
+    "protocol": "tcp",
+    "name": "mysql",
+    "product": "MySQL",
+    "version": "5.7.30"
+  },
+  {
+    "asset_ip": "10.0.3.5",
+    "port": 445,
+    "protocol": "tcp",
+    "name": "microsoft-ds",
+    "product": "Windows SMB",
+    "version": "SMBv1"
+  },
+  {
+    "asset_ip": "10.0.3.5",
+    "port": 389,
+    "protocol": "tcp",
+    "name": "ldap",
+    "product": "Microsoft AD LDAP",
+    "version": null
+  },
+  {
+    "asset_ip": "10.0.3.5",
+    "port": 88,
+    "protocol": "tcp",
+    "name": "kerberos-sec",
+    "product": "Microsoft Kerberos",
+    "version": null
+  },
+  {
+    "asset_ip": "10.0.3.6",
+    "port": 445,
+    "protocol": "tcp",
+    "name": "microsoft-ds",
+    "product": "Windows SMB",
+    "version": null
+  },
+  {
+    "asset_ip": "10.0.3.6",
+    "port": 389,
+    "protocol": "tcp",
+    "name": "ldap",
+    "product": "Microsoft AD LDAP",
+    "version": null
+  },
+  {
+    "asset_ip": "10.0.3.40",
+    "port": 445,
+    "protocol": "tcp",
+    "name": "microsoft-ds",
+    "product": "Windows SMB",
+    "version": null
+  },
+  {
+    "asset_ip": "10.0.3.40",
+    "port": 2049,
+    "protocol": "tcp",
+    "name": "nfs",
+    "product": null,
+    "version": null
+  },
+  {
+    "asset_ip": "10.0.3.50",
+    "port": 443,
+    "protocol": "tcp",
+    "name": "https",
+    "product": "VMware vCenter",
+    "version": "6.7"
+  },
+  {
+    "asset_ip": "10.0.3.60",
+    "port": 8080,
+    "protocol": "tcp",
+    "name": "http",
+    "product": "Jenkins",
+    "version": "2.263"
+  },
+  {
+    "asset_ip": "10.0.3.61",
+    "port": 443,
+    "protocol": "tcp",
+    "name": "https",
+    "product": "GitLab",
+    "version": "13.10"
+  },
+  {
+    "asset_ip": "10.0.3.61",
+    "port": 22,
+    "protocol": "tcp",
+    "name": "ssh",
+    "product": "OpenSSH",
+    "version": "8.2p1"
+  }
+]

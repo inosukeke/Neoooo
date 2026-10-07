@@ -53,3 +53,16 @@ python src/graph/algo/algo_demo.py
 Thêm 3 máy lab (vpn-01, jump-01, file-01) + gán `cost` 1–10 (nhỏ = dễ đi) cho 10 cạnh `CONNECTS_TO`, chiếu 2 đồ thị vào RAM (`attack` có hướng/có trọng số; `attack_u` vô hướng), rồi chạy & kiểm **BFS, Dijkstra, PageRank, Louvain, Leiden** theo bảng kết quả mong đợi (mục 6.1 `docs/giai-doan-01-graph-foundations/thuat-toan-do-thi.md`). In `OK/FAIL` từng mục.
 
 Lưu ý: script đưa DB lên **8 Asset / 10 `CONNECTS_TO`**, nên `model_v2.py` chạy lại *sau đó* sẽ báo LỆCH số lượng (đúng thiết kế — algo là trạng thái cuối Giai đoạn 01). Query dọn để quay lại dữ liệu bài trước nằm ở cuối `algo_demo.py`.
+
+## Giai đoạn 02 — Module 1: Parser nguồn dữ liệu
+
+Không cần Neo4j. Chỉ cần `pip install -r requirements.txt` (thêm `requests`). Xuất 7 file JSON chuẩn hóa vào `src/ingestion/normalized/` (chưa nạp Neo4j — việc đó sau Entity resolution).
+```bash
+python src/ingestion/gen_fixtures.py   # (tùy chọn) sinh lại data/sample_nmap.xml + sample_logs.jsonl
+python src/ingestion/sources.py
+```
+`gen_fixtures.py` sinh dữ liệu mẫu tất định (đã commit sẵn, chỉ chạy khi muốn đổi topology). `sources.py` parse 6 nguồn → `asset/service/vulnerability/user/account/membership/alert`:
+- **Nmap** (`data/sample_nmap.xml`) → asset + service; **Identity** sinh tất định (seed=42); **Log** (`data/sample_logs.jsonl`) → alert logon.
+- **NVD + EPSS + CISA KEV**: gọi **API công khai thật**, gộp theo `cve_id`. Response cache ở `src/ingestion/cache/` (đã commit) → lần sau chạy **offline/tức thì**, idempotent.
+
+NVD không cần key (tự giới hạn 6s/CVE, ~28 CVE ≈ 3 phút lần đầu); có key free thì đặt `NVD_API_KEY` để nhanh hơn. Dùng `--refresh` để xóa cache và gọi API lại. In số record 7 file + completeness (bao nhiêu CVE đủ cả 3 nguồn) + kiểm CVE-2021-44228.

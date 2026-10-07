@@ -1,0 +1,86 @@
+[
+  {
+    "username": "binh.nguyen0",
+    "group": "IT-Support"
+  },
+  {
+    "username": "chi.tran1",
+    "group": "Domain Admins"
+  },
+  {
+    "username": "chi.tran1",
+    "group": "Web-Dev"
+  },
+  {
+    "username": "an.nguyen2",
+    "group": "Finance"
+  },
+  {
+    "username": "phong.nguyen3",
+    "group": "Finance"
+  },
+  {
+    "username": "phong.nguyen3",
+    "group": "Web-Dev"
+  },
+  {
+    "username": "dung.ngo4",
+    "group": "IT-Support"
+  },
+  {
+    "username": "khanh.vu5",
+    "group": "DB-Admins"
+  },
+  {
+    "username": "binh.tran6",
+    "group": "DB-Admins"
+  },
+  {
+    "username": "phong.hoang7",
+    "group": "Web-Dev"
+  },
+  {
+    "username": "phong.hoang7",
+    "group": "Domain Admins"
+  },
+  {
+    "username": "khanh.tran8",
+    "group": "Finance"
+  },
+  {
+    "username": "khanh.tran8",
+    "group": "DB-Admins"
+  },
+  {
+    "username": "phong.pham9",
+    "group": "IT-Support"
+  },
+  {
+    "username": "giang.tran10",
+    "group": "Web-Dev"
+  },
+  {
+    "username": "giang.ngo11",
+    "group": "IT-Support"
+  },
+  {
+    "username": "hieu.vu12",
+    "group": "Domain Admins"
+  },
+  {
+    "username": "phong.le13",
+    "group": "IT-Support"
+  },
+  {
+    "username": "linh.do14",
+    "group": "Finance"
+  },
+  {
+    "username": "linh.do14",
+    "group": "IT-Support"
+  },
+  {
+    "username": "hieu.nguyen15",
+    "group": "DB-Admins"
+  }
+]

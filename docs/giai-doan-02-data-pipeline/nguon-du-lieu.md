@@ -16,11 +16,19 @@ Chi tiết endpoint/field: xem `../../.claude/rules/data-sources.md`.
 ## Cắt
 Parse EVTX nhị phân (`python-evtx`), ETL framework (Airbyte/Singer/Dagster), export AD thật qua PowerShell (chỉ ghi lệnh, không thực hành).
 
-## Còn nợ khi code thật
-- Hợp nhất record trùng giữa nguồn → Entity resolution
-- Nạp log vào OpenSearch → module OpenSearch
-- Nối `normalized/*.json` vào loader Neo4j (`model_v2.py`) — bài dừng ở xuất JSON
-- **Chưa gọi được NVD/EPSS/KEV API thật** trong sandbox viết bài (không có mạng ra ngoài) — chỉ parser Nmap đã chạy thật trên XML mẫu tự tạo
+## Đã chạy thật (2026-10-07)
+`src/ingestion/sources.py` + `gen_fixtures.py` đã chạy thật trên máy có mạng (Python 3, `requests` 2.32.3) — **gọi API công khai NVD/EPSS/KEV thật, thành công**:
+- Xuất **7 file** `normalized/*.json`: 21 asset, 33 service, **28 vulnerability**, 16 user, 16 account, 21 membership, 30 alert.
+- **Completeness: 28/28 CVE đủ cả 3 nguồn** (NVD cvss + EPSS + KEV). CVE-2021-44228: CVSS 10.0 CRITICAL, EPSS 0.99999, KEV ransomware=true.
+- Cache 57 file (`cache/`, đã commit) → chạy lần 2 **2s, offline, output y hệt** (idempotent: identity theo seed, API đọc cache).
+- `gen_fixtures.py` sinh `data/sample_nmap.xml` (22 host, 21 up, 33 port mở — có host down/port đóng để test lọc) + `sample_logs.jsonl` (30 logon 4624/4625, tham chiếu host Nmap + user seed=42).
+
+Quyết định khi code (khác gợi ý "lab Docker thật" của bài giảng, chọn vì tái lập được): Nmap + log dùng dữ liệu mẫu sinh tất định & commit, không dựng lab/quét thật; CVE seed 28 cái nổi tiếng (toàn bộ nằm trong KEV). API thật nhưng cache commit nên demo chạy offline.
+
+## Còn nợ (module/giai đoạn sau)
+- Hợp nhất record trùng giữa nguồn → Entity resolution (module 2)
+- Nạp log/alert vào OpenSearch → module OpenSearch (module 3)
+- Nối `normalized/*.json` vào loader Neo4j + map CVE→service (CPE/thủ công) → sau Entity resolution
 - Dữ liệu định danh giả không có biến thể tên (cố ý, để làm bài toán cho Entity resolution)
 
-Script: `sources.py` (xuất 6 file JSON vào `normalized/`).
+Script: `sources.py` (parser + API, xuất 7 file JSON vào `normalized/`), `gen_fixtures.py` (sinh Nmap XML + log mẫu).
