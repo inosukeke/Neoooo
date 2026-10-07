@@ -17,7 +17,15 @@ APOC/GDS (để module Thuật toán đồ thị), clustering/Fabric/Aura/Bloom,
 
 ## Còn nợ khi code thật
 - GraphAcademy (Fundamentals, Cypher Fundamentals, Graph Data Modeling) chưa làm
-- **Chưa chạy thử trên Neo4j thật** — quantified relationship `{0,3}` và `SHORTEST 1` chưa xác minh trên bản đang dùng
 - Thứ tự mục trong bài lệch so với khóa GraphAcademy (constraint/nạp dữ liệu đứng trước đọc/ghi)
 
-Script: `seed_graph.py` (schema v1, chạy lặp được).
+## Đã chạy thật — xác nhận 2026-10-07
+Chạy trên Neo4j Kernel **5.26.31 Community** (Docker, image `neo4j:5.26-community`) + driver Python `neo4j` **6.4.0**, qua `src/graph/seed_graph.py`.
+
+- **Quantified relationship `-[:CONNECTS_TO]->{0,3}`**: chạy được, không cần fallback. Kết quả đúng như bài dự đoán: bob→db-01, alice→web-01, carol→ws-hr-01.
+- **`SHORTEST 1 (a)-[:CONNECTS_TO]->+(b)`**: chạy được, không cần fallback về `shortestPath()`. Kết quả `["web-01","app-01","db-01"]`, khớp `shortestPath()` cũ.
+- Số node/relationship sau khi nạp khớp 100% bảng ở mục 6 (Asset 5, Service 4, Vulnerability 3, User 3, Account 3, Network 3; tổng relationship 22).
+- Chạy script lần hai: số liệu giữ nguyên — xác nhận idempotent.
+- `PROFILE MATCH (a:Asset {hostname:'db-01'}) RETURN a` → plan có `NodeUniqueIndexSeek`, không có `NodeByLabelScan`.
+
+Script: `seed_graph.py` (schema v1, chạy lặp được, đã test thật — xem `README.md`).

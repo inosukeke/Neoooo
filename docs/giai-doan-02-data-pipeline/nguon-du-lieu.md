@@ -11,6 +11,7 @@ Chi tiết endpoint/field: xem `../../.claude/rules/data-sources.md`.
 - Parser tay đúng ở quy mô demo (so với ETL framework/connector SIEM-VM trả phí)
 - Schema-on-read + nắn về schema chung, pipeline idempotent, cache response, backoff 429
 - Dữ liệu định danh giả lập bằng Python (không có AD thật), ghi rõ lệnh PowerShell tương đương
+- **Quy mô dữ liệu giả lập mục tiêu** (để đồ thị cuối ra ~50-150 node, xem `../00-tong-quan/chien-luoc.md` § Quy mô mục tiêu): ~15-30 Asset (Nmap), ~20-40 CVE map qua NVD/EPSS/KEV, ~15-20 User/Account, vài chục Alert/log mẫu — đủ tạo nhiều attack path cạnh tranh nhau và ít nhất 1-2 choke point rõ, không phải vài host như schema v1/v2 học khái niệm
 
 ## Cắt
 Parse EVTX nhị phân (`python-evtx`), ETL framework (Airbyte/Singer/Dagster), export AD thật qua PowerShell (chỉ ghi lệnh, không thực hành).

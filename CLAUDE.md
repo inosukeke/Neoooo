@@ -12,9 +12,11 @@ Sản phẩm: đồ thị tri thức an ninh thu nhỏ (Nmap + CVE/EPSS/KEV + d�
 Liên quan chính tới đề tài VinSOC #1 (Exposure Management & Attack Path Prediction), #2 (Context Intelligence & Security KG), #7 (Graph Application in Cybersecurity), #8 (AI Assistant/Text2SQL analog). Chi tiết: `docs/00-tong-quan/chien-luoc.md`.
 
 ## Trạng thái hiện tại (2026-10-07)
-**Chưa có code nào trong `src/` — toàn bộ là thư mục rỗng (scaffolding).** Chưa phải git repo, chưa có `requirements.txt`/`pyproject.toml`/`docker-compose.yml` hay bất kỳ file cấu hình nào. Vì vậy **chưa có lệnh build/lint/test nào để chạy** — không tự bịa ra (`pip install`, `pytest`, v.v.) khi chưa có manifest thật. Việc code đầu tiên là Giai đoạn 01 (Neo4j schema + seed) trong `src/graph/`.
+Git repo đã init. **Giai đoạn 01 đã code xong cả 3 module**: `src/graph/seed_graph.py` (schema v1), `src/graph/model_v2.py` (migrate lên schema v2 + 8 câu hỏi kiểm), và `src/graph/algo/algo_demo.py` (thuật toán đồ thị GDS). Cả ba đã chạy thật trên Neo4j 5.26 Community + **GDS 2.13.13** (Docker, no-auth) + driver `neo4j` 6.4.0, xác nhận idempotent và đúng 100% số liệu/câu hỏi/bảng kết quả mong đợi (xem "Đã chạy thật" trong `docs/giai-doan-01-graph-foundations/neo4j-cypher.md`, `mo-hinh-hoa-du-lieu.md`, `thuat-toan-do-thi.md`). Cách chạy: `README.md`. Build/run: `pip install -r requirements.txt` rồi chạy theo thứ tự `seed_graph.py` → `model_v2.py` → `algo_demo.py` — chưa có lệnh lint/test (chưa tới phần đó).
 
-Tiến độ bài giảng (lý thuyết, không phải code) chi tiết theo dõi trong Claude Project (`claude/tien-do-bai-giang.md`), không duplicate ở đây. Tính đến nay: đã có bài giảng lý thuyết cho Giai đoạn 01–04 (11 module). Lộ trình đầy đủ: `docs/00-tong-quan/lo-trinh.md`.
+Lưu ý: `algo_demo.py` thêm 3 máy lab + `cost` trên `CONNECTS_TO` (DB thành 8 Asset / 10 cạnh) nên chạy lại `model_v2.py` sau đó sẽ báo LỆCH số lượng — đúng thiết kế (algo là trạng thái cuối Giai đoạn 01); query dọn ở cuối `algo_demo.py`.
+
+Giai đoạn 02–04 vẫn chưa code. Betweenness centrality + `attack_path.py` (rule `graph-algorithms.md` có nhắc) đã chuyển sang Giai đoạn 04. Neo4j chạy no-auth cho demo local (`NEO4J_AUTH=none`); script dùng `auth=None` khi không có `NEO4J_PASSWORD`. Tiến độ bài giảng (lý thuyết, không phải code) theo dõi trong Claude Project (`claude/tien-do-bai-giang.md`), không duplicate ở đây. Lộ trình đầy đủ: `docs/00-tong-quan/lo-trinh.md`.
 
 ## Tech stack
 - Neo4j 5.26 Community (Docker, bind 127.0.0.1) + GDS 2.13.x
@@ -62,4 +64,3 @@ Mỗi rule chỉ load khi mở file trong path khớp glob của nó — không 
 4. Bảo mật: xem `.claude/rules/security.md` (luôn load mọi session).
 5. Các bài giảng gốc hầu hết **chưa chạy thử trên Neo4j/GDS/OpenSearch thật** (sandbox viết bài không có Docker). Khi code, luôn tự verify lại — không tin 100% cú pháp/API trong docs nếu đã lâu, tra lại tài liệu khi nghi ngờ.
 6. Dữ liệu demo giả lập (Nmap/NVD/EPSS/KEV mẫu, identity giả) — không có hạ tầng thật, không gọi API thật tới hệ thống production nào.
-7. Repo chưa init git — khi bắt đầu code thật (Giai đoạn 01), nhớ hỏi Chinh trước khi `git init`/tạo commit đầu tiên, vì đây là quyết định hạ tầng chứ không phải code thường.

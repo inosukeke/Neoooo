@@ -15,7 +15,17 @@ STIX/OCSF/ontology-RDF, cạnh Azure/Entra + ACL BloodHound chi tiết, versioni
 
 ## Còn nợ khi code thật
 - Map dữ liệu thật (Nmap, NVD, EPSS, KEV, AD) vào schema v2 — thuộc module Các nguồn dữ liệu an ninh
-- **Chưa chạy thử trên Neo4j thật** — EXISTS subquery, `*0..1`, FOREACH, datetime chưa xác minh
 - Một máy nhiều tên/IP để dành cho Entity resolution (cố ý chưa resolve ở đây)
 
-Script: `model_v2.py` (migration v1→v2, chạy 8 câu hỏi kiểm). Output kỳ vọng: node tổng 28, relationship tổng 37.
+## Đã chạy thật — xác nhận 2026-10-07
+Chạy trên Neo4j Kernel **5.26.31 Community** (Docker) + driver Python `neo4j` **6.4.0**, qua `src/graph/model_v2.py` (sau khi đã chạy `seed_graph.py`).
+
+- **`EXISTS { ... }` subquery** (câu hỏi 3 và 4): chạy được, không lỗi cú pháp.
+- **Quantified relationship `*0..1`** (câu hỏi 2, `MEMBER_OF*0..1`): chạy được.
+- **`FOREACH` với `CASE WHEN c IS NULL THEN [] ELSE [1] END`** (nạp Alert, account có thể null): chạy được, đúng tạo `INVOLVES` có điều kiện.
+- **`datetime(...)`** (literal và so sánh khoảng): chạy được, lọc alert theo ngày đúng kết quả.
+- Cả 8 câu hỏi kiểm ra đúng 100% kết quả mong đợi ở mục 6.1, kể cả câu 5a đổi từ 2→3 bước cho bob (đúng hiệu ứng "đổi mô hình đổi câu trả lời" bài giảng dự đoán khi quyền đi qua nhóm DBA).
+- Số node/relationship khớp 100% mục 6.2: node tổng 28 (Account 4, Alert 3, Asset 5, Group 2, Network 3, Service 4, User 4, Vulnerability 3), relationship tổng 37.
+- Chạy script lần hai: số liệu giữ nguyên, kể cả bước `DELETE` cạnh `CAN_ACCESS` cũ — xác nhận idempotent.
+
+Script: `model_v2.py` (migration v1→v2, chạy 8 câu hỏi kiểm, đã test thật — xem `README.md`). Output kỳ vọng: node tổng 28, relationship tổng 37.

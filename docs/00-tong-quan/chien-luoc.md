@@ -20,4 +20,9 @@ Chinh đang học khóa AI 3 tháng (2 tháng học + 1 tháng thực tập), m�
 
 Dự án demo bám chủ yếu đề tài #1, #2, #7, chạm #8.
 
+## Quy mô mục tiêu — sản phẩm demo, không phải bài học khái niệm
+Schema v1/v2 ở Giai đoạn 01 (vài chục node, ví dụ `seed_graph.py` v1 có 21 node) là **dữ liệu dạy khái niệm**, chỉ để verify cú pháp Cypher — không phải quy mô của sản phẩm nộp cuối. Ban giám khảo nhìn độ phức tạp/thuyết phục của attack path và chất lượng Text2Cypher/GraphRAG, nhưng đồ thị quá nhỏ (như 21 node hiện tại, chỉ đúng 1 đường đi tới db-01) sẽ khiến demo trông sơ sài.
+
+**Mục tiêu cho đồ thị demo cuối** (populate từ Giai đoạn 02, dữ liệu Nmap/NVD/EPSS/KEV giả lập): khoảng **50–150 node**, đủ để có nhiều attack path cạnh tranh nhau và vài choke point rõ cho betweenness centrality, nhưng vẫn kiểm tay được từng kết quả khi debug. Số liệu cụ thể để tạo dữ liệu giả lập: `docs/giai-doan-02-data-pipeline/nguon-du-lieu.md`.
+
 Kế hoạch 8 tuần gốc: `../../Let's go.html` (lưu ở root thư mục). Tài liệu hướng dẫn tạo bài giảng: Google Doc "system-prompt-bai-giang.md" (nguồn đề tài VinSOC + chương trình module ở trên).
