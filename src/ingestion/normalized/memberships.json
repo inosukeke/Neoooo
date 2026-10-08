@@ -1,86 +1,107 @@
 [
   {
     "username": "binh.nguyen0",
-    "group": "IT-Support"
+    "group": "IT-Support",
+    "source": "idp"
   },
   {
     "username": "chi.tran1",
-    "group": "Domain Admins"
+    "group": "Domain Admins",
+    "source": "idp"
   },
   {
     "username": "chi.tran1",
-    "group": "Web-Dev"
+    "group": "Web-Dev",
+    "source": "idp"
   },
   {
     "username": "an.nguyen2",
-    "group": "Finance"
+    "group": "Finance",
+    "source": "idp"
   },
   {
     "username": "phong.nguyen3",
-    "group": "Finance"
+    "group": "Finance",
+    "source": "idp"
   },
   {
     "username": "phong.nguyen3",
-    "group": "Web-Dev"
+    "group": "Web-Dev",
+    "source": "idp"
   },
   {
     "username": "dung.ngo4",
-    "group": "IT-Support"
+    "group": "IT-Support",
+    "source": "idp"
   },
   {
     "username": "khanh.vu5",
-    "group": "DB-Admins"
+    "group": "DB-Admins",
+    "source": "idp"
   },
   {
     "username": "binh.tran6",
-    "group": "DB-Admins"
+    "group": "DB-Admins",
+    "source": "idp"
   },
   {
     "username": "phong.hoang7",
-    "group": "Web-Dev"
+    "group": "Web-Dev",
+    "source": "idp"
   },
   {
     "username": "phong.hoang7",
-    "group": "Domain Admins"
+    "group": "Domain Admins",
+    "source": "idp"
   },
   {
     "username": "khanh.tran8",
-    "group": "Finance"
+    "group": "Finance",
+    "source": "idp"
   },
   {
     "username": "khanh.tran8",
-    "group": "DB-Admins"
+    "group": "DB-Admins",
+    "source": "idp"
   },
   {
     "username": "phong.pham9",
-    "group": "IT-Support"
+    "group": "IT-Support",
+    "source": "idp"
   },
   {
     "username": "giang.tran10",
-    "group": "Web-Dev"
+    "group": "Web-Dev",
+    "source": "idp"
   },
   {
     "username": "giang.ngo11",
-    "group": "IT-Support"
+    "group": "IT-Support",
+    "source": "idp"
   },
   {
     "username": "hieu.vu12",
-    "group": "Domain Admins"
+    "group": "Domain Admins",
+    "source": "idp"
   },
   {
     "username": "phong.le13",
-    "group": "IT-Support"
+    "group": "IT-Support",
+    "source": "idp"
   },
   {
     "username": "linh.do14",
-    "group": "Finance"
+    "group": "Finance",
+    "source": "idp"
   },
   {
     "username": "linh.do14",
-    "group": "IT-Support"
+    "group": "IT-Support",
+    "source": "idp"
   },
   {
     "username": "hieu.nguyen15",
-    "group": "DB-Admins"
+    "group": "DB-Admins",
+    "source": "idp"
   }
 ]

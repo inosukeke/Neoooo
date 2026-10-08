@@ -146,23 +146,109 @@ def build_logs(seed=42, n_events=30):
     return events
 
 
+# --- Nguồn AD (góc nhìn khác của cùng máy, tên biến thể) ------------------------------
+# AD đặt tên khác Nmap: hoa, FQDN, rút gọn, đổi tên vừa (review), hoặc không có máy đó.
+AD_NAME_OVERRIDE = {
+    "web-01": "web-01.lab.local",   # FQDN -> normalize cắt đuôi -> khớp 100
+    "web-02": "web-2",              # rút số -> ~match
+    "file-01": "fileserver-01",     # đổi tên vừa -> review
+    "vcenter-01": "vcenter",        # cắt hậu tố -> review
+}
+AD_ABSENT = {"spare-01", "ws-hr-01"}          # Nmap có, AD không (no-match + bẫy precision)
+AD_ONLY = [{"ad_key": "LEGACY-NAS", "hostname": "legacy-nas"},   # AD có, Nmap không
+           {"ad_key": "OLD-DC-99", "hostname": "old-dc-99"}]
+
+
+def build_ad_view():
+    ad = []
+    for h in HOSTS:
+        if not h["up"] or h["hostname"] in AD_ABSENT:
+            continue
+        base = h["hostname"]
+        ad.append({"ad_key": base.upper(), "hostname": AD_NAME_OVERRIDE.get(base, base.upper())})
+    return ad + [dict(x) for x in AD_ONLY]
+
+
+# --- Nguồn HR (góc nhìn khác của cùng user, tên biến thể) -----------------------------
+HR_ABSENT_INDICES = {1, 4}                       # user IdP có nhưng HR không (no-match)
+HR_ONLY = ["external.contractor99"]              # HR có, IdP không
+
+
+def build_hr_view(seed=42):
+    users, _, _ = generate_identity(seed=seed)
+    hr = []
+    for i, u in enumerate(users):
+        if i in HR_ABSENT_INDICES:
+            continue
+        name = u["username"]
+        if i % 3 == 0:
+            variant = f"{name}@lab.local"       # email
+        elif i % 3 == 1:
+            variant = name.replace(".", "")       # bỏ chấm: an.nguyen0 -> annguyen0
+        else:
+            variant = name                        # giữ nguyên
+        hr.append({"username": variant, "orig": name})  # orig chỉ để dựng truth, không ghi ra
+    hr += [{"username": x, "orig": None} for x in HR_ONLY]
+    return hr
+
+
+# --- Ground truth cho eval (biến thể là tổng hợp nên biết chính xác cặp nào cùng thực thể) ---
+def build_truth(logs, hr_view):
+    log_computers = {e["Computer"] for e in logs}
+    asset, user = [], []
+    for h in HOSTS:
+        if not h["up"]:
+            continue
+        base, ip = h["hostname"], h["ip"]
+        has_ad = base not in AD_ABSENT
+        has_log = base in log_computers
+        if has_ad:
+            asset.append([f"nmap:{ip}", f"ad:{base.upper()}"])
+        if has_log:
+            asset.append([f"nmap:{ip}", f"log:{base}"])
+        if has_ad and has_log:
+            asset.append([f"ad:{base.upper()}", f"log:{base}"])
+    for h in hr_view:
+        if h["orig"]:
+            user.append([f"idp:{h['orig']}", f"hr:{h['username']}"])
+    return {"asset": asset, "user": user}
+
+
+def _write(path, obj, lines=False):
+    with open(path, "w", encoding="utf-8") as f:
+        if lines:
+            for e in obj:
+                f.write(json.dumps(e, ensure_ascii=False) + "\n")
+        else:
+            json.dump(obj, f, ensure_ascii=False, indent=2)
+
+
 def main():
     os.makedirs(DATA_DIR, exist_ok=True)
 
-    xml_str = build_nmap_xml()
     nmap_path = os.path.join(DATA_DIR, "sample_nmap.xml")
     with open(nmap_path, "w", encoding="utf-8") as f:
-        f.write(xml_str)
+        f.write(build_nmap_xml())
     n_up = sum(1 for h in HOSTS if h["up"])
     n_open = sum(1 for h in HOSTS for p in h["ports"] if p["open"])
-    print(f"sample_nmap.xml: {len(HOSTS)} host ({n_up} up), {n_open} port mở -> {nmap_path}")
+    print(f"sample_nmap.xml: {len(HOSTS)} host ({n_up} up), {n_open} port mở")
 
     logs = build_logs()
-    log_path = os.path.join(DATA_DIR, "sample_logs.jsonl")
-    with open(log_path, "w", encoding="utf-8") as f:
-        for e in logs:
-            f.write(json.dumps(e, ensure_ascii=False) + "\n")
-    print(f"sample_logs.jsonl: {len(logs)} sự kiện logon -> {log_path}")
+    _write(os.path.join(DATA_DIR, "sample_logs.jsonl"), logs, lines=True)
+    print(f"sample_logs.jsonl: {len(logs)} sự kiện logon")
+
+    ad = build_ad_view()
+    _write(os.path.join(DATA_DIR, "sample_ad.json"), ad)
+    print(f"sample_ad.json: {len(ad)} máy (nguồn AD, tên biến thể)")
+
+    hr = build_hr_view()
+    _write(os.path.join(DATA_DIR, "sample_hr.json"), [{"username": h["username"]} for h in hr])
+    print(f"sample_hr.json: {len(hr)} user (nguồn HR, tên biến thể)")
+
+    truth = build_truth(logs, hr)
+    _write(os.path.join(DATA_DIR, "er_truth.json"), truth)
+    print(f"er_truth.json: {len(truth['asset'])} cặp asset + {len(truth['user'])} cặp user (nhãn eval)")
+    print(f"-> {DATA_DIR}")
 
 
 if __name__ == "__main__":

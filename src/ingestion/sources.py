@@ -124,13 +124,14 @@ def parse_nmap_xml(path):
         ip = addr_el.get("addr")
         hn_el = host.find("hostnames/hostname")
         hostname = hn_el.get("name") if hn_el is not None else ip
-        assets.append({"ip": ip, "hostname": hostname})
+        assets.append({"source": "nmap", "source_id": ip, "ip": ip, "hostname": hostname})
         for port in host.findall("ports/port"):
             state = port.find("state")
             if state is None or state.get("state") != "open":
                 continue
             svc = port.find("service")
             services.append({
+                "source": "nmap",
                 "asset_ip": ip,
                 "port": int(port.get("portid")),
                 "protocol": port.get("protocol"),
@@ -251,12 +252,43 @@ def parse_log_sample(path):
     return events
 
 
+# ---------- Nguồn bổ sung cho cùng thực thể (để Entity resolution gộp) ----------------
+# AD/HR là GÓC NHÌN KHÁC của chính máy/người ở trên (tên biến thể), sinh bởi gen_fixtures.
+# Chúng là NGUỒN, nên chuẩn hóa ở đây cùng Nmap/IdP — ER (module 2) chỉ đọc normalized/.
+def load_ad_assets(path):
+    if not os.path.exists(path):
+        return []
+    with open(path, encoding="utf-8") as f:
+        rows = json.load(f)
+    return [{"source": "ad", "source_id": r["ad_key"], "ip": None, "hostname": r["hostname"]}
+            for r in rows]
+
+
+def load_hr_users(path):
+    if not os.path.exists(path):
+        return []
+    with open(path, encoding="utf-8") as f:
+        rows = json.load(f)
+    return [{"source": "hr", "source_id": r["username"], "username": r["username"]} for r in rows]
+
+
+def log_asset_observations(alerts):
+    """Mỗi computer trong log là một quan sát asset (nguồn 'log') — để union-find ≥3 nguồn."""
+    seen, out = set(), []
+    for a in alerts:
+        c = a.get("computer")
+        if c and c not in seen:
+            seen.add(c)
+            out.append({"source": "log", "source_id": c, "ip": None, "hostname": c})
+    return out
+
+
 # ---------- Validate schema chung (mục 5, ưu tiên Trung bình) -----------------------
 REQUIRED = {
-    "assets": ["ip", "hostname"],
+    "assets": ["source", "source_id", "hostname"],
     "services": ["asset_ip", "port"],
     "vulnerabilities": ["cve_id"],
-    "users": ["username"],
+    "users": ["source", "source_id", "username"],
     "accounts": ["username"],
     "memberships": ["username", "group"],
     "alerts": ["event_id", "computer"],
@@ -272,8 +304,17 @@ def validate(name, rows):
 
 
 # ---------- Completeness (mục 6) ----------------------------------------------------
+def _by_source(rows):
+    c = {}
+    for r in rows:
+        c[r.get("source", "?")] = c.get(r.get("source", "?"), 0) + 1
+    return ", ".join(f"{k}={v}" for k, v in sorted(c.items()))
+
+
 def report_completeness(data, cve_ids):
     print("\n--- Completeness ---")
+    print(f"asset theo nguồn: {_by_source(data['assets'])}")
+    print(f"user theo nguồn: {_by_source(data['users'])}")
     svc = data["services"]
     svc_with_product = sum(1 for s in svc if s["product"])
     print(f"service có product: {svc_with_product}/{len(svc)}"
@@ -319,12 +360,24 @@ def main():
     nmap_path = os.path.join(DATA_DIR, "sample_nmap.xml")
     if not os.path.exists(nmap_path):
         sys.exit(f"Thiếu {nmap_path} — chạy: python src/ingestion/gen_fixtures.py trước")
-    assets, services = parse_nmap_xml(nmap_path)
-
-    users, accounts, memberships = generate_identity()
+    nmap_assets, services = parse_nmap_xml(nmap_path)
 
     log_path = os.path.join(DATA_DIR, "sample_logs.jsonl")
     alerts = parse_log_sample(log_path) if os.path.exists(log_path) else []
+    for al in alerts:
+        al["source"] = "log"
+
+    # Asset = hợp các nguồn cùng mô tả máy: Nmap + AD view + quan sát từ Log.
+    assets = (nmap_assets
+              + load_ad_assets(os.path.join(DATA_DIR, "sample_ad.json"))
+              + log_asset_observations(alerts))
+
+    # User = IdP (identity giả) + HR view (biến thể tên).
+    idp_users, accounts, memberships = generate_identity()
+    idp_users = [{"source": "idp", "source_id": u["username"], **u} for u in idp_users]
+    for r in accounts + memberships:
+        r["source"] = "idp"
+    users = idp_users + load_hr_users(os.path.join(DATA_DIR, "sample_hr.json"))
 
     api_key = os.environ.get("NVD_API_KEY")
     print(f"NVD API key: {'có' if api_key else 'không (self-throttle 6s/CVE)'}")

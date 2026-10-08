@@ -1,66 +1,173 @@
 [
   {
+    "source": "idp",
+    "source_id": "binh.nguyen0",
     "username": "binh.nguyen0",
     "display_name": "Binh Nguyen"
   },
   {
+    "source": "idp",
+    "source_id": "chi.tran1",
     "username": "chi.tran1",
     "display_name": "Chi Tran"
   },
   {
+    "source": "idp",
+    "source_id": "an.nguyen2",
     "username": "an.nguyen2",
     "display_name": "An Nguyen"
   },
   {
+    "source": "idp",
+    "source_id": "phong.nguyen3",
     "username": "phong.nguyen3",
     "display_name": "Phong Nguyen"
   },
   {
+    "source": "idp",
+    "source_id": "dung.ngo4",
     "username": "dung.ngo4",
     "display_name": "Dung Ngo"
   },
   {
+    "source": "idp",
+    "source_id": "khanh.vu5",
     "username": "khanh.vu5",
     "display_name": "Khanh Vu"
   },
   {
+    "source": "idp",
+    "source_id": "binh.tran6",
     "username": "binh.tran6",
     "display_name": "Binh Tran"
   },
   {
+    "source": "idp",
+    "source_id": "phong.hoang7",
     "username": "phong.hoang7",
     "display_name": "Phong Hoang"
   },
   {
+    "source": "idp",
+    "source_id": "khanh.tran8",
     "username": "khanh.tran8",
     "display_name": "Khanh Tran"
   },
   {
+    "source": "idp",
+    "source_id": "phong.pham9",
     "username": "phong.pham9",
     "display_name": "Phong Pham"
   },
   {
+    "source": "idp",
+    "source_id": "giang.tran10",
     "username": "giang.tran10",
     "display_name": "Giang Tran"
   },
   {
+    "source": "idp",
+    "source_id": "giang.ngo11",
     "username": "giang.ngo11",
     "display_name": "Giang Ngo"
   },
   {
+    "source": "idp",
+    "source_id": "hieu.vu12",
     "username": "hieu.vu12",
     "display_name": "Hieu Vu"
   },
   {
+    "source": "idp",
+    "source_id": "phong.le13",
     "username": "phong.le13",
     "display_name": "Phong Le"
   },
   {
+    "source": "idp",
+    "source_id": "linh.do14",
     "username": "linh.do14",
     "display_name": "Linh Do"
   },
   {
+    "source": "idp",
+    "source_id": "hieu.nguyen15",
     "username": "hieu.nguyen15",
     "display_name": "Hieu Nguyen"
+  },
+  {
+    "source": "hr",
+    "source_id": "binh.nguyen0@lab.local",
+    "username": "binh.nguyen0@lab.local"
+  },
+  {
+    "source": "hr",
+    "source_id": "an.nguyen2",
+    "username": "an.nguyen2"
+  },
+  {
+    "source": "hr",
+    "source_id": "phong.nguyen3@lab.local",
+    "username": "phong.nguyen3@lab.local"
+  },
+  {
+    "source": "hr",
+    "source_id": "khanh.vu5",
+    "username": "khanh.vu5"
+  },
+  {
+    "source": "hr",
+    "source_id": "binh.tran6@lab.local",
+    "username": "binh.tran6@lab.local"
+  },
+  {
+    "source": "hr",
+    "source_id": "phonghoang7",
+    "username": "phonghoang7"
+  },
+  {
+    "source": "hr",
+    "source_id": "khanh.tran8",
+    "username": "khanh.tran8"
+  },
+  {
+    "source": "hr",
+    "source_id": "phong.pham9@lab.local",
+    "username": "phong.pham9@lab.local"
+  },
+  {
+    "source": "hr",
+    "source_id": "giangtran10",
+    "username": "giangtran10"
+  },
+  {
+    "source": "hr",
+    "source_id": "giang.ngo11",
+    "username": "giang.ngo11"
+  },
+  {
+    "source": "hr",
+    "source_id": "hieu.vu12@lab.local",
+    "username": "hieu.vu12@lab.local"
+  },
+  {
+    "source": "hr",
+    "source_id": "phongle13",
+    "username": "phongle13"
+  },
+  {
+    "source": "hr",
+    "source_id": "linh.do14",
+    "username": "linh.do14"
+  },
+  {
+    "source": "hr",
+    "source_id": "hieu.nguyen15@lab.local",
+    "username": "hieu.nguyen15@lab.local"
+  },
+  {
+    "source": "hr",
+    "source_id": "external.contractor99",
+    "username": "external.contractor99"
   }
 ]

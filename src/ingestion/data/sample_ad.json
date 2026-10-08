@@ -1,0 +1,86 @@
+[
+  {
+    "ad_key": "WEB-01",
+    "hostname": "web-01.lab.local"
+  },
+  {
+    "ad_key": "WEB-02",
+    "hostname": "web-2"
+  },
+  {
+    "ad_key": "VPN-01",
+    "hostname": "VPN-01"
+  },
+  {
+    "ad_key": "MAIL-01",
+    "hostname": "MAIL-01"
+  },
+  {
+    "ad_key": "PROXY-01",
+    "hostname": "PROXY-01"
+  },
+  {
+    "ad_key": "WS-HR-02",
+    "hostname": "WS-HR-02"
+  },
+  {
+    "ad_key": "WS-FIN-01",
+    "hostname": "WS-FIN-01"
+  },
+  {
+    "ad_key": "WS-IT-01",
+    "hostname": "WS-IT-01"
+  },
+  {
+    "ad_key": "WS-DEV-01",
+    "hostname": "WS-DEV-01"
+  },
+  {
+    "ad_key": "APP-01",
+    "hostname": "APP-01"
+  },
+  {
+    "ad_key": "APP-02",
+    "hostname": "APP-02"
+  },
+  {
+    "ad_key": "DB-01",
+    "hostname": "DB-01"
+  },
+  {
+    "ad_key": "DB-02",
+    "hostname": "DB-02"
+  },
+  {
+    "ad_key": "DC-01",
+    "hostname": "DC-01"
+  },
+  {
+    "ad_key": "DC-02",
+    "hostname": "DC-02"
+  },
+  {
+    "ad_key": "FILE-01",
+    "hostname": "fileserver-01"
+  },
+  {
+    "ad_key": "VCENTER-01",
+    "hostname": "vcenter"
+  },
+  {
+    "ad_key": "JENKINS-01",
+    "hostname": "JENKINS-01"
+  },
+  {
+    "ad_key": "GIT-01",
+    "hostname": "GIT-01"
+  },
+  {
+    "ad_key": "LEGACY-NAS",
+    "hostname": "legacy-nas"
+  },
+  {
+    "ad_key": "OLD-DC-99",
+    "hostname": "old-dc-99"
+  }
+]

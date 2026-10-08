@@ -13,8 +13,8 @@ Chi tiết quy tắc: `../../.claude/rules/entity-resolution.md`.
 Weighted multi-field scoring đầy đủ, active learning/ML matching, blocking nâng cao (minhash/LSH — chỉ cần biết tồn tại).
 
 ## Đã chạy thật (2026-10-08)
-`src/ingestion/resolution/entity_resolution.py` đã chạy thật trên `normalized/*.json` của Module 1 (`rapidfuzz` 3.14.1) — gộp cả asset lẫn user, idempotent (view sinh tất định):
-- **Asset — 3 nguồn** (Nmap ip + AD view + Log computer): 55 id gốc → **26 canonical_id**. `make_ad_view` tự sinh biến thể (hoa, FQDN `.lab.local`, rút số `web-2`, đổi tên `fileserver-01`/`vcenter`) + máy chỉ-AD (`legacy-nas`) / chỉ-Nmap (`spare-01`) + bẫy `ws-hr-01` (AD không có).
+`src/ingestion/resolution/entity_resolution.py` **thuần xử lý** — đọc `normalized/{assets,users}.json` (đa-nguồn, có field `source`) + `data/er_truth.json` (nhãn eval), KHÔNG tự sinh data. Việc tạo nguồn AD/HR biến thể đã chuyển sang `gen_fixtures.py` (tầng ingestion) để data không trộn với logic. Chạy thật (`rapidfuzz` 3.14.1), idempotent:
+- **Asset — 3 nguồn** (Nmap ip + AD view + Log computer): 55 id gốc → **26 canonical_id**. Nguồn AD biến thể (hoa, FQDN `.lab.local`, rút số `web-2`, đổi tên `fileserver-01`/`vcenter`) + máy chỉ-AD (`legacy-nas`) / chỉ-Nmap (`spare-01`) + bẫy `ws-hr-01` (AD không có) — tất cả sinh ở `gen_fixtures.py`.
 - **Union-find gộp đúng ≥3 nguồn**: vd `db-01` → 1 cụm {nmap:10.0.3.30, ad:DB-01, log:db-01}.
 - **User — 2 nguồn** (IdP + HR view email/bỏ chấm): 31 id → 17 canonical, khớp 100% (dữ liệu sạch, không có case review — đúng như §10 lỗi #1 lưu ý).
 - **Eval 3 ngưỡng (asset)**: th70 P=0.96 R=1.0 F1=0.98 (2 false merge); th85 P=0.95 R=0.93; **th95 P=1.0 R=0.91 F1=0.95 (0 false merge)**.

@@ -1,86 +1,332 @@
 [
   {
+    "source": "nmap",
+    "source_id": "10.0.1.10",
     "ip": "10.0.1.10",
     "hostname": "web-01"
   },
   {
+    "source": "nmap",
+    "source_id": "10.0.1.11",
     "ip": "10.0.1.11",
     "hostname": "web-02"
   },
   {
+    "source": "nmap",
+    "source_id": "10.0.1.5",
     "ip": "10.0.1.5",
     "hostname": "vpn-01"
   },
   {
+    "source": "nmap",
+    "source_id": "10.0.1.20",
     "ip": "10.0.1.20",
     "hostname": "mail-01"
   },
   {
+    "source": "nmap",
+    "source_id": "10.0.1.30",
     "ip": "10.0.1.30",
     "hostname": "proxy-01"
   },
   {
+    "source": "nmap",
+    "source_id": "10.0.2.15",
     "ip": "10.0.2.15",
     "hostname": "ws-hr-01"
   },
   {
+    "source": "nmap",
+    "source_id": "10.0.2.16",
     "ip": "10.0.2.16",
     "hostname": "ws-hr-02"
   },
   {
+    "source": "nmap",
+    "source_id": "10.0.2.21",
     "ip": "10.0.2.21",
     "hostname": "ws-fin-01"
   },
   {
+    "source": "nmap",
+    "source_id": "10.0.2.31",
     "ip": "10.0.2.31",
     "hostname": "ws-it-01"
   },
   {
+    "source": "nmap",
+    "source_id": "10.0.2.41",
     "ip": "10.0.2.41",
     "hostname": "ws-dev-01"
   },
   {
+    "source": "nmap",
+    "source_id": "10.0.3.20",
     "ip": "10.0.3.20",
     "hostname": "app-01"
   },
   {
+    "source": "nmap",
+    "source_id": "10.0.3.21",
     "ip": "10.0.3.21",
     "hostname": "app-02"
   },
   {
+    "source": "nmap",
+    "source_id": "10.0.3.30",
     "ip": "10.0.3.30",
     "hostname": "db-01"
   },
   {
+    "source": "nmap",
+    "source_id": "10.0.3.31",
     "ip": "10.0.3.31",
     "hostname": "db-02"
   },
   {
+    "source": "nmap",
+    "source_id": "10.0.3.5",
     "ip": "10.0.3.5",
     "hostname": "dc-01"
   },
   {
+    "source": "nmap",
+    "source_id": "10.0.3.6",
     "ip": "10.0.3.6",
     "hostname": "dc-02"
   },
   {
+    "source": "nmap",
+    "source_id": "10.0.3.40",
     "ip": "10.0.3.40",
     "hostname": "file-01"
   },
   {
+    "source": "nmap",
+    "source_id": "10.0.3.50",
     "ip": "10.0.3.50",
     "hostname": "vcenter-01"
   },
   {
+    "source": "nmap",
+    "source_id": "10.0.3.60",
     "ip": "10.0.3.60",
     "hostname": "jenkins-01"
   },
   {
+    "source": "nmap",
+    "source_id": "10.0.3.61",
     "ip": "10.0.3.61",
     "hostname": "git-01"
   },
   {
+    "source": "nmap",
+    "source_id": "10.0.3.98",
     "ip": "10.0.3.98",
     "hostname": "spare-01"
+  },
+  {
+    "source": "ad",
+    "source_id": "WEB-01",
+    "ip": null,
+    "hostname": "web-01.lab.local"
+  },
+  {
+    "source": "ad",
+    "source_id": "WEB-02",
+    "ip": null,
+    "hostname": "web-2"
+  },
+  {
+    "source": "ad",
+    "source_id": "VPN-01",
+    "ip": null,
+    "hostname": "VPN-01"
+  },
+  {
+    "source": "ad",
+    "source_id": "MAIL-01",
+    "ip": null,
+    "hostname": "MAIL-01"
+  },
+  {
+    "source": "ad",
+    "source_id": "PROXY-01",
+    "ip": null,
+    "hostname": "PROXY-01"
+  },
+  {
+    "source": "ad",
+    "source_id": "WS-HR-02",
+    "ip": null,
+    "hostname": "WS-HR-02"
+  },
+  {
+    "source": "ad",
+    "source_id": "WS-FIN-01",
+    "ip": null,
+    "hostname": "WS-FIN-01"
+  },
+  {
+    "source": "ad",
+    "source_id": "WS-IT-01",
+    "ip": null,
+    "hostname": "WS-IT-01"
+  },
+  {
+    "source": "ad",
+    "source_id": "WS-DEV-01",
+    "ip": null,
+    "hostname": "WS-DEV-01"
+  },
+  {
+    "source": "ad",
+    "source_id": "APP-01",
+    "ip": null,
+    "hostname": "APP-01"
+  },
+  {
+    "source": "ad",
+    "source_id": "APP-02",
+    "ip": null,
+    "hostname": "APP-02"
+  },
+  {
+    "source": "ad",
+    "source_id": "DB-01",
+    "ip": null,
+    "hostname": "DB-01"
+  },
+  {
+    "source": "ad",
+    "source_id": "DB-02",
+    "ip": null,
+    "hostname": "DB-02"
+  },
+  {
+    "source": "ad",
+    "source_id": "DC-01",
+    "ip": null,
+    "hostname": "DC-01"
+  },
+  {
+    "source": "ad",
+    "source_id": "DC-02",
+    "ip": null,
+    "hostname": "DC-02"
+  },
+  {
+    "source": "ad",
+    "source_id": "FILE-01",
+    "ip": null,
+    "hostname": "fileserver-01"
+  },
+  {
+    "source": "ad",
+    "source_id": "VCENTER-01",
+    "ip": null,
+    "hostname": "vcenter"
+  },
+  {
+    "source": "ad",
+    "source_id": "JENKINS-01",
+    "ip": null,
+    "hostname": "JENKINS-01"
+  },
+  {
+    "source": "ad",
+    "source_id": "GIT-01",
+    "ip": null,
+    "hostname": "GIT-01"
+  },
+  {
+    "source": "ad",
+    "source_id": "LEGACY-NAS",
+    "ip": null,
+    "hostname": "legacy-nas"
+  },
+  {
+    "source": "ad",
+    "source_id": "OLD-DC-99",
+    "ip": null,
+    "hostname": "old-dc-99"
+  },
+  {
+    "source": "log",
+    "source_id": "file-01",
+    "ip": null,
+    "hostname": "file-01"
+  },
+  {
+    "source": "log",
+    "source_id": "ws-hr-02",
+    "ip": null,
+    "hostname": "ws-hr-02"
+  },
+  {
+    "source": "log",
+    "source_id": "db-02",
+    "ip": null,
+    "hostname": "db-02"
+  },
+  {
+    "source": "log",
+    "source_id": "app-02",
+    "ip": null,
+    "hostname": "app-02"
+  },
+  {
+    "source": "log",
+    "source_id": "ws-hr-01",
+    "ip": null,
+    "hostname": "ws-hr-01"
+  },
+  {
+    "source": "log",
+    "source_id": "ws-fin-01",
+    "ip": null,
+    "hostname": "ws-fin-01"
+  },
+  {
+    "source": "log",
+    "source_id": "dc-01",
+    "ip": null,
+    "hostname": "dc-01"
+  },
+  {
+    "source": "log",
+    "source_id": "ws-it-01",
+    "ip": null,
+    "hostname": "ws-it-01"
+  },
+  {
+    "source": "log",
+    "source_id": "app-01",
+    "ip": null,
+    "hostname": "app-01"
+  },
+  {
+    "source": "log",
+    "source_id": "ws-dev-01",
+    "ip": null,
+    "hostname": "ws-dev-01"
+  },
+  {
+    "source": "log",
+    "source_id": "dc-02",
+    "ip": null,
+    "hostname": "dc-02"
+  },
+  {
+    "source": "log",
+    "source_id": "git-01",
+    "ip": null,
+    "hostname": "git-01"
+  },
+  {
+    "source": "log",
+    "source_id": "db-01",
+    "ip": null,
+    "hostname": "db-01"
   }
 ]

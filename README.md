@@ -61,8 +61,9 @@ Không cần Neo4j. Chỉ cần `pip install -r requirements.txt` (thêm `reques
 python src/ingestion/gen_fixtures.py   # (tùy chọn) sinh lại data/sample_nmap.xml + sample_logs.jsonl
 python src/ingestion/sources.py
 ```
-`gen_fixtures.py` sinh dữ liệu mẫu tất định (đã commit sẵn, chỉ chạy khi muốn đổi topology). `sources.py` parse 6 nguồn → `asset/service/vulnerability/user/account/membership/alert`:
-- **Nmap** (`data/sample_nmap.xml`) → asset + service; **Identity** sinh tất định (seed=42); **Log** (`data/sample_logs.jsonl`) → alert logon.
+`gen_fixtures.py` sinh **toàn bộ dữ liệu nguồn giả** vào `data/` (tất định, đã commit): `sample_nmap.xml`, `sample_logs.jsonl`, `sample_ad.json` (AD view), `sample_hr.json` (HR view), `er_truth.json` (nhãn eval cho Module 2). `sources.py` chuẩn hóa mọi nguồn → 7 file, mỗi record có field `source`:
+- **Nmap** → asset + service; **Identity** (seed=42) → user/account/membership; **Log** → alert + quan sát asset; **AD/HR** → asset/user góc nhìn biến thể.
+- `assets.json` và `users.json` **đa-nguồn** (asset: nmap+ad+log; user: idp+hr) — để Module 2 có bản ghi trùng mà gộp.
 - **NVD + EPSS + CISA KEV**: gọi **API công khai thật**, gộp theo `cve_id`. Response cache ở `src/ingestion/cache/` (đã commit) → lần sau chạy **offline/tức thì**, idempotent.
 
 NVD không cần key (tự giới hạn 6s/CVE, ~28 CVE ≈ 3 phút lần đầu); có key free thì đặt `NVD_API_KEY` để nhanh hơn. Dùng `--refresh` để xóa cache và gọi API lại. In số record 7 file + completeness (bao nhiêu CVE đủ cả 3 nguồn) + kiểm CVE-2021-44228.
@@ -73,9 +74,8 @@ Cần `rapidfuzz` (đã trong `requirements.txt`). Đọc `normalized/{assets,us
 ```bash
 python src/ingestion/resolution/entity_resolution.py
 ```
-Gộp bản ghi từ nhiều nguồn về cùng một thực thể → `canonical_id`:
-- **Asset — 3 nguồn**: Nmap (ip) + **AD view** (`make_ad_view` tự sinh biến thể tên: hoa/FQDN/rút gọn/đổi tên) + **Log** (computer). Union-find gộp cả 3.
-- **User — 2 nguồn**: IdP (`users.json`) + **HR view** (`make_hr_view`: email/bỏ chấm).
-- Pipeline: blocking (2 ký tự đầu) → compare (exact trước, rồi `fuzz.ratio`/`token_sort_ratio`) → ngưỡng → union-find → crosswalk giữ mọi id gốc.
+**Thuần xử lý**: đọc `normalized/{assets,users}.json` (đã đa-nguồn từ Module 1) + `data/er_truth.json`, không tự sinh data. Gộp bản ghi nhiều nguồn về cùng thực thể → `canonical_id`:
+- **Asset — 3 nguồn** (nmap+ad+log) union-find gộp cả 3; **User — 2 nguồn** (idp+hr).
+- Pipeline: blocking (2 ký tự đầu) → best-match (exact trước, rồi `fuzz.ratio`/`token_sort_ratio`) → ngưỡng → union-find → crosswalk giữ mọi id gốc.
 
 **Ngưỡng match=95** (không phải 85), chọn theo `security.md` (false merge nguy hiểm hơn false split); cặp 70–94 vào `review_queue.json` cho người xác nhận tay (gồm bẫy `ws-hr-01`↔`ws-hr-02`). Xuất: `crosswalk.json`, `review_queue.json`, `decisions.json` (audit trail), `eval.json` (precision/recall/F1 ở 3 ngưỡng). `canonical_id` sẽ là khóa MERGE khi nạp Neo4j (bước load, sau module này).

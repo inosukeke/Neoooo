@@ -2,81 +2,97 @@
   {
     "username": "binh.nguyen0",
     "account_type": "domain",
-    "enabled": true
+    "enabled": true,
+    "source": "idp"
   },
   {
     "username": "chi.tran1",
     "account_type": "domain",
-    "enabled": true
+    "enabled": true,
+    "source": "idp"
   },
   {
     "username": "an.nguyen2",
     "account_type": "domain",
-    "enabled": true
+    "enabled": true,
+    "source": "idp"
   },
   {
     "username": "phong.nguyen3",
     "account_type": "domain",
-    "enabled": true
+    "enabled": true,
+    "source": "idp"
   },
   {
     "username": "dung.ngo4",
     "account_type": "domain",
-    "enabled": true
+    "enabled": true,
+    "source": "idp"
   },
   {
     "username": "khanh.vu5",
     "account_type": "domain",
-    "enabled": true
+    "enabled": true,
+    "source": "idp"
   },
   {
     "username": "binh.tran6",
     "account_type": "domain",
-    "enabled": true
+    "enabled": true,
+    "source": "idp"
   },
   {
     "username": "phong.hoang7",
     "account_type": "domain",
-    "enabled": true
+    "enabled": true,
+    "source": "idp"
   },
   {
     "username": "khanh.tran8",
     "account_type": "domain",
-    "enabled": true
+    "enabled": true,
+    "source": "idp"
   },
   {
     "username": "phong.pham9",
     "account_type": "domain",
-    "enabled": true
+    "enabled": true,
+    "source": "idp"
   },
   {
     "username": "giang.tran10",
     "account_type": "domain",
-    "enabled": true
+    "enabled": true,
+    "source": "idp"
   },
   {
     "username": "giang.ngo11",
     "account_type": "domain",
-    "enabled": true
+    "enabled": true,
+    "source": "idp"
   },
   {
     "username": "hieu.vu12",
     "account_type": "domain",
-    "enabled": true
+    "enabled": true,
+    "source": "idp"
   },
   {
     "username": "phong.le13",
     "account_type": "domain",
-    "enabled": true
+    "enabled": true,
+    "source": "idp"
   },
   {
     "username": "linh.do14",
     "account_type": "domain",
-    "enabled": true
+    "enabled": true,
+    "source": "idp"
   },
   {
     "username": "hieu.nguyen15",
     "account_type": "domain",
-    "enabled": true
+    "enabled": true,
+    "source": "idp"
   }
 ]

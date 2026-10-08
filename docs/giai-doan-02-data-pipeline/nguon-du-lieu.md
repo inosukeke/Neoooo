@@ -16,9 +16,10 @@ Chi tiết endpoint/field: xem `../../.claude/rules/data-sources.md`.
 ## Cắt
 Parse EVTX nhị phân (`python-evtx`), ETL framework (Airbyte/Singer/Dagster), export AD thật qua PowerShell (chỉ ghi lệnh, không thực hành).
 
-## Đã chạy thật (2026-10-07)
+## Đã chạy thật (2026-10-08, cập nhật: normalized đa-nguồn)
 `src/ingestion/sources.py` + `gen_fixtures.py` đã chạy thật trên máy có mạng (Python 3, `requests` 2.32.3) — **gọi API công khai NVD/EPSS/KEV thật, thành công**:
-- Xuất **7 file** `normalized/*.json`: 21 asset, 33 service, **28 vulnerability**, 16 user, 16 account, 21 membership, 30 alert.
+- Xuất **7 file** `normalized/*.json`, mỗi record mang field **`source`** (pipeline tự mô tả nguồn). Asset/User **đa-nguồn** để Entity resolution có việc gộp: **55 asset** (nmap 21 + ad 21 + log 13), **31 user** (idp 16 + hr 15), 33 service, **28 vulnerability**, 16 account, 21 membership, 30 alert.
+- AD (góc nhìn máy, tên biến thể) và HR (góc nhìn user) là **nguồn thật trong tầng ingestion** — `gen_fixtures.py` sinh `data/sample_ad.json` + `sample_hr.json` + `data/er_truth.json` (nhãn eval), `sources.py` chuẩn hóa chúng vào `normalized/` cùng Nmap/IdP/Log. ER (module 2) chỉ đọc `normalized/`, không tự chế data.
 - **Completeness: 28/28 CVE đủ cả 3 nguồn** (NVD cvss + EPSS + KEV). CVE-2021-44228: CVSS 10.0 CRITICAL, EPSS 0.99999, KEV ransomware=true.
 - Cache 57 file (`cache/`, đã commit) → chạy lần 2 **2s, offline, output y hệt** (idempotent: identity theo seed, API đọc cache).
 - `gen_fixtures.py` sinh `data/sample_nmap.xml` (22 host, 21 up, 33 port mở — có host down/port đóng để test lọc) + `sample_logs.jsonl` (30 logon 4624/4625, tham chiếu host Nmap + user seed=42).
@@ -31,4 +32,4 @@ Quyết định khi code (khác gợi ý "lab Docker thật" của bài giảng,
 - Nối `normalized/*.json` vào loader Neo4j + map CVE→service (CPE/thủ công) → sau Entity resolution
 - Dữ liệu định danh giả không có biến thể tên (cố ý, để làm bài toán cho Entity resolution)
 
-Script: `sources.py` (parser + API, xuất 7 file JSON vào `normalized/`), `gen_fixtures.py` (sinh Nmap XML + log mẫu).
+Script: `sources.py` (parser + API, chuẩn hóa mọi nguồn → 7 file `normalized/`), `gen_fixtures.py` (sinh toàn bộ dữ liệu nguồn giả vào `data/`: Nmap XML, log, AD view, HR view, + `er_truth.json`).
