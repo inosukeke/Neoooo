@@ -66,3 +66,16 @@ python src/ingestion/sources.py
 - **NVD + EPSS + CISA KEV**: gọi **API công khai thật**, gộp theo `cve_id`. Response cache ở `src/ingestion/cache/` (đã commit) → lần sau chạy **offline/tức thì**, idempotent.
 
 NVD không cần key (tự giới hạn 6s/CVE, ~28 CVE ≈ 3 phút lần đầu); có key free thì đặt `NVD_API_KEY` để nhanh hơn. Dùng `--refresh` để xóa cache và gọi API lại. In số record 7 file + completeness (bao nhiêu CVE đủ cả 3 nguồn) + kiểm CVE-2021-44228.
+
+## Giai đoạn 02 — Module 2: Entity resolution
+
+Cần `rapidfuzz` (đã trong `requirements.txt`). Đọc `normalized/{assets,users,alerts}.json`, xuất vào `src/ingestion/resolved/`.
+```bash
+python src/ingestion/resolution/entity_resolution.py
+```
+Gộp bản ghi từ nhiều nguồn về cùng một thực thể → `canonical_id`:
+- **Asset — 3 nguồn**: Nmap (ip) + **AD view** (`make_ad_view` tự sinh biến thể tên: hoa/FQDN/rút gọn/đổi tên) + **Log** (computer). Union-find gộp cả 3.
+- **User — 2 nguồn**: IdP (`users.json`) + **HR view** (`make_hr_view`: email/bỏ chấm).
+- Pipeline: blocking (2 ký tự đầu) → compare (exact trước, rồi `fuzz.ratio`/`token_sort_ratio`) → ngưỡng → union-find → crosswalk giữ mọi id gốc.
+
+**Ngưỡng match=95** (không phải 85), chọn theo `security.md` (false merge nguy hiểm hơn false split); cặp 70–94 vào `review_queue.json` cho người xác nhận tay (gồm bẫy `ws-hr-01`↔`ws-hr-02`). Xuất: `crosswalk.json`, `review_queue.json`, `decisions.json` (audit trail), `eval.json` (precision/recall/F1 ở 3 ngưỡng). `canonical_id` sẽ là khóa MERGE khi nạp Neo4j (bước load, sau module này).

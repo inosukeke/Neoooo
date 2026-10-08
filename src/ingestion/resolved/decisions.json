@@ -1,0 +1,542 @@
+[
+  {
+    "a": "nmap:10.0.1.10",
+    "b": "ad:WEB-01",
+    "a_name": "web-01",
+    "b_name": "web-01.lab.local",
+    "score": 100.0,
+    "decision": "match",
+    "kind": "asset"
+  },
+  {
+    "a": "nmap:10.0.1.11",
+    "b": "ad:WEB-02",
+    "a_name": "web-02",
+    "b_name": "web-2",
+    "score": 90.9,
+    "decision": "review",
+    "kind": "asset"
+  },
+  {
+    "a": "nmap:10.0.1.5",
+    "b": "ad:VPN-01",
+    "a_name": "vpn-01",
+    "b_name": "VPN-01",
+    "score": 100.0,
+    "decision": "match",
+    "kind": "asset"
+  },
+  {
+    "a": "nmap:10.0.1.20",
+    "b": "ad:MAIL-01",
+    "a_name": "mail-01",
+    "b_name": "MAIL-01",
+    "score": 100.0,
+    "decision": "match",
+    "kind": "asset"
+  },
+  {
+    "a": "nmap:10.0.1.30",
+    "b": "ad:PROXY-01",
+    "a_name": "proxy-01",
+    "b_name": "PROXY-01",
+    "score": 100.0,
+    "decision": "match",
+    "kind": "asset"
+  },
+  {
+    "a": "nmap:10.0.2.15",
+    "b": "ad:WS-HR-02",
+    "a_name": "ws-hr-01",
+    "b_name": "WS-HR-02",
+    "score": 87.5,
+    "decision": "review",
+    "kind": "asset"
+  },
+  {
+    "a": "nmap:10.0.2.15",
+    "b": "log:ws-hr-01",
+    "a_name": "ws-hr-01",
+    "b_name": "ws-hr-01",
+    "score": 100.0,
+    "decision": "match",
+    "kind": "asset"
+  },
+  {
+    "a": "nmap:10.0.2.16",
+    "b": "ad:WS-HR-02",
+    "a_name": "ws-hr-02",
+    "b_name": "WS-HR-02",
+    "score": 100.0,
+    "decision": "match",
+    "kind": "asset"
+  },
+  {
+    "a": "nmap:10.0.2.16",
+    "b": "log:ws-hr-02",
+    "a_name": "ws-hr-02",
+    "b_name": "ws-hr-02",
+    "score": 100.0,
+    "decision": "match",
+    "kind": "asset"
+  },
+  {
+    "a": "nmap:10.0.2.21",
+    "b": "ad:WS-FIN-01",
+    "a_name": "ws-fin-01",
+    "b_name": "WS-FIN-01",
+    "score": 100.0,
+    "decision": "match",
+    "kind": "asset"
+  },
+  {
+    "a": "nmap:10.0.2.21",
+    "b": "log:ws-fin-01",
+    "a_name": "ws-fin-01",
+    "b_name": "ws-fin-01",
+    "score": 100.0,
+    "decision": "match",
+    "kind": "asset"
+  },
+  {
+    "a": "nmap:10.0.2.31",
+    "b": "ad:WS-IT-01",
+    "a_name": "ws-it-01",
+    "b_name": "WS-IT-01",
+    "score": 100.0,
+    "decision": "match",
+    "kind": "asset"
+  },
+  {
+    "a": "nmap:10.0.2.31",
+    "b": "log:ws-it-01",
+    "a_name": "ws-it-01",
+    "b_name": "ws-it-01",
+    "score": 100.0,
+    "decision": "match",
+    "kind": "asset"
+  },
+  {
+    "a": "nmap:10.0.2.41",
+    "b": "ad:WS-DEV-01",
+    "a_name": "ws-dev-01",
+    "b_name": "WS-DEV-01",
+    "score": 100.0,
+    "decision": "match",
+    "kind": "asset"
+  },
+  {
+    "a": "nmap:10.0.2.41",
+    "b": "log:ws-dev-01",
+    "a_name": "ws-dev-01",
+    "b_name": "ws-dev-01",
+    "score": 100.0,
+    "decision": "match",
+    "kind": "asset"
+  },
+  {
+    "a": "ad:WS-HR-02",
+    "b": "log:ws-hr-02",
+    "a_name": "WS-HR-02",
+    "b_name": "ws-hr-02",
+    "score": 100.0,
+    "decision": "match",
+    "kind": "asset"
+  },
+  {
+    "a": "ad:WS-FIN-01",
+    "b": "log:ws-fin-01",
+    "a_name": "WS-FIN-01",
+    "b_name": "ws-fin-01",
+    "score": 100.0,
+    "decision": "match",
+    "kind": "asset"
+  },
+  {
+    "a": "ad:WS-IT-01",
+    "b": "log:ws-it-01",
+    "a_name": "WS-IT-01",
+    "b_name": "ws-it-01",
+    "score": 100.0,
+    "decision": "match",
+    "kind": "asset"
+  },
+  {
+    "a": "ad:WS-DEV-01",
+    "b": "log:ws-dev-01",
+    "a_name": "WS-DEV-01",
+    "b_name": "ws-dev-01",
+    "score": 100.0,
+    "decision": "match",
+    "kind": "asset"
+  },
+  {
+    "a": "log:ws-hr-01",
+    "b": "ad:WS-HR-02",
+    "a_name": "ws-hr-01",
+    "b_name": "WS-HR-02",
+    "score": 87.5,
+    "decision": "review",
+    "kind": "asset"
+  },
+  {
+    "a": "nmap:10.0.3.20",
+    "b": "ad:APP-01",
+    "a_name": "app-01",
+    "b_name": "APP-01",
+    "score": 100.0,
+    "decision": "match",
+    "kind": "asset"
+  },
+  {
+    "a": "nmap:10.0.3.20",
+    "b": "log:app-01",
+    "a_name": "app-01",
+    "b_name": "app-01",
+    "score": 100.0,
+    "decision": "match",
+    "kind": "asset"
+  },
+  {
+    "a": "nmap:10.0.3.21",
+    "b": "ad:APP-02",
+    "a_name": "app-02",
+    "b_name": "APP-02",
+    "score": 100.0,
+    "decision": "match",
+    "kind": "asset"
+  },
+  {
+    "a": "nmap:10.0.3.21",
+    "b": "log:app-02",
+    "a_name": "app-02",
+    "b_name": "app-02",
+    "score": 100.0,
+    "decision": "match",
+    "kind": "asset"
+  },
+  {
+    "a": "ad:APP-01",
+    "b": "log:app-01",
+    "a_name": "APP-01",
+    "b_name": "app-01",
+    "score": 100.0,
+    "decision": "match",
+    "kind": "asset"
+  },
+  {
+    "a": "ad:APP-02",
+    "b": "log:app-02",
+    "a_name": "APP-02",
+    "b_name": "app-02",
+    "score": 100.0,
+    "decision": "match",
+    "kind": "asset"
+  },
+  {
+    "a": "nmap:10.0.3.30",
+    "b": "ad:DB-01",
+    "a_name": "db-01",
+    "b_name": "DB-01",
+    "score": 100.0,
+    "decision": "match",
+    "kind": "asset"
+  },
+  {
+    "a": "nmap:10.0.3.30",
+    "b": "log:db-01",
+    "a_name": "db-01",
+    "b_name": "db-01",
+    "score": 100.0,
+    "decision": "match",
+    "kind": "asset"
+  },
+  {
+    "a": "nmap:10.0.3.31",
+    "b": "ad:DB-02",
+    "a_name": "db-02",
+    "b_name": "DB-02",
+    "score": 100.0,
+    "decision": "match",
+    "kind": "asset"
+  },
+  {
+    "a": "nmap:10.0.3.31",
+    "b": "log:db-02",
+    "a_name": "db-02",
+    "b_name": "db-02",
+    "score": 100.0,
+    "decision": "match",
+    "kind": "asset"
+  },
+  {
+    "a": "ad:DB-01",
+    "b": "log:db-01",
+    "a_name": "DB-01",
+    "b_name": "db-01",
+    "score": 100.0,
+    "decision": "match",
+    "kind": "asset"
+  },
+  {
+    "a": "ad:DB-02",
+    "b": "log:db-02",
+    "a_name": "DB-02",
+    "b_name": "db-02",
+    "score": 100.0,
+    "decision": "match",
+    "kind": "asset"
+  },
+  {
+    "a": "nmap:10.0.3.5",
+    "b": "ad:DC-01",
+    "a_name": "dc-01",
+    "b_name": "DC-01",
+    "score": 100.0,
+    "decision": "match",
+    "kind": "asset"
+  },
+  {
+    "a": "nmap:10.0.3.5",
+    "b": "log:dc-01",
+    "a_name": "dc-01",
+    "b_name": "dc-01",
+    "score": 100.0,
+    "decision": "match",
+    "kind": "asset"
+  },
+  {
+    "a": "nmap:10.0.3.6",
+    "b": "ad:DC-02",
+    "a_name": "dc-02",
+    "b_name": "DC-02",
+    "score": 100.0,
+    "decision": "match",
+    "kind": "asset"
+  },
+  {
+    "a": "nmap:10.0.3.6",
+    "b": "log:dc-02",
+    "a_name": "dc-02",
+    "b_name": "dc-02",
+    "score": 100.0,
+    "decision": "match",
+    "kind": "asset"
+  },
+  {
+    "a": "ad:DC-01",
+    "b": "log:dc-01",
+    "a_name": "DC-01",
+    "b_name": "dc-01",
+    "score": 100.0,
+    "decision": "match",
+    "kind": "asset"
+  },
+  {
+    "a": "ad:DC-02",
+    "b": "log:dc-02",
+    "a_name": "DC-02",
+    "b_name": "dc-02",
+    "score": 100.0,
+    "decision": "match",
+    "kind": "asset"
+  },
+  {
+    "a": "nmap:10.0.3.40",
+    "b": "ad:FILE-01",
+    "a_name": "file-01",
+    "b_name": "fileserver-01",
+    "score": 70.0,
+    "decision": "review",
+    "kind": "asset"
+  },
+  {
+    "a": "nmap:10.0.3.40",
+    "b": "log:file-01",
+    "a_name": "file-01",
+    "b_name": "file-01",
+    "score": 100.0,
+    "decision": "match",
+    "kind": "asset"
+  },
+  {
+    "a": "ad:FILE-01",
+    "b": "log:file-01",
+    "a_name": "fileserver-01",
+    "b_name": "file-01",
+    "score": 70.0,
+    "decision": "review",
+    "kind": "asset"
+  },
+  {
+    "a": "nmap:10.0.3.50",
+    "b": "ad:VCENTER-01",
+    "a_name": "vcenter-01",
+    "b_name": "vcenter",
+    "score": 82.4,
+    "decision": "review",
+    "kind": "asset"
+  },
+  {
+    "a": "nmap:10.0.3.60",
+    "b": "ad:JENKINS-01",
+    "a_name": "jenkins-01",
+    "b_name": "JENKINS-01",
+    "score": 100.0,
+    "decision": "match",
+    "kind": "asset"
+  },
+  {
+    "a": "nmap:10.0.3.61",
+    "b": "ad:GIT-01",
+    "a_name": "git-01",
+    "b_name": "GIT-01",
+    "score": 100.0,
+    "decision": "match",
+    "kind": "asset"
+  },
+  {
+    "a": "nmap:10.0.3.61",
+    "b": "log:git-01",
+    "a_name": "git-01",
+    "b_name": "git-01",
+    "score": 100.0,
+    "decision": "match",
+    "kind": "asset"
+  },
+  {
+    "a": "ad:GIT-01",
+    "b": "log:git-01",
+    "a_name": "GIT-01",
+    "b_name": "git-01",
+    "score": 100.0,
+    "decision": "match",
+    "kind": "asset"
+  },
+  {
+    "a": "idp:binh.nguyen0",
+    "b": "hr:binh.nguyen0@lab.local",
+    "a_name": "binh.nguyen0",
+    "b_name": "binh.nguyen0@lab.local",
+    "score": 100.0,
+    "decision": "match",
+    "kind": "user"
+  },
+  {
+    "a": "idp:binh.tran6",
+    "b": "hr:binh.tran6@lab.local",
+    "a_name": "binh.tran6",
+    "b_name": "binh.tran6@lab.local",
+    "score": 100.0,
+    "decision": "match",
+    "kind": "user"
+  },
+  {
+    "a": "idp:an.nguyen2",
+    "b": "hr:an.nguyen2",
+    "a_name": "an.nguyen2",
+    "b_name": "an.nguyen2",
+    "score": 100.0,
+    "decision": "match",
+    "kind": "user"
+  },
+  {
+    "a": "idp:phong.nguyen3",
+    "b": "hr:phong.nguyen3@lab.local",
+    "a_name": "phong.nguyen3",
+    "b_name": "phong.nguyen3@lab.local",
+    "score": 100.0,
+    "decision": "match",
+    "kind": "user"
+  },
+  {
+    "a": "idp:phong.hoang7",
+    "b": "hr:phonghoang7",
+    "a_name": "phong.hoang7",
+    "b_name": "phonghoang7",
+    "score": 100.0,
+    "decision": "match",
+    "kind": "user"
+  },
+  {
+    "a": "idp:phong.pham9",
+    "b": "hr:phong.pham9@lab.local",
+    "a_name": "phong.pham9",
+    "b_name": "phong.pham9@lab.local",
+    "score": 100.0,
+    "decision": "match",
+    "kind": "user"
+  },
+  {
+    "a": "idp:phong.le13",
+    "b": "hr:phongle13",
+    "a_name": "phong.le13",
+    "b_name": "phongle13",
+    "score": 100.0,
+    "decision": "match",
+    "kind": "user"
+  },
+  {
+    "a": "idp:khanh.vu5",
+    "b": "hr:khanh.vu5",
+    "a_name": "khanh.vu5",
+    "b_name": "khanh.vu5",
+    "score": 100.0,
+    "decision": "match",
+    "kind": "user"
+  },
+  {
+    "a": "idp:khanh.tran8",
+    "b": "hr:khanh.tran8",
+    "a_name": "khanh.tran8",
+    "b_name": "khanh.tran8",
+    "score": 100.0,
+    "decision": "match",
+    "kind": "user"
+  },
+  {
+    "a": "idp:giang.tran10",
+    "b": "hr:giangtran10",
+    "a_name": "giang.tran10",
+    "b_name": "giangtran10",
+    "score": 100.0,
+    "decision": "match",
+    "kind": "user"
+  },
+  {
+    "a": "idp:giang.ngo11",
+    "b": "hr:giang.ngo11",
+    "a_name": "giang.ngo11",
+    "b_name": "giang.ngo11",
+    "score": 100.0,
+    "decision": "match",
+    "kind": "user"
+  },
+  {
+    "a": "idp:hieu.vu12",
+    "b": "hr:hieu.vu12@lab.local",
+    "a_name": "hieu.vu12",
+    "b_name": "hieu.vu12@lab.local",
+    "score": 100.0,
+    "decision": "match",
+    "kind": "user"
+  },
+  {
+    "a": "idp:hieu.nguyen15",
+    "b": "hr:hieu.nguyen15@lab.local",
+    "a_name": "hieu.nguyen15",
+    "b_name": "hieu.nguyen15@lab.local",
+    "score": 100.0,
+    "decision": "match",
+    "kind": "user"
+  },
+  {
+    "a": "idp:linh.do14",
+    "b": "hr:linh.do14",
+    "a_name": "linh.do14",
+    "b_name": "linh.do14",
+    "score": 100.0,
+    "decision": "match",
+    "kind": "user"
+  }
+]

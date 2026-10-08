@@ -1,0 +1,56 @@
+[
+  {
+    "a": "nmap:10.0.1.11",
+    "b": "ad:WEB-02",
+    "a_name": "web-02",
+    "b_name": "web-2",
+    "score": 90.9,
+    "decision": "review",
+    "kind": "asset"
+  },
+  {
+    "a": "nmap:10.0.2.15",
+    "b": "ad:WS-HR-02",
+    "a_name": "ws-hr-01",
+    "b_name": "WS-HR-02",
+    "score": 87.5,
+    "decision": "review",
+    "kind": "asset"
+  },
+  {
+    "a": "log:ws-hr-01",
+    "b": "ad:WS-HR-02",
+    "a_name": "ws-hr-01",
+    "b_name": "WS-HR-02",
+    "score": 87.5,
+    "decision": "review",
+    "kind": "asset"
+  },
+  {
+    "a": "nmap:10.0.3.40",
+    "b": "ad:FILE-01",
+    "a_name": "file-01",
+    "b_name": "fileserver-01",
+    "score": 70.0,
+    "decision": "review",
+    "kind": "asset"
+  },
+  {
+    "a": "ad:FILE-01",
+    "b": "log:file-01",
+    "a_name": "fileserver-01",
+    "b_name": "file-01",
+    "score": 70.0,
+    "decision": "review",
+    "kind": "asset"
+  },
+  {
+    "a": "nmap:10.0.3.50",
+    "b": "ad:VCENTER-01",
+    "a_name": "vcenter-01",
+    "b_name": "vcenter",
+    "score": 82.4,
+    "decision": "review",
+    "kind": "asset"
+  }
+]
