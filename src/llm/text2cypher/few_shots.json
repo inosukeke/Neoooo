@@ -1,0 +1,80 @@
+[
+  {
+    "question": "Máy nào chạy dịch vụ có lỗ hổng nằm trong danh sách KEV (CISA Known Exploited Vulnerabilities)?",
+    "cypher": "MATCH (a:Asset)-[:RUNS]->(:Service)-[:HAS_VULN]->(v:Vulnerability) WHERE v.kev = true RETURN DISTINCT a.hostname AS hostname",
+    "expect_nonempty": true,
+    "covers": ["RUNS", "HAS_VULN", "KEV"]
+  },
+  {
+    "question": "Những lỗ hổng KEV nào còn bị gắn cờ ransomware?",
+    "cypher": "MATCH (v:Vulnerability) WHERE v.kev = true AND v.kev_ransomware = true RETURN v.cve AS cve, v.epss AS epss",
+    "expect_nonempty": true,
+    "covers": ["Vulnerability", "KEV", "kev_ransomware"]
+  },
+  {
+    "question": "Nhóm nào có quyền admin trên máy dc-01?",
+    "cypher": "MATCH (g:Group)-[:ADMIN_TO]->(a:Asset {hostname: 'dc-01'}) RETURN g.name AS group_name",
+    "expect_nonempty": true,
+    "covers": ["ADMIN_TO"]
+  },
+  {
+    "question": "Những user nào có tài khoản thuộc nhóm Domain Admins?",
+    "cypher": "MATCH (u:User)-[:HAS_ACCOUNT]->(:Account)-[:MEMBER_OF]->(:Group {name: 'Domain Admins'}) RETURN u.display_name AS display_name",
+    "expect_nonempty": true,
+    "covers": ["MEMBER_OF", "HAS_ACCOUNT"]
+  },
+  {
+    "question": "Những user nào vừa có tài khoản admin trên một máy, vừa trực tiếp quản trị máy đó qua group?",
+    "cypher": "MATCH (u:User)-[:HAS_ACCOUNT]->(acc:Account)-[:MEMBER_OF]->(g:Group)-[:ADMIN_TO]->(a:Asset) RETURN u.display_name AS display_name, g.name AS group_name, a.hostname AS hostname",
+    "expect_nonempty": true,
+    "covers": ["ADMIN_TO", "MEMBER_OF", "HAS_ACCOUNT"]
+  },
+  {
+    "question": "Tài khoản nào đã đăng nhập vào máy ws-hr-02, lần gần nhất là khi nào?",
+    "cypher": "MATCH (acc:Account)-[r:AUTHENTICATED_TO]->(a:Asset {hostname: 'ws-hr-02'}) RETURN acc.name AS account, r.last_seen AS last_seen ORDER BY r.last_seen DESC",
+    "expect_nonempty": true,
+    "covers": ["AUTHENTICATED_TO"]
+  },
+  {
+    "question": "Có bao nhiêu tài khoản đã từng đăng nhập vào mỗi máy, tính theo số lượt AUTHENTICATED_TO?",
+    "cypher": "MATCH (acc:Account)-[:AUTHENTICATED_TO]->(a:Asset) RETURN a.hostname AS hostname, count(acc) AS account_count ORDER BY account_count DESC",
+    "expect_nonempty": true,
+    "covers": ["AUTHENTICATED_TO", "count"]
+  },
+  {
+    "question": "Từ máy web-01, có thể kết nối tới những máy nào trong vòng tối đa 3 bước (CONNECTS_TO)?",
+    "cypher": "MATCH (a:Asset {hostname: 'web-01'})-[:CONNECTS_TO*1..3]->(b:Asset) RETURN DISTINCT b.hostname AS hostname",
+    "expect_nonempty": true,
+    "covers": ["CONNECTS_TO"]
+  },
+  {
+    "question": "Những cảnh báo (Alert) nào xảy ra trong khoảng từ 10 giờ đến 12 giờ ngày 2026-10-05?",
+    "cypher": "MATCH (al:Alert) WHERE al.time >= datetime('2026-10-05T10:00:00Z') AND al.time <= datetime('2026-10-05T12:00:00Z') RETURN al.rule AS rule, al.severity AS severity, al.time AS time ORDER BY al.time",
+    "expect_nonempty": true,
+    "covers": ["Alert", "datetime"]
+  },
+  {
+    "question": "Mỗi quy tắc cảnh báo (rule) đã kích hoạt bao nhiêu lần, gộp theo mức độ nghiêm trọng?",
+    "cypher": "MATCH (al:Alert) RETURN al.rule AS rule, al.severity AS severity, count(al) AS total ORDER BY total DESC",
+    "expect_nonempty": true,
+    "covers": ["Alert", "count"]
+  },
+  {
+    "question": "Alert nào liên quan tới tài khoản nào và xảy ra trên máy nào?",
+    "cypher": "MATCH (al:Alert)-[:INVOLVES]->(acc:Account), (al)-[:TRIGGERED_ON]->(a:Asset) RETURN al.rule AS rule, acc.name AS account, a.hostname AS hostname LIMIT 20",
+    "expect_nonempty": true,
+    "covers": ["Alert", "INVOLVES", "TRIGGERED_ON"]
+  },
+  {
+    "question": "Những dịch vụ nào đang có lỗ hổng mức độ CRITICAL, tên dịch vụ và CVE là gì?",
+    "cypher": "MATCH (s:Service)-[:HAS_VULN]->(v:Vulnerability {cvss_severity: 'CRITICAL'}) RETURN s.name AS service, s.product AS product, v.cve AS cve",
+    "expect_nonempty": true,
+    "covers": ["HAS_VULN", "Vulnerability"]
+  },
+  {
+    "question": "Mỗi mạng (Network) hiện có bao nhiêu máy và liệt kê hostname của chúng?",
+    "cypher": "MATCH (a:Asset)-[:IN_NETWORK]->(n:Network) RETURN n.cidr AS cidr, n.zone AS zone, count(a) AS asset_count, collect(a.hostname) AS hostnames ORDER BY asset_count DESC",
+    "expect_nonempty": true,
+    "covers": ["IN_NETWORK", "collect", "count"]
+  }
+]
