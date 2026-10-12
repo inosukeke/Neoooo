@@ -1,3 +1,7 @@
 neo4j==6.4.0
 requests==2.32.3
 rapidfuzz==3.14.1
+opensearch-py==3.2.0
+openai==3.26.1
+pytest==9.1.1
+ruff==0.16.10
