@@ -26,10 +26,10 @@ Parse EVTX nhị phân (`python-evtx`), ETL framework (Airbyte/Singer/Dagster), 
 
 Quyết định khi code (khác gợi ý "lab Docker thật" của bài giảng, chọn vì tái lập được): Nmap + log dùng dữ liệu mẫu sinh tất định & commit, không dựng lab/quét thật; CVE seed 28 cái nổi tiếng (toàn bộ nằm trong KEV). API thật nhưng cache commit nên demo chạy offline.
 
-## Còn nợ (module/giai đoạn sau)
-- Hợp nhất record trùng giữa nguồn → Entity resolution (module 2)
-- Nạp log/alert vào OpenSearch → module OpenSearch (module 3)
-- Nối `normalized/*.json` vào loader Neo4j + map CVE→service (CPE/thủ công) → sau Entity resolution
-- Dữ liệu định danh giả không có biến thể tên (cố ý, để làm bài toán cho Entity resolution)
+## Còn nợ (module/giai đoạn sau) — đã đóng (2026-10-08)
+- ~~Hợp nhất record trùng giữa nguồn~~ → Entity resolution (module 2, đã code).
+- ~~Nạp log/alert vào OpenSearch~~ → module OpenSearch (module 3, đã code, xem `opensearch.md`).
+- ~~Nối `normalized/*.json` vào loader Neo4j + map CVE→service~~ → `src/graph/load_graph.py` đã chạy thật (158 node/243 rel), xem `docs/giai-doan-01-graph-foundations/mo-hinh-hoa-du-lieu.md` mục "Nạp từ pipeline Giai đoạn 02".
+- Dữ liệu định danh giả không có biến thể tên (cố ý, để làm bài toán cho Entity resolution) — vẫn còn đúng, không phải nợ cần đóng.
 
 Script: `sources.py` (parser + API, chuẩn hóa mọi nguồn → 7 file `normalized/`), `gen_fixtures.py` (sinh toàn bộ dữ liệu nguồn giả vào `data/`: Nmap XML, log, AD view, HR view, + `er_truth.json`).

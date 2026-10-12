@@ -22,6 +22,8 @@ Mô hình hóa thời gian: trạng thái dùng property hiện tại, sự ki�
 
 Không lưu bí mật vào property (xem `security.md`).
 
-Script liên quan: `seed_graph.py` (schema v1 ban đầu), `model_v2.py` (schema v2 hiện hành + 8 câu hỏi kiểm).
+**Khóa MERGE sau khi nạp pipeline Giai đoạn 02**: `canonical_id` cho `Asset`/`User` (không dùng `hostname`/`username` thuần — có thể trùng giữa node cũ/mới qua entity resolution). `ADMIN_TO`, CVE→`Service` (map vào `HAS_VULN`) và `CONNECTS_TO` được **suy diễn từ bảng rule viết tay** (`src/graph/graph_rules.py`) vì pipeline demo không có nguồn dữ liệu thật cho 3 quan hệ này — luôn ghi rõ "giả định demo" khi đọc/sửa các rule đó. `OWNS` không nạp (không có nguồn).
+
+Script liên quan: `seed_graph.py` (schema v1 ban đầu), `model_v2.py` (schema v2 hiện hành + 8 câu hỏi kiểm), `load_graph.py` (nạp dữ liệu pipeline Giai đoạn 02, thay thế dữ liệu dạy khái niệm ở trên).
 
 Chi tiết đầy đủ + quyết định thiết kế: `docs/giai-doan-01-graph-foundations/mo-hinh-hoa-du-lieu.md`.

@@ -22,7 +22,7 @@ Weighted multi-field scoring đầy đủ, active learning/ML matching, blocking
 **Quyết định ngưỡng = 95** (không phải 85 ví dụ bài giảng): theo `security.md` false merge nguy hiểm hơn false split, th95 cho precision tuyệt đối. Mọi cặp 70–94 (gồm bẫy `ws-hr-01`↔`ws-hr-02` 87.5đ) rơi `review_queue.json` cho người xác nhận tay — ở th95 bẫy này KHÔNG bị gộp (ws-hr-01 và ws-hr-02 tách đúng 2 cụm), còn ở th85 thì gộp sai. Đây là minh họa trực tiếp vì sao nghiêng precision.
 
 ## Còn nợ (bước sau)
-- Chưa nối `crosswalk.json` vào loader Neo4j (dùng `canonical_id` làm khóa MERGE) — thuộc bước load sau Module 3.
+- ~~Chưa nối `crosswalk.json` vào loader Neo4j~~ → đã đóng (2026-10-08): `src/graph/load_graph.py` dùng `canonical_id` làm khóa MERGE, chạy thật 158 node/243 rel.
 - Review band cho user hiện rỗng (biến thể email/bỏ chấm đều khớp qua `username_variants`); nếu muốn demo review cho user, thêm biến thể gõ sai/cắt ký tự.
 
 Script: `entity_resolution.py` → output `resolved/{crosswalk,review_queue,decisions,eval}.json`.
