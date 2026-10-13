@@ -266,16 +266,28 @@ def main():
     summarize("USER ", u_pairs)
     u_cross = build_crosswalk(cluster(u_records, u_pairs), "user")
 
-    # Eval ở 3 ngưỡng (§6.2) so với ground truth sinh kèm
+    # Eval sweep threshold từ 50 đến 100 step 5 (S2.4) — tìm ngưỡng F1 tối ưu.
+    # Ngưỡng 70/85/95 vẫn lưu (3 ngưỡng lịch sử từ bài giảng §6.2) để tương thích.
+    THRESHOLDS = sorted(set(range(50, 101, 5)) | {70, 85, 95})
     eval_out = {"asset": {}, "user": {}}
-    for th in (70, 85, 95):
-        eval_out["asset"][th] = evaluate([pairkey(p["a"], p["b"]) for p in a_pairs if p["score"] >= th], a_truth)
-        eval_out["user"][th] = evaluate([pairkey(p["a"], p["b"]) for p in u_pairs if p["score"] >= th], u_truth)
+    for th in THRESHOLDS:
+        eval_out["asset"][th] = evaluate(
+            [pairkey(p["a"], p["b"]) for p in a_pairs if p["score"] >= th], a_truth
+        )
+        eval_out["user"][th] = evaluate(
+            [pairkey(p["a"], p["b"]) for p in u_pairs if p["score"] >= th], u_truth
+        )
+
+    # In bảng P/R/F1 theo threshold + highlight ngưỡng F1 cao nhất.
     for kind in ("asset", "user"):
-        print(f"--- Eval P/R/F1 ({kind}) ---")
-        for th in (70, 85, 95):
+        print(f"--- Eval P/R/F1 ({kind}) (sweep {len(THRESHOLDS)} thresholds) ---")
+        best_th = max(
+            eval_out[kind].items(), key=lambda kv: kv[1]["f1"]
+        )[0]
+        for th in THRESHOLDS:
             e = eval_out[kind][th]
-            print(f"  ngưỡng {th}: P={e['precision']} R={e['recall']} F1={e['f1']} "
+            marker = " *" if th == best_th else "  "
+            print(f"{marker} ngưỡng {th:3d}: P={e['precision']} R={e['recall']} F1={e['f1']} "
                   f"(tp={e['tp']} fp={e['fp']} fn={e['fn']})")
 
     crosswalk = {**a_cross, **u_cross}

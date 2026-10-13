@@ -6,9 +6,11 @@ from entity_resolution import (
     build_crosswalk,
     cluster,
     decide,
+    evaluate,
     load_norm,
     load_truth,
     normalize_name,
+    pairkey,
     records_from,
     scored_pairs,
     user_score,
@@ -148,6 +150,57 @@ def test_eval_against_ground_truth_asset_th95():
     fp = len(predicted_set - truth)
     precision = tp / (tp + fp) if (tp + fp) else 0.0
     assert precision == 1.0
+
+
+# ---------- S2.4: threshold sweep eval ----------
+def test_evaluate_sweep_thresholds_returns_valid_range():
+    """evaluate() chạy với nhiều threshold phải trả P/R/F1 hợp lệ (0-1) cho mỗi threshold."""
+    pairs = [
+        {"a": ("nmap", "1"), "b": ("log", "1"), "score": 100.0},
+        {"a": ("nmap", "2"), "b": ("log", "2"), "score": 80.0},
+        {"a": ("nmap", "3"), "b": ("log", "3"), "score": 50.0},
+    ]
+    truth = {
+        frozenset(("nmap:1", "log:1")),
+        frozenset(("nmap:2", "log:2")),
+    }
+    for th in (50, 70, 85, 95, 100):
+        predicted = [
+            pairkey(p["a"], p["b"]) for p in pairs if p["score"] >= th
+        ]
+        e = evaluate(predicted, truth)
+        assert 0.0 <= e["precision"] <= 1.0
+        assert 0.0 <= e["recall"] <= 1.0
+        assert 0.0 <= e["f1"] <= 1.0
+
+
+def test_main_sweep_output_includes_historical_thresholds():
+    """main() phải in sweep 50-100 step 5 + giữ 70/85/95 cho tương thích lịch sử."""
+    import io
+    import sys
+
+    from entity_resolution import main
+
+    # Capture stdout
+    captured = io.StringIO()
+    old_stdout = sys.stdout
+    sys.stdout = captured
+    try:
+        sys.argv = ["entity_resolution.py"]
+        main()
+    finally:
+        sys.stdout = old_stdout
+
+    output = captured.getvalue()
+    # Phải có threshold lịch sử
+    assert "ngưỡng  70:" in output
+    assert "ngưỡng  85:" in output
+    assert "ngưỡng  95:" in output
+    # Phải có threshold mới (50, 100)
+    assert "ngưỡng  50:" in output
+    assert "ngưỡng 100:" in output
+    # Phải có marker F1 tốt nhất
+    assert " *" in output
 
 
 # ---------- S2.2: signals + alternatives ----------
