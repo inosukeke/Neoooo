@@ -26,6 +26,7 @@ def _sample_schema() -> GraphSchema:
                 ("Asset", "RUNS", "Service"),
             }
         ),
+        cardinality={"Asset": 26, "Service": 33},
     )
 
 
@@ -80,6 +81,30 @@ def test_render_schema_text_sorts_alphabetically():
     assert text.index("Apple") < text.index("Zebra")
     assert text.index("a_prop") < text.index("z_prop")
     assert text.index("A_REL") < text.index("Z_REL")
+
+
+def test_render_schema_text_includes_cardinality_section():
+    """Section Cardinality cho LLM biết scale dữ liệu — sort theo count giảm dần
+    rồi alphabetical tie-break."""
+    schema = GraphSchema(
+        node_props={"A": {}, "B": {}, "C": {}},
+        rel_props={},
+        patterns=frozenset(),
+        cardinality={"A": 5, "B": 10, "C": 3},
+    )
+    text = render_schema_text(schema)
+    assert "Cardinality:" in text
+    # Sort: B(10) > A(5) > C(3); tie-break alphabetical nếu count bằng nhau
+    assert text.index("B: 10") < text.index("A: 5")
+    assert text.index("A: 5") < text.index("C: 3")
+
+
+def test_render_schema_text_omits_cardinality_when_empty():
+    schema = GraphSchema(
+        node_props={"X": {}}, rel_props={}, patterns=frozenset(), cardinality={}
+    )
+    text = render_schema_text(schema)
+    assert "Cardinality:" not in text
 
 
 def test_fetch_schema_signature():

@@ -8,7 +8,7 @@ Dùng chung cho:
 không nhận thêm input nào khác, không chứa giá trị dữ liệu thật (hostname, CVE id...).
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 
 @dataclass(frozen=True)
@@ -19,11 +19,21 @@ class GraphSchema:
     rel_props: dict[
         str, dict[str, list[str]]
     ]  # relType -> {propertyName: [propertyTypes]}
-    patterns: frozenset[tuple[str, str, str]]  # (src_label, rel_type, dst_label)
+    patterns: frozenset[tuple[str, str, str]] = field(
+        default_factory=frozenset
+    )  # (src_label, rel_type, dst_label)
+    cardinality: dict[str, int] = field(
+        default_factory=dict
+    )  # label -> số record thật (cho hint LLM)
 
 
 def render_schema_text(schema: GraphSchema) -> str:
-    """Render GraphSchema thành text tất định (sort alphabet mọi cấp)."""
+    """Render GraphSchema thành text tất định (sort alphabet mọi cấp).
+
+    Thêm section \"Cardinality\" với số record thật của mỗi label — giúp LLM biết
+    scale (vd \"Asset có 26 record\" → sinh LIMIT hợp lý, không giả định
+    LIMIT mặc định 1000). Nếu `cardinality` rỗng (vd test không có DB) → bỏ
+    section."""
     lines: list[str] = []
 
     lines.append("Node labels:")
@@ -47,6 +57,15 @@ def render_schema_text(schema: GraphSchema) -> str:
     lines.append("Patterns:")
     for src, rel_type, dst in sorted(schema.patterns):
         lines.append(f"- ({src})-[:{rel_type}]->({dst})")
+
+    if schema.cardinality:
+        # Section \"Cardinality\" — sort theo count giảm dần để LLM thấy label
+        # nào phổ biến nhất; tie-break alphabetical để ổn định qua nhiều lần fetch.
+        lines.append("Cardinality:")
+        for label, count in sorted(
+            schema.cardinality.items(), key=lambda kv: (-kv[1], kv[0])
+        ):
+            lines.append(f"- {label}: {count}")
 
     return "\n".join(lines)
 
@@ -103,8 +122,20 @@ def fetch_schema(driver, database: str = "neo4j") -> GraphSchema:
                 continue
             patterns.add((s, t, d))
 
+    # Cardinality (count per label) cho hint LLM — biết scale dữ liệu thật.
+    cardinality: dict[str, int] = {}
+    for record in session.run(
+        "MATCH (n) WHERE NOT n:`_SchemaVersion` "
+        "RETURN labels(n)[0] AS l, count(n) AS c"
+    ):
+        label = record["l"]
+        if label.startswith("_"):
+            continue
+        cardinality[label] = record["c"]
+
     return GraphSchema(
         node_props=node_props,
         rel_props=rel_props,
         patterns=frozenset(patterns),
+        cardinality=cardinality,
     )
