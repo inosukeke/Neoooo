@@ -65,17 +65,17 @@ def fetch_schema(driver, database: str = "neo4j") -> GraphSchema:
       đó khi build map nhưng vẫn phải đảm bảo `rel_props` có key cho rel type
       đó (map rỗng `{}`).
     """
-    # LoadMeta là node kỹ thuật nội bộ của loader (crosswalk hash guard,
-    # src/graph/load_graph.py) — không thuộc Schema v2 nghiệp vụ, loại khỏi
-    # schema đưa vào prompt LLM (cùng nguyên tắc load_graph.py đã loại trừ nó
-    # khỏi EXPECT_NODES/verify_counts/warn_stale).
-    _INTERNAL_LABELS = {"LoadMeta"}
+    # Internal nodes (loader/kỹ thuật, không thuộc Schema v2 nghiệp vụ) theo
+    # convention: prefix `_` (LoadMeta sẽ đổi tên thành `_LoadMeta` ở commit
+    # tương ứng, hoặc node tương lai như `_SchemaVersion` cũng tự filter).
+    # Cùng nguyên tắc load_graph.py đã loại trừ `LoadMeta` khỏi
+    # EXPECT_NODES/verify_counts/warn_stale.
 
     node_props: dict[str, dict[str, list[str]]] = {}
     with driver.session(database=database) as session:
         for record in session.run("CALL db.schema.nodeTypeProperties()"):
             label = record["nodeLabels"][0]
-            if label in _INTERNAL_LABELS:
+            if label.startswith("_"):
                 continue
             prop_name = record["propertyName"]
             prop_types = record["propertyTypes"]
@@ -99,7 +99,7 @@ def fetch_schema(driver, database: str = "neo4j") -> GraphSchema:
         )
         for record in session.run(pattern_query):
             s, t, d = record["s"], record["t"], record["d"]
-            if s in _INTERNAL_LABELS or d in _INTERNAL_LABELS:
+            if s.startswith("_") or d.startswith("_"):
                 continue
             patterns.add((s, t, d))
 
