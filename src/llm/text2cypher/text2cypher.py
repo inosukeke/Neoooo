@@ -48,16 +48,20 @@ REJECTED_WRITE_ANSWER = (
 )
 
 
-@dataclass
-class Text2CypherResult:
-    question: str
-    status: Literal["ok", "rejected_write", "failed"]
-    cypher: str | None
-    attempts: int
-    fixes: list[str]
-    rows: list[dict]
-    answer: str
-    errors: list[str] = field(default_factory=list)
+def _failure_answer(attempts: int, max_attempts: int, errors: list[str]) -> str:
+    """Message chi tiết khi pipeline fail sau hết số lần thử — cho user biết
+    tại sao thay vì `EMPTY_ANSWER` chung chung. Giữ 1 dòng để CLI/UI hiển thị
+    gọn; chi tiết error nằm trong `result.errors`."""
+    if not errors:
+        return f"Không trả lời được sau {attempts}/{max_attempts} lần thử."
+    last = errors[-1]
+    # Cắt dòng dài để không tràn terminal, nhưng giữ đủ thông tin.
+    if len(last) > 200:
+        last = last[:197] + "..."
+    return (
+        f"Không trả lời được sau {attempts}/{max_attempts} lần thử. "
+        f"Lỗi cuối: {last}"
+    )
 
 
 def _truncate_jsonable(value):
@@ -78,6 +82,18 @@ def _truncate_jsonable(value):
     if isinstance(value, list):
         return [_truncate_jsonable(v) for v in value]
     return value
+
+
+@dataclass
+class Text2CypherResult:
+    question: str
+    status: Literal["ok", "rejected_write", "failed"]
+    cypher: str | None
+    attempts: int
+    fixes: list[str]
+    rows: list[dict]
+    answer: str
+    errors: list[str] = field(default_factory=list)
 
 
 def answer_question(
@@ -140,7 +156,7 @@ def answer_question(
             attempts=attempts,
             fixes=[],
             rows=[],
-            answer=EMPTY_ANSWER,
+            answer=_failure_answer(attempts, max_attempts, errors),
             errors=errors,
         )
 
@@ -155,7 +171,7 @@ def answer_question(
             attempts=attempts,
             fixes=fixes,
             rows=[],
-            answer=EMPTY_ANSWER,
+            answer=_failure_answer(attempts, max_attempts, errors),
             errors=errors,
         )
 

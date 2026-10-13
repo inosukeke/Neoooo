@@ -129,6 +129,11 @@ def test_always_invalid_cypher_fails_after_max_attempts():
     assert generate.call_count == 3
     execute.assert_not_called()
     interpret.assert_not_called()
+    # E5.2 fix: khi fail, trả message chi tiết thay vì EMPTY_ANSWER chung chung —
+    # user biết lý do để điều chỉnh câu hỏi.
+    assert "Không trả lời được sau 3/3 lần thử" in result.answer
+    assert "Lỗi cuối" in result.answer
+    assert result.answer != EMPTY_ANSWER
 
 
 # --- (d) write clause bị chặn ngay, không sửa lỗi, execute không được gọi ---
