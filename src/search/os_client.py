@@ -35,6 +35,16 @@ ALERTS_MAPPING = {
             "source": {"type": "keyword"},
             "synthetic": {"type": "boolean"},
             "scenario": {"type": "keyword"},
+            # S2 (D.2): các field SIEM chuẩn (parent/child analysis, lateral movement)
+            "source_ip": {"type": "ip"},
+            "dest_ip": {"type": "ip"},
+            "source_port": {"type": "integer"},
+            "dest_port": {"type": "integer"},
+            "process_name": {"type": "keyword"},
+            "process_path": {"type": "keyword"},
+            "parent_process": TEXT_KW,
+            "file_hash": {"type": "keyword"},
+            "file_path": {"type": "keyword"},
         }
     }
 }

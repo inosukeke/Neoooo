@@ -32,6 +32,37 @@ def test_time_is_date():
     assert prop["type"] == "date"
 
 
+# ---------- S2 (D.2): SIEM standard fields ----------
+def test_siem_ip_fields_are_ip_type():
+    """source_ip/dest_ip dùng OpenSearch `ip` type (chuẩn SIEM)."""
+    props = ALERTS_MAPPING["mappings"]["properties"]
+    assert props["source_ip"]["type"] == "ip"
+    assert props["dest_ip"]["type"] == "ip"
+
+
+def test_siem_port_fields_are_integer_type():
+    """source_port/dest_port là integer để query range (vd `gte`/`lte`)."""
+    props = ALERTS_MAPPING["mappings"]["properties"]
+    assert props["source_port"]["type"] == "integer"
+    assert props["dest_port"]["type"] == "integer"
+
+
+def test_siem_process_fields_are_keyword_for_exact_match():
+    """process_name/file_hash là keyword để aggregation exact match."""
+    props = ALERTS_MAPPING["mappings"]["properties"]
+    assert props["process_name"]["type"] == "keyword"
+    assert props["process_path"]["type"] == "keyword"
+    assert props["file_hash"]["type"] == "keyword"
+    assert props["file_path"]["type"] == "keyword"
+
+
+def test_siem_parent_process_is_text_with_keyword():
+    """parent_process là text + keyword (full-text + exact match aggregation)."""
+    prop = ALERTS_MAPPING["mappings"]["properties"]["parent_process"]
+    assert prop["type"] == "text"
+    assert prop["fields"]["keyword"]["type"] == "keyword"
+
+
 def test_no_http_auth_in_make_client(monkeypatch):
     """make_client không dùng http_auth (security plugin tắt)."""
     captured = {}
