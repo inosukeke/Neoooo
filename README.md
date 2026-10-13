@@ -137,3 +137,35 @@ python -m pytest tests/ -v                 # unit, không cần Neo4j/OpenSearch
 python -m pytest tests/ -v -m integration  # cần Neo4j + OpenSearch đang chạy (2 docker ở trên)
 ```
 Test gắn `@pytest.mark.integration` cần service thật — `pytest.ini` tự bỏ qua chúng ở lần chạy mặc định (`addopts = -m "not integration"`). Riêng `tests/test_text2cypher_e2e.py` còn cần biến môi trường LLM (mục Text2Cypher ở trên) — tốn gọi API thật mỗi lần chạy.
+
+## Thay đổi gần đây
+
+Sau Giai đoạn 03 Text2Cypher đã có 20 commit cải tiến trong scope "đã hoàn thành" (Stage 01, 02, Text2Cypher). Chia thành 3 PR tuần tự — chi tiết từng commit xem [COMMIT_MESSAGES.md](COMMIT_MESSAGES.md), tóm tắt thay đổi đáng chú ý:
+
+| # | Thay đổi | Tác động |
+|---|---|---|
+| 2.4 | Network "unknown" cho asset không IP | `EXPECT_NODES["Network"]`: 3 → **4**; `EXPECT_RELS["IN_NETWORK"]`: 21 → **26** |
+| 2.9 | `canonical_id` prefix `ast-/usr-` | Format `asset-014` → `ast-014`, `user-003` → `usr-003`. **Cần `--reset`** |
+| 3.3 | Rules YAML có `source`/`last_reviewed` | `src/graph/rules.yaml` mới, mỗi rule có metadata audit |
+| 3.7 | Truncate safety net trong `to_jsonable` | `_truncate_jsonable` bị xóa, gộp vào `to_jsonable` |
+
+**Behavior change quan trọng nhất**: commit **2.9** đổi `canonical_id` format. Sau khi merge PR2, **bắt buộc** chạy `--reset` để nạp lại toàn bộ graph. Script tự động:
+
+```powershell
+# Yêu cầu: Neo4j + OpenSearch Docker đang chạy
+powershell -ExecutionPolicy Bypass -File scripts/reset_and_reload.ps1
+```
+
+Script làm 6 bước: verify service → regenerate pipeline → `--reset` → verify canonical_id → re-index OpenSearch → pytest. Tham số:
+- `-SkipRegenerate`: bỏ qua bước 2 (nếu normalized/ + resolved/ đã mới)
+- `-SkipTest`: bỏ qua bước 6 (integration test)
+- `-DryRun`: chỉ in command, không chạy
+
+Sau khi script chạy xong, verify cuối:
+```bash
+python -m pytest tests/ -v                    # 221 unit test
+python -m pytest tests/ -v -m integration     # cần service thật
+python src/llm/text2cypher/text2cypher.py "Máy nào chạy dịch vụ có lỗ hổng KEV?"
+```
+
+Nếu gặp HĐ 04 attack path / risk scoring sau này — cần áp dụng Phương án 2 (role từ Nmap service) đã chốt cho commit `C.3`.
