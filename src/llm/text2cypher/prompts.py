@@ -16,6 +16,7 @@ from neo4j.time import Date, DateTime, Duration, Time
 
 MAX_FEW_SHOTS = 8
 MAX_CELL_CHARS = 300  # chuỗi dài hơn thế bị cắt + "..." để chống prompt injection
+MAX_CELL_CHARS = 300  # chuỗi dài hơn thế bị cắt + "..." để chống prompt injection
 
 _FENCE_RE = re.compile(r"```(?:cypher)?\s*\n?(.*?)```", re.DOTALL | re.IGNORECASE)
 
@@ -130,35 +131,52 @@ def extract_cypher(text: str) -> str:
     return text.strip()
 
 
-def to_jsonable(value):
+def to_jsonable(value, max_cell_chars: int = MAX_CELL_CHARS):
     """Chuyển neo4j.graph/spatial/time Node/Relationship/Path/Point + temporal types
     (DateTime/Date/Time/Duration) thành dict/str JSON-serializable.
     dict/list/primitive giữ nguyên (đệ quy).
 
+    Safety net (S5.5): cắt mọi `str` > `max_cell_chars` thành `<prefix>...` để chống
+    prompt injection khi LLM diễn giải (dữ liệu NVD/log không tin cậy có thể dài
+    hoặc chứa chuỗi cố đóng tag `<du_lieu_truy_van>`). Cắt ÁP DỤNG SAU to_jsonable
+    để escape `<`/`>` ở `_escape_angle_brackets` vẫn chạy trước (caller escape
+    trên kết quả to_jsonable). Caller KHÔNG cần gọi `_truncate_jsonable` riêng —
+    safety net tích hợp sẵn.
+
     Vector index của Neo4j 5.x thường trả list[float] qua RETURN — đã được handle
     bởi nhánh `list` ở trên. Spatial Point dùng `str()` (WKT-like repr)."""
     if isinstance(value, dict):
-        return {k: to_jsonable(v) for k, v in value.items()}
+        return {k: to_jsonable(v, max_cell_chars) for k, v in value.items()}
     if isinstance(value, list):
-        return [to_jsonable(v) for v in value]
-    if isinstance(value, (str, int, float, bool)) or value is None:
+        return [to_jsonable(v, max_cell_chars) for v in value]
+    if isinstance(value, str):
+        if len(value) > max_cell_chars:
+            return value[:max_cell_chars] + "..."
+        return value
+    if isinstance(value, (int, float, bool)) or value is None:
         return value
 
     # neo4j.graph.Node / Relationship: dict(value) trả property pairs.
     if isinstance(value, Node):
         return {
             "labels": list(value.labels),
-            "properties": {k: to_jsonable(v) for k, v in dict(value).items()},
+            "properties": {
+                k: to_jsonable(v, max_cell_chars) for k, v in dict(value).items()
+            },
         }
     if isinstance(value, Relationship):
         return {
             "type": value.type,
-            "properties": {k: to_jsonable(v) for k, v in dict(value).items()},
+            "properties": {
+                k: to_jsonable(v, max_cell_chars) for k, v in dict(value).items()
+            },
         }
     if isinstance(value, Path):
         return {
-            "nodes": [to_jsonable(n) for n in value.nodes],
-            "relationships": [to_jsonable(r) for r in value.relationships],
+            "nodes": [to_jsonable(n, max_cell_chars) for n in value.nodes],
+            "relationships": [
+                to_jsonable(r, max_cell_chars) for r in value.relationships
+            ],
         }
 
     # neo4j.time.DateTime/Date/Time/Duration đều có .iso_format() — chuẩn ISO 8601.

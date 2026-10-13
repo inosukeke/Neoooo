@@ -40,7 +40,6 @@ FEW_SHOTS_PATH = Path(__file__).parent / "few_shots.json"
 MAX_REPAIRS = 2
 MAX_ROWS = 100
 MAX_ROWS_TO_LLM = 50
-MAX_CELL_CHARS = 300
 QUERY_TIMEOUT_SECONDS = 10
 EMPTY_ANSWER = "Không tìm thấy dữ liệu phù hợp trong đồ thị."
 REJECTED_WRITE_ANSWER = (
@@ -62,26 +61,6 @@ def _failure_answer(attempts: int, max_attempts: int, errors: list[str]) -> str:
         f"Không trả lời được sau {attempts}/{max_attempts} lần thử. "
         f"Lỗi cuối: {last}"
     )
-
-
-def _truncate_jsonable(value):
-    """Cắt đệ quy mọi str > MAX_CELL_CHARS, lồng trong dict/list bất kỳ độ sâu.
-
-    PHẢI gọi SAU `to_jsonable(value)` (caller truyền `row` đã qua `to_jsonable`)
-    — nếu không, `neo4j.graph.Node`/`Relationship`/list[str] dài (vd
-    `collect(v.description)`, hay `RETURN v` trả thẳng Node) đi thẳng vào
-    `build_interpret_messages` KHÔNG bị cắt, phá vỡ chống prompt injection của
-    tag `<du_lieu_truy_van>` (dữ liệu NVD/log không tin cậy có thể dài/chứa
-    chuỗi cố đóng tag sớm)."""
-    if isinstance(value, str):
-        if len(value) > MAX_CELL_CHARS:
-            return value[:MAX_CELL_CHARS] + "..."
-        return value
-    if isinstance(value, dict):
-        return {k: _truncate_jsonable(v) for k, v in value.items()}
-    if isinstance(value, list):
-        return [_truncate_jsonable(v) for v in value]
-    return value
 
 
 @dataclass
@@ -187,9 +166,7 @@ def answer_question(
             errors=errors,
         )
 
-    rows_for_llm = [
-        _truncate_jsonable(to_jsonable(row)) for row in rows[:MAX_ROWS_TO_LLM]
-    ]
+    rows_for_llm = [to_jsonable(row) for row in rows[:MAX_ROWS_TO_LLM]]
     interpret_messages = build_interpret_messages(question, cypher, rows_for_llm)
     try:
         answer = interpret(interpret_messages)

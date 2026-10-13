@@ -5,11 +5,10 @@ là hàm Python giả tiêm vào (callback), đếm số lần gọi bằng Magi
 
 from unittest.mock import MagicMock
 
-from prompts import build_interpret_messages
+from prompts import MAX_CELL_CHARS, build_interpret_messages
 from schema_text import GraphSchema
 from text2cypher import (
     EMPTY_ANSWER,
-    MAX_CELL_CHARS,
     MAX_ROWS_TO_LLM,
     answer_question,
 )
