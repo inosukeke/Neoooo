@@ -46,7 +46,11 @@ def alert_id(alert: dict) -> str:
         ]
     )
     digest = hashlib.sha1(raw.encode("utf-8")).hexdigest()
-    return "AL-" + digest[:12]
+    # Lấy phần ngày từ ISO time (vd "2026-10-05T01:00:00Z" -> "20261005") để
+    # alert_id sort được theo ngày, debug incident dễ hơn. Không fail nếu
+    # time format khác — fallback rỗng, alert_id vẫn ổn định theo digest.
+    date_prefix = alert["time"][:10].replace("-", "") if len(alert.get("time", "")) >= 10 else ""
+    return f"AL-{date_prefix}-{digest[:12]}" if date_prefix else "AL-" + digest[:12]
 
 
 def event_meta(event_id: int) -> tuple[str, str]:

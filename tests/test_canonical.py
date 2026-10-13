@@ -17,7 +17,7 @@ INGESTION_DIR = os.path.normpath(
 )
 ALERTS_PATH = os.path.join(INGESTION_DIR, "normalized", "alerts.json")
 
-ALERT_ID_RE = re.compile(r"^AL-[0-9a-f]{12}$")
+ALERT_ID_RE = re.compile(r"^AL-(\d{8}-)?[0-9a-f]{12}$")
 
 
 def load_alerts():
@@ -38,6 +38,16 @@ def test_alert_id_unique_and_well_formed():
     assert len(set(ids)) == 30
     for i in ids:
         assert ALERT_ID_RE.match(i)
+
+
+def test_alert_id_has_date_prefix_when_iso_time_present():
+    """Format mới AL-{YYYYMMDD}-{12_char_sha1} giúp sort theo ngày dễ — chỉ áp
+    dụng khi `time` ISO format chuẩn (≥10 ký tự)."""
+    alerts = load_alerts()
+    a = alerts[0]
+    aid = alert_id(a)
+    # ISO time đầu tiên là "2026-10-05..." -> prefix "20261005"
+    assert aid.startswith("AL-20261005-"), aid
 
 
 def test_asset_canonical_id_covers_all_alert_computers():
