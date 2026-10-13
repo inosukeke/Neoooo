@@ -8,11 +8,17 @@ bruteforce nhằm vào domain controller. `index_alerts` bulk nạp kết quả 
 index `security-alerts` (`os_client.ALERTS_MAPPING`).
 
 Thuần đọc normalized/ + crosswalk, không ghi lại file nguồn.
+
+Bulk retry (S4.5): wrap helpers.bulk trong retry loop với exponential backoff
+khi OpenSearch trả 429 (rate limit) hoặc 503 (unavailable). Idempotent nhờ
+_id = alert_id (rerun cùng input -> cùng _id -> OpenSearch overwrite, không nhân đôi).
 """
 
 import json
+import logging
 import os
 import random
+import time
 from datetime import datetime, timedelta, timezone
 
 from canonical import (
@@ -24,6 +30,8 @@ from canonical import (
 )
 from opensearchpy import helpers
 from os_client import ALERTS_INDEX, ensure_index, make_client
+
+logger = logging.getLogger(__name__)
 
 BASE = os.path.dirname(os.path.abspath(__file__))
 ALERTS_PATH = os.path.normpath(
@@ -147,6 +155,33 @@ def expand_log_sample(
     return out
 
 
+def _bulk_with_retry(client, *, max_retries: int = 3, **bulk_kwargs):
+    """helpers.bulk wrapper với exponential backoff khi lỗi 429/503.
+
+    OpenSearch trả list `errors` cho mỗi doc fail. Nếu bất kỳ error nào có
+    status 429/503 -> sleep backoff rồi retry toàn bộ batch (idempotent nhờ
+    `_id` ổn định). max_retries=3 mặc định (4 tổng lần thử), backoff 1s/2s/4s.
+    Trả tuple (success_count, errors_list) như helpers.bulk."""
+    delay = 1.0
+    for attempt in range(max_retries + 1):
+        success, errors = helpers.bulk(client, **bulk_kwargs, raise_on_error=False)
+        # Lọc error transient (429/503) — những lỗi khác (vd mapping conflict)
+        # raise ngay, không retry.
+        retryable = [
+            e for e in (errors if isinstance(errors, list) else [])
+            if isinstance(e, dict) and e.get("status") in (429, 503)
+        ]
+        if not retryable or attempt == max_retries:
+            return success, errors
+        logger.warning(
+            "bulk index gặp %d lỗi transient, sleep %.1fs rồi retry (lần %d/%d)",
+            len(retryable), delay, attempt + 1, max_retries,
+        )
+        time.sleep(delay)
+        delay *= 2
+    return success, errors  # unreachable, nhưng để mypy yên tâm
+
+
 def index_alerts(client=None) -> dict:
     """Load normalized/alerts.json + crosswalk, expand, bulk index vào OpenSearch."""
     client = client or make_client()
@@ -164,7 +199,7 @@ def index_alerts(client=None) -> dict:
         }
         for doc in docs
     )
-    success, errors = helpers.bulk(client, actions, raise_on_error=False)
+    success, errors = _bulk_with_retry(client, actions=actions)
     client.indices.refresh(index=ALERTS_INDEX)
 
     err_count = len(errors) if isinstance(errors, list) else errors
