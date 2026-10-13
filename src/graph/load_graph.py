@@ -53,7 +53,9 @@ AUTH = (USER, PASSWORD) if PASSWORD else None
 # Số liệu thật đo được ở T007/T008 (xem brief T012) — dùng để verify sau khi nạp.
 EXPECT_NODES = {
     "Asset": 26,
-    "Network": 3,
+    # Network 4 = 3 zone thật (dmz/workstation/server) + 1 "unknown" cho asset
+    # không có IP (chỉ AD/log source). Xem `build_all_rows`.
+    "Network": 4,
     "Service": 33,
     "Vulnerability": 28,
     "User": 17,
@@ -62,7 +64,9 @@ EXPECT_NODES = {
     "Alert": 30,
 }
 EXPECT_RELS = {
-    "IN_NETWORK": 21,
+    # IN_NETWORK 26 = 21 asset có IP (gắn 3 zone thật) + 5 asset không IP
+    # (gắn Network "unknown"). Xem `build_all_rows`.
+    "IN_NETWORK": 26,
     "RUNS": 33,
     "HAS_VULN": 16,
     "HAS_ACCOUNT": 16,
@@ -279,12 +283,22 @@ def build_all_rows(data: dict) -> dict:
         row["role"] = asset_role(row["hostname"])
 
     cidrs = sorted({r["cidr"] for r in asset_rows if r["cidr"] is not None})
+    # Asset không có IP (chỉ AD/log) gán vào Network "unknown" để vẫn có
+    # IN_NETWORK — không bị "cô lập" khỏi attack path graph. Zone=null.
+    has_no_ip = any(r["cidr"] is None for r in asset_rows)
     network_rows = [{"cidr": cidr, "zone": network_zone(cidr)} for cidr in cidrs]
+    if has_no_ip:
+        network_rows.append({"cidr": "unknown", "zone": None})
     in_network_rows = [
         {"asset_canonical_id": r["canonical_id"], "cidr": r["cidr"]}
         for r in asset_rows
         if r["cidr"] is not None
     ]
+    in_network_rows.extend(
+        {"asset_canonical_id": r["canonical_id"], "cidr": "unknown"}
+        for r in asset_rows
+        if r["cidr"] is None
+    )
 
     service_rows = build_service_rows(data["services"], cw)
     vuln_rows = build_vuln_rows(data["vulnerabilities"])
