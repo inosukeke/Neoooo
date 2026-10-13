@@ -1,33 +1,39 @@
-"""Bảng rule suy diễn ADMIN_TO, CONNECTS_TO, CVE→Service — GIẢ ĐỊNH NGHIỆP VỤ DEMO,
-KHÔNG PHẢI DỮ LIỆU ĐO THẬT. Pipeline Giai đoạn 02 không có nguồn dữ liệu thật cho 3
-quan hệ này (xem mo-hinh-hoa-du-lieu.md § "Nạp từ pipeline Giai đoạn 02").
+"""Bảng rule suy diễn ADMIN_TO, CONNECTS_TO, CVE→Service — load từ rules.yaml
+(commit S1.2). GIẢ ĐỊNH NGHIỆP VỤ DEMO, KHÔNG PHẢI DỮ LIỆU ĐO THẬT.
 
-Thuần xử lý, không đọc file / không kết nối Neo4j. Input là list[dict] AssetRow/ServiceRow
-do graph_rows.py sinh ra (import nhau là cố ý KHÔNG có ở đây — xem brief T007/T008).
+Mọi rule ở `src/graph/rules.yaml` đều có metadata `source` / `last_reviewed`
+để giám khảo/reviewer truy vết nguồn gốc khi hỏi "rule R1 từ đâu". Xem comment
+đầu file YAML để biết thêm.
+
+Backward compat: các biến `ROLE_BY_PREFIX`, `ZONE_BY_CIDR`, `CVE_SERVICE_RULES`,
+`ADMIN_RULES`, `CONNECT_RULES` vẫn được export như cũ — code cũ (load_graph.py,
+test_graph_rules.py) không phải đổi.
+
+Thuần xử lý, không đọc file ở runtime NGOẠI TRỪ load YAML 1 lần khi import.
+Input cho `derive_*` là list[dict] AssetRow/ServiceRow do graph_rows.py sinh ra.
 """
 
 import re
+from pathlib import Path
 
-ROLE_BY_PREFIX = {
-    "web": "web",
-    "vpn": "vpn",
-    "mail": "mail",
-    "proxy": "proxy",
-    "ws": "workstation",
-    "app": "app",
-    "db": "db",
-    "dc": "dc",
-    "file": "file",
-    "fileserver": "file",
-    "vcenter": "hypervisor",
-    "jenkins": "ci",
-    "git": "scm",
-}
-ZONE_BY_CIDR = {
-    "10.0.1.0/24": "dmz",
-    "10.0.2.0/24": "workstation",
-    "10.0.3.0/24": "server",
-}
+import yaml
+
+BASE = Path(__file__).parent
+RULES_PATH = BASE / "rules.yaml"
+
+
+def _load_rules(path: Path = RULES_PATH) -> dict:
+    """Load rules.yaml 1 lần khi module import. Trả dict với keys
+    `asset_role`, `zones`, `admin_rules`, `cve_service_rules`, `connect_rules`."""
+    with path.open(encoding="utf-8") as f:
+        return yaml.safe_load(f)
+
+
+_RULES = _load_rules()
+
+
+# ---------- Role detection (giữ nguyên logic từ prefix) ----------
+ROLE_BY_PREFIX: dict[str, str] = dict(_RULES["asset_role"]["by_prefix"])
 
 
 def asset_role(hostname: str) -> str:
@@ -36,39 +42,18 @@ def asset_role(hostname: str) -> str:
     return ROLE_BY_PREFIX.get(prefix, "unknown")
 
 
+# ---------- Network zone ----------
+ZONE_BY_CIDR: dict[str, str] = dict(_RULES["zones"]["by_cidr"])
+
+
 def network_zone(cidr: str | None) -> str | None:
     if cidr is None:
         return None
     return ZONE_BY_CIDR.get(cidr)
 
 
-CVE_SERVICE_RULES = [
-    {"product": "Apache httpd", "version": "2.4.49", "cves": ["CVE-2021-41773"]},
-    {"product": "Fortinet FortiOS", "version": "6.0.4", "cves": ["CVE-2018-13379"]},
-    {
-        "product": "Microsoft Exchange",
-        "version": "15.1",
-        "cves": ["CVE-2021-26855", "CVE-2021-34473"],
-    },
-    {
-        "product": "Apache Tomcat",
-        "version": "9.0.50",
-        "cves": ["CVE-2021-44228", "CVE-2022-22965"],
-    },
-    {"product": "Apache Tomcat", "version": "8.5.0", "cves": ["CVE-2017-5638"]},
-    {"product": "Windows SMB", "version": "SMBv1", "cves": ["CVE-2017-0144"]},
-    # version=None khớp MỌI version của product, KỂ CẢ "không rõ version" (Nmap không
-    # detect được) — giả định cố ý cho demo (vd CVE-2019-0708/BlueKeep thực ra chỉ ảnh
-    # hưởng Win7/2008 cũ, không phải mọi bản Terminal Services). Không phải bug, chỉ
-    # ghi rõ để người đọc sau không hiểu nhầm.
-    {
-        "product": "Microsoft Terminal Services",
-        "version": None,
-        "cves": ["CVE-2019-0708"],
-    },
-    {"product": "Microsoft AD LDAP", "version": None, "cves": ["CVE-2020-1472"]},
-    {"product": "VMware vCenter", "version": "6.7", "cves": ["CVE-2021-21972"]},
-]
+# ---------- CVE -> Service (giữ nguyên shape để code cũ không đổi) ----------
+CVE_SERVICE_RULES: list[dict] = _RULES["cve_service_rules"]["rules"]
 
 
 def map_service_vulns(service_rows: list) -> list[dict]:
@@ -84,12 +69,10 @@ def map_service_vulns(service_rows: list) -> list[dict]:
     return rows
 
 
-ADMIN_RULES = {
-    "Domain Admins": ["dc"],
-    "IT-Support": ["workstation"],
-    "DB-Admins": ["db"],
-    "Web-Dev": ["web", "app", "ci", "scm"],
-    "Finance": [],
+# ---------- Admin rules (giữ nguyên shape: group -> list[role]) ----------
+_ADMIN_RULES_RAW: dict[str, dict] = _RULES["admin_rules"]["mapping"]
+ADMIN_RULES: dict[str, list[str]] = {
+    group: cfg["roles"] for group, cfg in _ADMIN_RULES_RAW.items()
 }
 
 
@@ -115,47 +98,16 @@ def derive_admin_to(asset_rows: list) -> list[dict]:
     return rows
 
 
-CONNECT_RULES = [
-    {"id": "R1", "src": {"role": "web"}, "dst": {"role": "app"}, "ports": [8080]},
-    {"id": "R2", "src": {"role": "app"}, "dst": {"role": "db"}, "ports": [5432, 3306]},
+# ---------- Connect rules (giữ nguyên shape; metadata `source` bị strip) ----------
+_CONNECT_RULES_RAW: list[dict] = _RULES["connect_rules"]["rules"]
+CONNECT_RULES: list[dict] = [
     {
-        "id": "R3",
-        "src": {"zone": "workstation"},
-        "dst": {"role": "dc"},
-        "ports": [88, 389, 445],
-    },
-    {
-        "id": "R4",
-        "src": {"zone": "workstation"},
-        "dst": {"role": "file"},
-        "ports": [445],
-    },
-    {
-        "id": "R5",
-        "src": {"role": "vpn"},
-        "dst": {"zone": "workstation"},
-        "ports": [3389],
-    },
-    {
-        "id": "R6",
-        "src": {"hostname": "ws-it-01"},
-        "dst": {"zone": "server"},
-        "ports": [22, 443, 445, 3306, 3389, 5432, 8080],
-    },
-    {
-        "id": "R7",
-        "src": {"hostname": "ws-dev-01"},
-        "dst": {"role": "scm"},
-        "ports": [22, 443],
-    },
-    {
-        "id": "R7b",
-        "src": {"hostname": "ws-dev-01"},
-        "dst": {"role": "ci"},
-        "ports": [8080],
-    },
-    {"id": "R8", "src": {"role": "ci"}, "dst": {"role": "app"}, "ports": [8080]},
-    {"id": "R9", "src": {"role": "mail"}, "dst": {"role": "dc"}, "ports": [88, 389]},
+        "id": r["id"],
+        "src": r["src"],
+        "dst": r["dst"],
+        "ports": r["ports"],
+    }
+    for r in _CONNECT_RULES_RAW
 ]
 
 
@@ -170,6 +122,10 @@ def _matches_selector(asset: dict, selector: dict) -> bool:
 
 
 def derive_connects_to(asset_rows: list, service_rows: list) -> list[dict]:
+    """Sinh cạnh CONNECTS_TO theo CONNECT_RULES.
+
+    Lưu ý: chỉ asset có IP mới tham gia — asset không IP (chỉ AD/log source)
+    gán vào Network "unknown", không có CONNECTS_TO vào/ra (xem S3.7)."""
     open_ports: dict[str, set[int]] = {}
     for svc in service_rows:
         if svc.get("protocol") != "tcp":
@@ -206,6 +162,22 @@ def derive_connects_to(asset_rows: list, service_rows: list) -> list[dict]:
                     }
                 edges[key]["ports"] |= matched_ports
                 edges[key]["rules"].add(rule["id"])
+                dst_ports = open_ports.get(dst["canonical_id"], set())
+                if not dst_ports:
+                    continue
+                matched_ports = dst_ports & set(rule["ports"])
+                if not matched_ports:
+                    continue
+                key = (src["canonical_id"], dst["canonical_id"])
+                if key not in edges:
+                    edges[key] = {
+                        "src": key[0],
+                        "dst": key[1],
+                        "ports": set(),
+                        "rules": set(),
+                    }
+                edges[key]["ports"] |= matched_ports
+                edges[key]["rules"].add(rule["id"])
 
     return [
         {
@@ -216,3 +188,14 @@ def derive_connects_to(asset_rows: list, service_rows: list) -> list[dict]:
         }
         for e in edges.values()
     ]
+
+
+def rules_metadata() -> dict:
+    """Trả metadata tổng (version, last_reviewed, source) để CLI in ra khi debug
+    — chỉ dành cho `python -c "from graph_rules import rules_metadata; print(rules_metadata())"`."""
+    return {
+        "version": _RULES.get("version"),
+        "last_reviewed": _RULES.get("last_reviewed"),
+        "source": _RULES.get("source"),
+        "rules_path": str(RULES_PATH),
+    }

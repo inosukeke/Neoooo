@@ -283,3 +283,49 @@ def test_derive_admin_to_and_connects_to_on_real_data():
     # Số thật đo được: 38 CONNECTS_TO (brief kỳ vọng 38 — khớp, sau khi graph_rows.py
     # sửa build_asset_rows để suy cidr từ ip, trước đó cidr luôn None -> chỉ ra 14).
     assert len(connect_rows) == 38
+
+
+# ---------- S1.2: rules.yaml metadata ----------
+def test_rules_yaml_loaded_and_backward_compat():
+    """Rules load từ rules.yaml giữ nguyên shape dict — code cũ không phải đổi."""
+    from graph_rules import (
+        ADMIN_RULES,
+        CONNECT_RULES,
+        CVE_SERVICE_RULES,
+        ROLE_BY_PREFIX,
+        ZONE_BY_CIDR,
+        rules_metadata,
+    )
+
+    assert isinstance(ROLE_BY_PREFIX, dict) and len(ROLE_BY_PREFIX) > 5
+    assert isinstance(ZONE_BY_CIDR, dict) and len(ZONE_BY_CIDR) == 3
+    assert isinstance(CVE_SERVICE_RULES, list) and len(CVE_SERVICE_RULES) >= 5
+    assert isinstance(ADMIN_RULES, dict) and len(ADMIN_RULES) == 5
+    assert isinstance(CONNECT_RULES, list) and len(CONNECT_RULES) >= 9
+
+    # Metadata tổng
+    meta = rules_metadata()
+    assert meta["version"] is not None
+    assert meta["last_reviewed"] is not None
+    assert "Giả định nghiệp vụ demo" in meta["source"]
+
+
+def test_connect_rules_strip_metadata_to_legacy_shape():
+    """CONNECT_RULES expose cho code cũ chỉ có id/src/dst/ports — metadata bị strip
+    để backward compat với `derive_connects_to`."""
+    from graph_rules import CONNECT_RULES
+
+    for rule in CONNECT_RULES:
+        assert set(rule.keys()) >= {"id", "src", "dst", "ports"}
+        assert "source" not in rule  # metadata strip
+
+
+def test_cve_service_rules_preserve_version_none():
+    """version=None (match mọi version) phải giữ nguyên qua YAML load."""
+    from graph_rules import CVE_SERVICE_RULES
+
+    terminal_rule = next(
+        r for r in CVE_SERVICE_RULES if r["product"] == "Microsoft Terminal Services"
+    )
+    assert terminal_rule["version"] is None
+    assert "CVE-2019-0708" in terminal_rule["cves"]

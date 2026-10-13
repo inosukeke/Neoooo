@@ -1,0 +1,170 @@
+# Rules suy diễn ADMIN_TO, CONNECTS_TO, CVE→Service — GIẢ ĐỊNH NGHIỆP VỤ DEMO,
+# KHÔNG PHẢI DỮ LIỆU ĐO THẬT. Pipeline Giai đoạn 02 không có nguồn dữ liệu thật
+# cho 3 quan hệ này (xem docs/giai-doan-01-graph-foundations/mo-hinh-hoa-du-lieu.md
+# § "Nạp từ pipeline Giai đoạn 02").
+#
+# Format YAML để:
+# - Reviewer/giám khảo dễ đọc, dễ chỉnh không cần đụng code
+# - Mỗi rule có metadata (source, last_reviewed, note) — khi hỏi "rule R1 từ đâu"
+#   trả lời được ngay từ YAML thay vì đào trong code
+# - Diff trong git review dễ đọc hơn dict Python
+#
+# Schema vẫn ổn định (load_graph.py dùng các key dưới). Thay đổi rule số lượng
+# hoặc port phải đi kèm update EXPECT_RELS + test integration nếu số count đổi.
+
+version: "1.0.0"
+last_reviewed: "2026-10-13"
+source: "Giả định nghiệp vụ demo — không phải dữ liệu đo thật. Xem docs giai-doan-01-graph-foundations/mo-hinh-hoa-du-lieu.md § 'Nạp từ pipeline Giai đoạn 02'."
+note: "Mọi rule dưới đây đều là công thức viết tay để demo. Khi demo ở VinSOC, nếu giám khảo hỏi 'rule này từ đâu' / 'có audit trace không' — chỉ vào file này + check field `source` trong từng rule."
+
+# ---------- Role detection từ hostname prefix ----------
+asset_role:
+  description: "Suy role asset từ prefix hostname (vd `ws-01` -> workstation). Fallback `unknown` nếu prefix không match."
+  last_reviewed: "2026-10-13"
+  source: "Convention hostname nội bộ lab. Không chuẩn AD/commercial — xem entity-resolution.md § Cắt 'Weighted multi-field scoring đầy đủ'."
+  by_prefix:
+    web: web
+    vpn: vpn
+    mail: mail
+    proxy: proxy
+    ws: workstation
+    app: app
+    db: db
+    dc: dc
+    file: file
+    fileserver: file
+    vcenter: hypervisor
+    jenkins: ci
+    git: scm
+
+# ---------- Network zone detection từ CIDR ----------
+zones:
+  description: "Map CIDR /24 -> zone. 3 zone lab giả lập."
+  last_reviewed: "2026-10-13"
+  source: "Subnet plan lab nội bộ."
+  by_cidr:
+    10.0.1.0/24: dmz
+    10.0.2.0/24: workstation
+    10.0.3.0/24: server
+
+# ---------- Group -> asset role (ADMIN_TO) ----------
+admin_rules:
+  description: "Group AD nào có quyền admin trên asset role nào (rule nghiệp vụ)."
+  last_reviewed: "2026-10-13"
+  source: "Cấu hình RBAC giả định trong AD lab."
+  mapping:
+    Domain Admins:
+      roles: [dc]
+      source: "AD built-in Domain Admins group."
+    IT-Support:
+      roles: [workstation]
+      source: "Quy ước nội bộ — workstation admin cho IT-Support."
+    DB-Admins:
+      roles: [db]
+      source: "Quy ước nội bộ — DBA team."
+    Web-Dev:
+      roles: [web, app, ci, scm]
+      source: "Quy ước nội bộ — web dev team có quyền trên app/web/CI/SCM."
+    Finance:
+      roles: []
+      source: "Finance không có quyền admin — placeholder cho completeness."
+
+# ---------- CVE map theo service product/version ----------
+cve_service_rules:
+  description: "Map product/version của service -> CVE. Version `null` = match mọi version (kể cả 'không rõ version')."
+  last_reviewed: "2026-10-13"
+  source: "CVE list thủ công, đối chiếu NVD/EPSS/KEV ở Giai đoạn 02."
+  rules:
+    - product: Apache httpd
+      version: "2.4.49"
+      cves: [CVE-2021-41773]
+      source: "NVD — Apache HTTP path traversal."
+    - product: Fortinet FortiOS
+      version: "6.0.4"
+      cves: [CVE-2018-13379]
+      source: "NVD — FortiOS SSL VPN path traversal."
+    - product: Microsoft Exchange
+      version: "15.1"
+      cves: [CVE-2021-26855, CVE-2021-34473]
+      source: "NVD — ProxyLogon + ProxyShell chain."
+    - product: Apache Tomcat
+      version: "9.0.50"
+      cves: [CVE-2021-44228, CVE-2022-22965]
+      source: "NVD — Log4Shell + Spring4Shell (cùng version)."
+    - product: Apache Tomcat
+      version: "8.5.0"
+      cves: [CVE-2017-5638]
+      source: "NVD — Apache Struts (Equifax)."
+    - product: Windows SMB
+      version: SMBv1
+      cves: [CVE-2017-0144]
+      source: "NVD — EternalBlue."
+    - product: Microsoft Terminal Services
+      version: null
+      cves: [CVE-2019-0708]
+      source: "NVD — BlueKeep. version=null match mọi version (kể cả 'không rõ') — giả định cố ý cho demo; thực tế chỉ ảnh hưởng Win7/2008 cũ."
+    - product: Microsoft AD LDAP
+      version: null
+      cves: [CVE-2020-1472]
+      source: "NVD — Zerologon."
+    - product: VMware vCenter
+      version: "6.7"
+      cves: [CVE-2021-21972]
+      source: "NVD — VMware vCenter RCE."
+
+# ---------- Network reachability rules (CONNECTS_TO) ----------
+connect_rules:
+  description: "Selector role/zone/hostname -> port mở thật trên dst = cạnh CONNECTS_TO."
+  last_reviewed: "2026-10-13"
+  source: "Quy ước nội bộ về luồng traffic — không phải đo packet thật."
+  rules:
+    - id: R1
+      src: {role: web}
+      dst: {role: app}
+      ports: [8080]
+      source: "Web -> App: nginx reverse proxy 8080."
+    - id: R2
+      src: {role: app}
+      dst: {role: db}
+      ports: [5432, 3306]
+      source: "App -> DB: PostgreSQL (5432) + MySQL (3306)."
+    - id: R3
+      src: {zone: workstation}
+      dst: {role: dc}
+      ports: [88, 389, 445]
+      source: "Workstation -> DC: Kerberos (88) + LDAP (389) + SMB (445)."
+    - id: R4
+      src: {zone: workstation}
+      dst: {role: file}
+      ports: [445]
+      source: "Workstation -> File server: SMB (445)."
+    - id: R5
+      src: {role: vpn}
+      dst: {zone: workstation}
+      ports: [3389]
+      source: "VPN -> Workstation: RDP (3389) cho từ xa."
+    - id: R6
+      src: {hostname: ws-it-01}
+      dst: {zone: server}
+      ports: [22, 443, 445, 3306, 3389, 5432, 8080]
+      source: "WS-IT đặc biệt (admin workstation) có nhiều kết nối."
+    - id: R7
+      src: {hostname: ws-dev-01}
+      dst: {role: scm}
+      ports: [22, 443]
+      source: "WS-Dev -> GitLab: SSH (22) + HTTPS (443)."
+    - id: R7b
+      src: {hostname: ws-dev-01}
+      dst: {role: ci}
+      ports: [8080]
+      source: "WS-Dev -> Jenkins: HTTP (8080)."
+    - id: R8
+      src: {role: ci}
+      dst: {role: app}
+      ports: [8080]
+      source: "Jenkins deploy -> App: HTTP (8080)."
+    - id: R9
+      src: {role: mail}
+      dst: {role: dc}
+      ports: [88, 389]
+      source: "Mail server -> DC: Kerberos (88) + LDAP (389) cho auth."
