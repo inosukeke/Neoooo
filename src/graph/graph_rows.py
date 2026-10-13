@@ -10,20 +10,13 @@ memberships,alerts}.json + src/ingestion/resolved/{crosswalk,review_queue}.json.
 
 import json
 import os
-import sys
 
 BASE = os.path.dirname(os.path.abspath(__file__))
 NORM_DIR = os.path.normpath(os.path.join(BASE, "..", "ingestion", "normalized"))
 RESOLVED_DIR = os.path.normpath(os.path.join(BASE, "..", "ingestion", "resolved"))
 
-# canonical.py và entity_resolution.py nằm ở src/ingestion[/resolution] — thêm vào
-# sys.path để import được khi graph_rows.py không chạy qua pytest.ini pythonpath.
-_INGESTION_DIR = os.path.normpath(os.path.join(BASE, "..", "ingestion"))
-_RESOLUTION_DIR = os.path.join(_INGESTION_DIR, "resolution")
-for _p in (_INGESTION_DIR, _RESOLUTION_DIR):
-    if _p not in sys.path:
-        sys.path.insert(0, _p)
-
+# canonical.py và entity_resolution.py ở src/ingestion[/resolution] — pytest.ini
+# đã thêm src/ingestion + src/graph vào pythonpath, nên import thẳng OK.
 from canonical import asset_canonical_id, enrich_alert, user_canonical_id
 from entity_resolution import normalize_name
 
