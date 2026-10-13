@@ -91,11 +91,22 @@ def test_build_crosswalk_no_dict_key_repr_dependency():
     }
     cw = build_crosswalk(clusters, "asset")
     # Cluster có min(ids) = ('ad', 'A') -> sort trước
-    assert cw["ad:A"] == "asset-000"
-    assert cw["nmap:a"] == "asset-000"
+    assert cw["ad:A"] == "ast-000"
+    assert cw["nmap:a"] == "ast-000"
     # Cluster có min(ids) = ('ad', 'Z') -> sort sau
-    assert cw["ad:Z"] == "asset-001"
-    assert cw["nmap:z"] == "asset-001"
+    assert cw["ad:Z"] == "ast-001"
+    assert cw["nmap:z"] == "ast-001"
+
+
+def test_build_crosswalk_prefix_mapping():
+    """S-A.1: prefix đầy đủ map sang short prefix (`asset`->`ast`, `user`->`usr`).
+    Prefix không biết giữ nguyên (fallback)."""
+    cw = build_crosswalk({("x", "x"): [("nmap", "ip")]}, "user")
+    assert list(cw.values()) == ["usr-000"]
+    cw = build_crosswalk({("x", "x"): [("nmap", "ip")]}, "asset")
+    assert list(cw.values()) == ["ast-000"]
+    cw = build_crosswalk({("x", "x"): [("nmap", "ip")]}, "unknown_prefix")
+    assert list(cw.values()) == ["unknown_prefix-000"]
 
 
 # ---------- pipeline E2E nhẹ trên data thật ----------

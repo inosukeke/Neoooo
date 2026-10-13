@@ -142,17 +142,31 @@ def cluster(records, pairs):
 
 
 def build_crosswalk(clusters, prefix):
-    """Sinh canonical_id tất định `prefix-NNN` cho mỗi cluster.
+    """Sinh canonical_id tất định `<short>-NNN` cho mỗi cluster.
 
-    Sort theo `str(kv[0])` (UnionFind root có thể là tuple phụ thuộc
-    repr Python) — đảm bảo canonical_id ổn định qua nhiều lần
+    `prefix` đầy đủ (vd `asset`/`user`) dùng cho output JSON/debug; `short`
+    (vd `ast`/`usr`) dùng cho canonical_id thật trong Neo4j — ngắn hơn, type
+    prefix rõ ràng (cũ: `asset-014`; mới: `ast-014`).
+
+    Sort theo `min(ids)` (tuple `(source, raw)` đầu tiên alphabetically nhỏ
+    nhất trong cluster) — đảm bảo canonical_id ổn định qua nhiều lần
     chạy + Python version, không phụ thuộc repr/hash của tuple."""
+    short = _PREFIX_TO_SHORT.get(prefix, prefix)
     crosswalk = {}
-    for i, (_, ids) in enumerate(sorted(clusters.items(), key=lambda kv: str(kv[0]))):
-        canonical = f"{prefix}-{i:03d}"
+    items = sorted(clusters.items(), key=lambda kv: min(kv[1]))
+    for i, (_, ids) in enumerate(items):
+        canonical = f"{short}-{i:03d}"
         for src, raw in ids:
             crosswalk[f"{src}:{raw}"] = canonical
     return crosswalk
+
+
+# Mapping prefix đầy đủ -> prefix ngắn cho canonical_id. Mở rộng khi thêm loại
+# entity mới (vd `account`/`acc`, `group`/`grp`).
+_PREFIX_TO_SHORT = {
+    "asset": "ast",
+    "user": "usr",
+}
 
 
 # ---------- Đánh giá (§6) -----------------------------------------------------------
