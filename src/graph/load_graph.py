@@ -17,6 +17,7 @@ nếu còn) trước khi nạp. Chỉ dùng khi đã xác nhận với Chinh (xe
 import argparse
 import hashlib
 import json
+import logging
 import os
 import sys
 
@@ -39,6 +40,8 @@ from graph_rules import (
     network_zone,
 )
 from neo4j import GraphDatabase
+
+logger = logging.getLogger(__name__)
 
 for _stream in (sys.stdout, sys.stderr):
     if hasattr(_stream, "reconfigure"):
@@ -267,7 +270,7 @@ def reset(driver) -> None:
             if exists_rows and exists_rows[0]["exists"]:
                 run(driver, "CALL gds.graph.drop($name)", name=name)
         except Exception as exc:  # noqa: BLE001 — GDS có thể không cài / không có graph nào, chỉ log và tiếp tục
-            print(f"  (bỏ qua drop GDS graph {name}: {exc})")
+            logger.info("bỏ qua drop GDS graph %s: %s", name, exc)
     run(driver, "MATCH (n) DETACH DELETE n")
 
 
@@ -421,9 +424,15 @@ def main() -> int:
     )
     args = parser.parse_args()
 
+    # Setup logging cho CLI — level INFO cho console, có thể chỉnh qua LOG_LEVEL env.
+    logging.basicConfig(
+        level=os.getenv("LOG_LEVEL", "INFO"),
+        format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+    )
+
     with GraphDatabase.driver(URI, auth=AUTH) as driver:
         driver.verify_connectivity()
-        print(f"Đã kết nối {URI}")
+        logger.info("đã kết nối %s", URI)
 
         # Đọc + dựng rows TRƯỚC khi --reset (minor fix round 1): nếu input hỏng/thiếu,
         # dừng ở đây — không xóa DB mà không nạp lại được gì.
@@ -431,8 +440,9 @@ def main() -> int:
             data = load_inputs()
             rows = build_all_rows(data)
         except Exception as exc:  # noqa: BLE001 — lỗi đọc/dựng input bất kỳ đều phải dừng trước khi đụng DB
-            print(
-                f"LỖI: không đọc/dựng được dữ liệu nguồn ({exc}). Không ghi gì xuống DB."
+            logger.error(
+                "không đọc/dựng được dữ liệu nguồn (%s). Không ghi gì xuống DB.",
+                exc,
             )
             return 2
 
@@ -443,18 +453,18 @@ def main() -> int:
             hash_changed = stored_hash is not None and stored_hash != current_hash
 
             if n_blocked > 0:
-                print(
-                    f"BLOCKED: tìm thấy {n_blocked} Asset/User thiếu canonical_id "
-                    "(có thể là toy graph Giai đoạn 01 cũ). Không ghi gì xuống DB.\n"
-                    "Xác nhận với Chinh rồi chạy lại với --reset để xóa và nạp dữ liệu pipeline thật."
+                logger.warning(
+                    "BLOCKED: tìm thấy %d Asset/User thiếu canonical_id "
+                    "(có thể là toy graph Giai đoạn 01 cũ). Không ghi gì xuống DB. "
+                    "Xác nhận với Chinh rồi chạy lại với --reset.",
+                    n_blocked,
                 )
                 return 2
             if hash_changed:
-                print(
+                logger.warning(
                     "BLOCKED: crosswalk.json đã đổi từ lần nạp trước (hash lệch) — entity "
-                    "resolution có thể đã chạy lại và dịch số canonical_id (xem Fix round 1, "
-                    "major #4). Không ghi gì xuống DB.\n"
-                    "Xác nhận với Chinh rồi chạy lại với --reset để nạp lại từ đầu."
+                    "resolution có thể đã chạy lại và dịch số canonical_id. "
+                    "Không ghi gì xuống DB. Xác nhận với Chinh rồi chạy lại với --reset."
                 )
                 return 2
             if stored_hash is None:
@@ -464,15 +474,14 @@ def main() -> int:
                 # không -> coi như nghi vấn giống hash lệch, chặn luôn cho an toàn.
                 existing_asset_rows, _, _ = run(driver, ASSET_COUNT_QUERY)
                 if existing_asset_rows[0]["n"] > 0:
-                    print(
-                        "BLOCKED: DB đã có Asset nhưng chưa từng lưu crosswalk_hash (có thể "
-                        "nạp từ code cũ trước Fix round 1). Không thể xác nhận canonical_id "
-                        "hiện có còn khớp crosswalk.json hiện tại. Không ghi gì xuống DB.\n"
-                        "Xác nhận với Chinh rồi chạy lại với --reset để nạp lại từ đầu."
+                    logger.warning(
+                        "BLOCKED: DB đã có Asset nhưng chưa từng lưu crosswalk_hash. "
+                        "Không thể xác nhận canonical_id hiện có còn khớp crosswalk.json. "
+                        "Không ghi gì xuống DB. Xác nhận với Chinh rồi chạy lại với --reset."
                     )
                     return 2
         else:
-            print(
+            logger.info(
                 "Đang --reset: xóa toy graph cũ (kể cả GDS projection attack/attack_u nếu còn)..."
             )
             reset(driver)
