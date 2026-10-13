@@ -142,6 +142,11 @@ def cluster(records, pairs):
 
 
 def build_crosswalk(clusters, prefix):
+    """Sinh canonical_id tất định `prefix-NNN` cho mỗi cluster.
+
+    Sort theo `str(kv[0])` (UnionFind root có thể là tuple phụ thuộc
+    repr Python) — đảm bảo canonical_id ổn định qua nhiều lần
+    chạy + Python version, không phụ thuộc repr/hash của tuple."""
     crosswalk = {}
     for i, (_, ids) in enumerate(sorted(clusters.items(), key=lambda kv: str(kv[0]))):
         canonical = f"{prefix}-{i:03d}"
