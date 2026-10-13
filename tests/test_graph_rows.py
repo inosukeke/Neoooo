@@ -34,6 +34,66 @@ def test_asset_rows_in_review_and_ip():
     assert sum(1 for r in rows if r["ip"] is not None) == 21
 
 
+# --- Hostname priority theo ASSET_SOURCE_PRIORITY = ("nmap", "log", "ad") ---
+# Xem graph_rows.py:25. Edge case: cluster chỉ có 1 nguồn (log/ad), hoặc nhiều
+# nguồn không có nmap → hostname lấy từ nguồn ưu tiên cao nhất có mặt.
+
+
+def _build_rows_for_priority_test():
+    """Crossfeed giả — 4 cluster demo 4 case hostname priority."""
+    return {
+        "nmap:10.0.1.50": "ast-test-1",  # cluster chỉ có nmap
+        "log:ws-foo": "ast-test-2",  # cluster chỉ có log
+        "ad:WEB-BAR": "ast-test-3",  # cluster chỉ có ad (phải normalize)
+        "log:web-02": "ast-test-4",  # cluster log+ad, hostname từ log (priority > ad)
+        "ad:WEB-02": "ast-test-4",  # (cùng cluster 4)
+    }
+
+
+def _norm_assets():
+    return [
+        {"source": "nmap", "source_id": "10.0.1.50", "ip": "10.0.1.50", "hostname": "web-extra"},
+        {"source": "log", "source_id": "ws-foo", "ip": None, "hostname": "ws-foo"},
+        {"source": "ad", "source_id": "WEB-BAR", "ip": None, "hostname": "WEB-BAR.LAB.LOCAL"},
+        {"source": "log", "source_id": "web-02", "ip": None, "hostname": "web-02"},
+        {"source": "ad", "source_id": "WEB-02", "ip": None, "hostname": "WEB-02"},
+    ]
+
+
+def test_asset_rows_hostname_priority_nmap_only():
+    cw = _build_rows_for_priority_test()
+    rows = build_asset_rows(_norm_assets(), cw, [])
+    by_cid = {r["canonical_id"]: r for r in rows}
+    assert by_cid["ast-test-1"]["hostname"] == "web-extra"
+    assert by_cid["ast-test-1"]["ip"] == "10.0.1.50"
+
+
+def test_asset_rows_hostname_priority_log_only():
+    cw = _build_rows_for_priority_test()
+    rows = build_asset_rows(_norm_assets(), cw, [])
+    by_cid = {r["canonical_id"]: r for r in rows}
+    assert by_cid["ast-test-2"]["hostname"] == "ws-foo"
+    assert by_cid["ast-test-2"]["ip"] is None
+
+
+def test_asset_rows_hostname_priority_ad_only_normalized():
+    """Cluster chỉ có AD (uppercase FQDN) → hostname phải qua `normalize_name` để
+    cắt FQDN và lowercase."""
+    cw = _build_rows_for_priority_test()
+    rows = build_asset_rows(_norm_assets(), cw, [])
+    by_cid = {r["canonical_id"]: r for r in rows}
+    assert by_cid["ast-test-3"]["hostname"] == "web-bar"
+
+
+def test_asset_rows_hostname_priority_log_beats_ad():
+    """Cluster log + ad (không có nmap): hostname lấy từ log (priority > ad),
+    không qua normalize_name vì không phải ad."""
+    cw = _build_rows_for_priority_test()
+    rows = build_asset_rows(_norm_assets(), cw, [])
+    by_cid = {r["canonical_id"]: r for r in rows}
+    assert by_cid["ast-test-4"]["hostname"] == "web-02"
+
+
 def test_user_rows_count():
     d = _data()
     rows = build_user_rows(d["users"], d["crosswalk"])
