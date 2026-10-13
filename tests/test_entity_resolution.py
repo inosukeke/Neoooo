@@ -148,3 +148,42 @@ def test_eval_against_ground_truth_asset_th95():
     fp = len(predicted_set - truth)
     precision = tp / (tp + fp) if (tp + fp) else 0.0
     assert precision == 1.0
+
+
+# ---------- S2.2: signals + alternatives ----------
+def test_scored_pairs_includes_signals_and_alternatives():
+    """Mỗi pair phải có `signals` (list[str]) và `alternatives` (list[dict]) để
+    reviewer có đủ info duyệt (S2.2)."""
+    records = [
+        {"id": ("nmap", "1.1.1.1"), "name": "web-01", "source": "nmap"},
+        {"id": ("log", "web-01"), "name": "web-01", "source": "log"},
+        {"id": ("ad", "WEB-01"), "name": "WEB-01", "source": "ad"},
+        {"id": ("ad", "WEB-99"), "name": "WEB-99", "source": "ad"},  # distractor
+    ]
+    pairs = scored_pairs(records, asset_score)
+    # Mỗi pair phải có signals (list) + alternatives (list of dict có id/name/score)
+    assert all("signals" in p and isinstance(p["signals"], list) for p in pairs)
+    assert all("alternatives" in p and isinstance(p["alternatives"], list) for p in pairs)
+    for alt in next(iter(pairs))["alternatives"]:
+        assert set(alt.keys()) == {"id", "name", "score"}
+
+
+def test_match_signals_categories():
+    """Signals phân loại theo score: exact (100), fuzzy_high (95-99), fuzzy_review (70-94), fuzzy_low (<70)."""
+    from entity_resolution import _match_signals
+
+    assert _match_signals("web-01", "web-01", 100.0) == ["exact_name"]
+    assert _match_signals("web-01", "web-01", 100.0) == ["exact_name"]  # post-normalize
+    assert _match_signals("web-02", "web-2", 85.0) == ["fuzzy_review"]
+    assert _match_signals("web-02", "web-99", 50.0) == ["fuzzy_low"]
+
+
+def test_scored_pairs_alternatives_limited_to_3():
+    """Alternatives tối đa 3 candidates để không phình output."""
+    records = [{"id": ("log", "src"), "name": "web-01", "source": "log"}]
+    for i in range(10):
+        records.append({"id": ("ad", f"a{i}"), "name": f"web-{i:02d}", "source": "ad"})
+    pairs = scored_pairs(records, asset_score)
+    # 10 ad × 1 log = 10 cặp (mỗi ad_id khác nhau). Mỗi cặp có alternatives ≤ 3.
+    for p in pairs:
+        assert len(p["alternatives"]) <= 3

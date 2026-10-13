@@ -99,7 +99,10 @@ def user_score(u1, u2):
 def scored_pairs(records, score_fn):
     """Best-match (§4.2): mỗi record chỉ lấy candidate điểm cao nhất ở từng nguồn khác,
     trong cùng block — không so mọi-với-mọi (tránh rác từ máy tên gần giống). Cặp dedup
-    theo frozenset, giữ điểm cao nhất (A->B và B->A có thể chọn khác nhau)."""
+    theo frozenset, giữ điểm cao nhất (A->B và B->A có thể chọn khác nhau).
+
+    Mỗi pair có thêm `signals` (list[str] mô tả variant match) và `alternatives`
+    (top-3 candidates khác cùng src) để reviewer có đủ info duyệt (S2.2)."""
     blocks = defaultdict(list)
     for r in records:
         blocks[block_key(normalize_name(r["name"]))].append(r)
@@ -112,13 +115,51 @@ def scored_pairs(records, score_fn):
             for src, cands in by_src.items():
                 if src == r["source"]:
                     continue
-                top = max(cands, key=lambda c: score_fn(r["name"], c["name"]))
+                # Top match + alternatives (top-3 candidates khác điểm cao)
+                scored = sorted(
+                    cands, key=lambda c: score_fn(r["name"], c["name"]), reverse=True
+                )
+                top = scored[0]
                 score = round(score_fn(r["name"], top["name"]), 1)
+                alts = [
+                    {
+                        "id": c["id"],
+                        "name": c["name"],
+                        "score": round(score_fn(r["name"], c["name"]), 1),
+                    }
+                    for c in scored[1:4]
+                ]
+                signals = _match_signals(r["name"], top["name"], score)
                 key = frozenset((r["id"], top["id"]))
                 if key not in best or score > best[key]["score"]:
-                    best[key] = {"a": r["id"], "b": top["id"], "a_name": r["name"],
-                                 "b_name": top["name"], "score": score}
+                    best[key] = {
+                        "a": r["id"],
+                        "b": top["id"],
+                        "a_name": r["name"],
+                        "b_name": top["name"],
+                        "score": score,
+                        "signals": signals,
+                        "alternatives": alts,
+                    }
     return list(best.values())
+
+
+def _match_signals(a_name: str, b_name: str, score: float) -> list[str]:
+    """Sinh danh sách tín hiệu mô tả vì sao pair này match — giúp debug/truy vết.
+
+    Hiện chỉ có signal `exact_name` (score=100 từ normalize exact match). Sẽ
+    mở rộng thêm `variant_match`/`fuzzy_*` khi áp dụng multi-signal scoring
+    ở Giai đoạn sau (xem entity-resolution.md rule "Weighted multi-field
+    scoring đầy đủ" — cắt ở quy mô demo)."""
+    a_norm = normalize_name(a_name)
+    b_norm = normalize_name(b_name)
+    if a_norm == b_norm:
+        return ["exact_name"]
+    if score >= 95:
+        return ["fuzzy_high"]
+    if score >= 70:
+        return ["fuzzy_review"]
+    return ["fuzzy_low"]
 
 
 def decide(pairs, match_th=MATCH_TH, review_th=REVIEW_TH):
