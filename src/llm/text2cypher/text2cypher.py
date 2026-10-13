@@ -63,6 +63,24 @@ def _failure_answer(attempts: int, max_attempts: int, errors: list[str]) -> str:
     )
 
 
+def _finalize_kwargs(
+    prompt_tokens: int,
+    completion_tokens: int,
+    start_ms: int,
+    model: str,
+) -> dict:
+    """Tính latency_ms + trả dict các field usage để spread vào Text2CypherResult."""
+    import time as _time
+
+    latency_ms = (_time.monotonic_ns() // 1_000_000) - start_ms
+    return {
+        "prompt_tokens": prompt_tokens,
+        "completion_tokens": completion_tokens,
+        "latency_ms": latency_ms,
+        "model": model,
+    }
+
+
 @dataclass
 class Text2CypherResult:
     question: str
@@ -73,6 +91,11 @@ class Text2CypherResult:
     rows: list[dict]
     answer: str
     errors: list[str] = field(default_factory=list)
+    # S5.7: usage stats — đo chi phí + latency (rule eval.md yêu cầu).
+    prompt_tokens: int = 0
+    completion_tokens: int = 0
+    latency_ms: int = 0
+    model: str = ""
 
 
 def answer_question(
@@ -84,8 +107,19 @@ def answer_question(
     interpret: Callable[[list[dict]], str],
     explain: Callable[[str], None],
     execute: Callable[[str], list[dict]],
+    model: str = "",
+    chat_with_usage: Callable[[list[dict]], tuple[str, dict]] | None = None,
 ) -> Text2CypherResult:
-    """Chạy đủ pipeline 6 bước cho một câu hỏi, trả `Text2CypherResult`."""
+    """Chạy đủ pipeline 6 bước cho một câu hỏi, trả `Text2CypherResult`.
+
+    Nếu `chat_with_usage` được cung cấp (trả `(text, usage_dict)`), result sẽ
+    điền `prompt_tokens`/`completion_tokens` từ `usage_dict`. Nếu không, default
+    0 (backward compat với `generate` callback cũ)."""
+    import time as _time
+
+    start_ms = _time.monotonic_ns() // 1_000_000
+    prompt_tokens_total = 0
+    completion_tokens_total = 0
     messages = build_generation_messages(
         question, render_schema_text(schema), few_shots
     )
@@ -100,7 +134,12 @@ def answer_question(
     for attempt_num in range(1, max_attempts + 1):
         attempts = attempt_num
         try:
-            raw = generate(messages)
+            if chat_with_usage is not None:
+                raw, usage = chat_with_usage(messages)
+                prompt_tokens_total += usage.get("prompt_tokens", 0)
+                completion_tokens_total += usage.get("completion_tokens", 0)
+            else:
+                raw = generate(messages)
             cypher = extract_cypher(raw)
             result = validate_cypher(cypher, schema, explain)
             fixes = result.fixes
@@ -118,6 +157,12 @@ def answer_question(
                     rows=[],
                     answer=REJECTED_WRITE_ANSWER,
                     errors=errors,
+                    **_finalize_kwargs(
+                        prompt_tokens_total,
+                        completion_tokens_total,
+                        start_ms,
+                        model,
+                    ),
                 )
             errors.append(str(exc))
             if attempts < max_attempts:
@@ -137,6 +182,12 @@ def answer_question(
             rows=[],
             answer=_failure_answer(attempts, max_attempts, errors),
             errors=errors,
+            **_finalize_kwargs(
+                prompt_tokens_total,
+                completion_tokens_total,
+                start_ms,
+                model,
+            ),
         )
 
     try:
@@ -152,6 +203,12 @@ def answer_question(
             rows=[],
             answer=_failure_answer(attempts, max_attempts, errors),
             errors=errors,
+            **_finalize_kwargs(
+                prompt_tokens_total,
+                completion_tokens_total,
+                start_ms,
+                model,
+            ),
         )
 
     if not rows:
@@ -164,12 +221,23 @@ def answer_question(
             rows=[],
             answer=EMPTY_ANSWER,
             errors=errors,
+            **_finalize_kwargs(
+                prompt_tokens_total,
+                completion_tokens_total,
+                start_ms,
+                model,
+            ),
         )
 
     rows_for_llm = [to_jsonable(row) for row in rows[:MAX_ROWS_TO_LLM]]
     interpret_messages = build_interpret_messages(question, cypher, rows_for_llm)
     try:
-        answer = interpret(interpret_messages)
+        if chat_with_usage is not None:
+            answer, usage = chat_with_usage(interpret_messages)
+            prompt_tokens_total += usage.get("prompt_tokens", 0)
+            completion_tokens_total += usage.get("completion_tokens", 0)
+        else:
+            answer = interpret(interpret_messages)
     except Exception as exc:  # noqa: BLE001 - lỗi hạ tầng khi diễn giải (mạng, gateway...) -> failed, không bay ra ngoài
         errors.append(str(exc))
         return Text2CypherResult(
@@ -181,6 +249,12 @@ def answer_question(
             rows=rows,
             answer=EMPTY_ANSWER,
             errors=errors,
+            **_finalize_kwargs(
+                prompt_tokens_total,
+                completion_tokens_total,
+                start_ms,
+                model,
+            ),
         )
 
     return Text2CypherResult(
@@ -192,6 +266,12 @@ def answer_question(
         rows=rows,
         answer=answer,
         errors=errors,
+        **_finalize_kwargs(
+            prompt_tokens_total,
+            completion_tokens_total,
+            start_ms,
+            model,
+        ),
     )
 
 

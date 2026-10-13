@@ -261,6 +261,67 @@ def test_answer_question_truncates_nested_list_before_interpret():
     assert "short" in content
 
 
+# --- (g) usage stats (S5.7) ---
+
+
+def test_usage_stats_zero_without_chat_with_usage():
+    """Không truyền chat_with_usage -> token = 0 (backward compat)."""
+    generate = MagicMock(return_value="```cypher\nMATCH (n) RETURN n\n```")
+    execute = MagicMock(return_value=[{"hostname": "web-01"}])
+    interpret = MagicMock(return_value="ok")
+
+    result = answer_question(
+        "Máy nào?",
+        schema=_sample_schema(),
+        few_shots=FEW_SHOTS,
+        generate=generate,
+        interpret=interpret,
+        explain=_noop_explain,
+        execute=execute,
+    )
+
+    assert result.status == "ok"
+    assert result.prompt_tokens == 0
+    assert result.completion_tokens == 0
+    assert result.latency_ms >= 0
+    assert result.model == ""
+
+
+def test_usage_stats_tracked_with_chat_with_usage():
+    """chat_with_usage callback cung cấp token -> result.prompt_tokens/completion_tokens
+    được track (cộng dồn qua cả generate + interpret)."""
+    generate = MagicMock(return_value="```cypher\nMATCH (n) RETURN n\n```")
+    execute = MagicMock(return_value=[{"x": 1}])
+    interpret = MagicMock(return_value="kết quả")
+
+    chat_with_usage = MagicMock(
+        side_effect=[
+            ("```cypher\nMATCH (n) RETURN n\n```",
+             {"prompt_tokens": 100, "completion_tokens": 50}),
+            ("kết quả",
+             {"prompt_tokens": 30, "completion_tokens": 20}),
+        ]
+    )
+
+    result = answer_question(
+        "Máy nào?",
+        schema=_sample_schema(),
+        few_shots=FEW_SHOTS,
+        generate=generate,
+        interpret=interpret,
+        explain=_noop_explain,
+        execute=execute,
+        model="gpt-4o-mini",
+        chat_with_usage=chat_with_usage,
+    )
+
+    assert result.status == "ok"
+    assert result.prompt_tokens == 130  # 100 + 30
+    assert result.completion_tokens == 70  # 50 + 20
+    assert result.model == "gpt-4o-mini"
+    assert result.latency_ms >= 0
+
+
 # --- (f) execute trả [] -> ok, answer=EMPTY_ANSWER, interpret không được gọi ---
 
 
