@@ -11,8 +11,11 @@ import random
 import re
 
 from neo4j.graph import Node, Path, Relationship
+from neo4j.spatial import Point
+from neo4j.time import Date, DateTime, Duration, Time
 
 MAX_FEW_SHOTS = 8
+MAX_CELL_CHARS = 300  # chuỗi dài hơn thế bị cắt + "..." để chống prompt injection
 
 _FENCE_RE = re.compile(r"```(?:cypher)?\s*\n?(.*?)```", re.DOTALL | re.IGNORECASE)
 
@@ -128,8 +131,12 @@ def extract_cypher(text: str) -> str:
 
 
 def to_jsonable(value):
-    """Chuyển neo4j.graph.Node/Relationship/Path/temporal types (DateTime/Date) thành
-    dict/str JSON-serializable. dict/list/primitive giữ nguyên (đệ quy)."""
+    """Chuyển neo4j.graph/spatial/time Node/Relationship/Path/Point + temporal types
+    (DateTime/Date/Time/Duration) thành dict/str JSON-serializable.
+    dict/list/primitive giữ nguyên (đệ quy).
+
+    Vector index của Neo4j 5.x thường trả list[float] qua RETURN — đã được handle
+    bởi nhánh `list` ở trên. Spatial Point dùng `str()` (WKT-like repr)."""
     if isinstance(value, dict):
         return {k: to_jsonable(v) for k, v in value.items()}
     if isinstance(value, list):
@@ -154,7 +161,15 @@ def to_jsonable(value):
             "relationships": [to_jsonable(r) for r in value.relationships],
         }
 
-    # neo4j.time.DateTime/Date/Time/Duration đều có .iso_format() hoặc str() ổn định.
+    # neo4j.time.DateTime/Date/Time/Duration đều có .iso_format() — chuẩn ISO 8601.
+    if isinstance(value, (DateTime, Date, Time, Duration)):
+        return value.iso_format()
+
+    # neo4j.spatial.Point (WGS84/Cartesian) — dùng __str__ (WKT-like "Point(x y)").
+    if isinstance(value, Point):
+        return str(value)
+
+    # neo4j.time.Time/Duration có iso_format ổn định; các class khác có thể có.
     if hasattr(value, "iso_format"):
         return value.iso_format()
 
