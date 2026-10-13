@@ -124,10 +124,16 @@ DELETE_STALE_HAS_VULN_QUERY = """MATCH (s:Service)-[r:HAS_VULN]->(v:Vulnerabilit
 WHERE r.derived_by = 'cve_service_rule' AND NOT [s.id, v.cve] IN $pairs
 DELETE r"""
 
-ASSET_QUERY = """UNWIND $rows AS row
-MERGE (a:Asset {canonical_id: row.canonical_id})
+# Mốc thời gian dùng cho first_seen/last_seen — neo theo ngày load pipeline
+# (xem HAS_VULN cũng dùng datetime('2026-10-05T00:00:00Z')).
+LOAD_TIMESTAMP = "2026-10-05T00:00:00Z"
+
+ASSET_QUERY = f"""UNWIND $rows AS row
+MERGE (a:Asset {{canonical_id: row.canonical_id}})
 SET a.hostname = row.hostname, a.ip = row.ip, a.sources = row.sources,
-    a.source_ids = row.source_ids, a.in_review = row.in_review, a.role = row.role"""
+    a.source_ids = row.source_ids, a.in_review = row.in_review, a.role = row.role,
+    a.last_seen = datetime('{LOAD_TIMESTAMP}')
+ON CREATE SET a.first_seen = datetime('{LOAD_TIMESTAMP}')"""
 
 NETWORK_QUERY = """UNWIND $rows AS row
 MERGE (n:Network {cidr: row.cidr})
@@ -137,44 +143,54 @@ IN_NETWORK_QUERY = """UNWIND $rows AS row
 MATCH (a:Asset {canonical_id: row.asset_canonical_id}), (n:Network {cidr: row.cidr})
 MERGE (a)-[:IN_NETWORK]->(n)"""
 
-SERVICE_QUERY = """UNWIND $rows AS row
-MERGE (s:Service {id: row.id})
+SERVICE_QUERY = f"""UNWIND $rows AS row
+MERGE (s:Service {{id: row.id}})
 SET s.port = row.port, s.protocol = row.protocol, s.name = row.name,
-    s.product = row.product, s.version = row.version"""
+    s.product = row.product, s.version = row.version,
+    s.last_seen = datetime('{LOAD_TIMESTAMP}')
+ON CREATE SET s.first_seen = datetime('{LOAD_TIMESTAMP}')"""
 
 RUNS_QUERY = """UNWIND $rows AS row
 MATCH (a:Asset {canonical_id: row.asset_canonical_id}), (s:Service {id: row.id})
 MERGE (a)-[:RUNS]->(s)"""
 
-VULN_QUERY = """UNWIND $rows AS row
-MERGE (v:Vulnerability {cve: row.cve})
+VULN_QUERY = f"""UNWIND $rows AS row
+MERGE (v:Vulnerability {{cve: row.cve}})
 SET v.cvss = row.cvss, v.cvss_severity = row.cvss_severity, v.epss = row.epss,
     v.epss_percentile = row.epss_percentile, v.kev = row.kev,
     v.kev_date_added = CASE WHEN row.kev_date_added IS NULL THEN NULL ELSE date(row.kev_date_added) END,
     v.kev_due_date = CASE WHEN row.kev_due_date IS NULL THEN NULL ELSE date(row.kev_due_date) END,
-    v.kev_ransomware = row.kev_ransomware, v.description = row.description"""
+    v.kev_ransomware = row.kev_ransomware, v.description = row.description,
+    v.last_seen = datetime('{LOAD_TIMESTAMP}')
+ON CREATE SET v.first_seen = datetime('{LOAD_TIMESTAMP}')"""
 
-HAS_VULN_QUERY = """UNWIND $rows AS row
-MATCH (s:Service {id: row.service_id}), (v:Vulnerability {cve: row.cve})
+HAS_VULN_QUERY = f"""UNWIND $rows AS row
+MATCH (s:Service {{id: row.service_id}}), (v:Vulnerability {{cve: row.cve}})
 MERGE (s)-[r:HAS_VULN]->(v)
-ON CREATE SET r.first_seen = datetime('2026-10-05T00:00:00Z'), r.status = 'open'
+ON CREATE SET r.first_seen = datetime('{LOAD_TIMESTAMP}'), r.status = 'open'
 SET r.derived_by = 'cve_service_rule'"""
 
-USER_QUERY = """UNWIND $rows AS row
-MERGE (u:User {canonical_id: row.canonical_id})
+USER_QUERY = f"""UNWIND $rows AS row
+MERGE (u:User {{canonical_id: row.canonical_id}})
 SET u.username = row.username, u.display_name = row.display_name, u.sources = row.sources,
-    u.source_ids = row.source_ids"""
+    u.source_ids = row.source_ids,
+    u.last_seen = datetime('{LOAD_TIMESTAMP}')
+ON CREATE SET u.first_seen = datetime('{LOAD_TIMESTAMP}')"""
 
-ACCOUNT_QUERY = """UNWIND $rows AS row
-MERGE (c:Account {name: row.name})
-SET c.account_type = row.account_type, c.enabled = row.enabled"""
+ACCOUNT_QUERY = f"""UNWIND $rows AS row
+MERGE (c:Account {{name: row.name}})
+SET c.account_type = row.account_type, c.enabled = row.enabled,
+    c.last_seen = datetime('{LOAD_TIMESTAMP}')
+ON CREATE SET c.first_seen = datetime('{LOAD_TIMESTAMP}')"""
 
 HAS_ACCOUNT_QUERY = """UNWIND $rows AS row
 MATCH (u:User {canonical_id: row.user_canonical_id}), (c:Account {name: row.name})
 MERGE (u)-[:HAS_ACCOUNT]->(c)"""
 
-GROUP_QUERY = """UNWIND $rows AS row
-MERGE (g:Group {name: row.group})"""
+GROUP_QUERY = f"""UNWIND $rows AS row
+MERGE (g:Group {{name: row.group}})
+SET g.last_seen = datetime('{LOAD_TIMESTAMP}')
+ON CREATE SET g.first_seen = datetime('{LOAD_TIMESTAMP}')"""
 
 MEMBER_OF_QUERY = """UNWIND $rows AS row
 MATCH (c:Account {name: row.account}), (g:Group {name: row.group})
@@ -373,8 +389,10 @@ def warn_stale(driver, crosswalk: dict) -> None:
         db_ids = {r["cid"] for r in rows if r["cid"] is not None}
         stale = db_ids - valid_ids
         if stale:
-            print(
-                f"CẢNH BÁO: {label} có canonical_id không còn trong crosswalk hiện tại: {sorted(stale)}"
+            logger.warning(
+                "%s có canonical_id không còn trong crosswalk hiện tại: %s",
+                label,
+                sorted(stale),
             )
 
 
