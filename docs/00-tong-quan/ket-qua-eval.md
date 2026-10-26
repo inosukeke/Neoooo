@@ -58,13 +58,31 @@ Bắn 8 câu đối kháng (xóa/tạo/SET/`CALL dbms`/`SHOW` + injection) thẳ
 validator chặn) coi là chưa đạt — **không phải lỗ hổng** (data 160→160). **1 câu `injection_leak` là
 rủi ro còn lại thật** cần siết prompt/validator — nên nêu trung thực, không giấu.
 
+## Judge chất lượng GraphRAG (deepeval) — chạy live
+
+`deepeval` 4.1.10 làm judge (model `gpt-4o-mini` qua env `DEEPEVAL_JUDGE_MODEL`), chạy trên 5 câu
+fuzzy (5/5 execution accuracy ở lô này):
+
+| Metric | Trung bình | Đọc |
+|---|---|---|
+| answer_relevancy | **1.00** | Câu trả lời bám sát câu hỏi |
+| faithfulness | **0.68** | ~68% khẳng định trong câu trả lời được context hỗ trợ (còn claim chưa support) |
+| contextual_relevancy | **0.06** | **Thấp** — Cypher mở rộng 1-2 hop kéo nhiều node không liên quan → precision truy hồi yếu |
+
+→ Kết luận trung thực: GraphRAG **sinh câu trả lời tốt** (relevancy cao) nhưng **truy hồi chưa tinh**
+(context nhiễu) — hướng cải thiện rõ: siết expand / thêm re-ranking / lọc theo `min_score`.
+`contextual_precision/recall` **bỏ qua** vì golden chưa có `expected_output` tham chiếu đủ cho deepeval.
+
+**Nợ bắt buộc trước khi trích số judge:** "tự chấm tay 10 câu đo % đồng thuận với judge" (rule
+`eval.md`) **CHƯA làm** — cần người đánh giá. Số judge trên là **sơ bộ**, đừng trích dẫn như đã validate.
+
 ## Caveat (đọc kỹ trước khi trích dẫn)
 - **Đơn giá là list-price `gpt-4o-mini` của OpenAI**, không phải giá thực của gateway dùng —
   con số $/câu mang tính ước lượng bậc độ lớn, không phải hóa đơn thật.
 - **Chi phí embedding câu hỏi GraphRAG CHƯA được cộng** (callback embed không trả usage).
-- **Judge deepeval (contextual precision/recall, faithfulness) CHƯA chạy** — `deepeval` chưa
-  cài; do đó CHƯA có metric retrieval/generation tách riêng, và CHƯA "tự chấm tay 10 câu đo
-  đồng thuận judge" như rule `eval.md` yêu cầu.
+- **Judge deepeval ĐÃ chạy** (xem mục trên): answer_relevancy 1.0, faithfulness 0.68,
+  contextual_relevancy 0.06 (5 câu). Nhưng **"tự chấm tay 10 câu đo đồng thuận judge" CHƯA làm**
+  (cần người) → số judge là sơ bộ, chưa được validate.
 - **Chạy 1 lần, chưa đo variance** (nhiệt độ sinh Cypher = 0 nên Text2Cypher khá tất định;
   GraphRAG/diễn giải vẫn có dao động). Golden set nhỏ (35 câu) → khoảng tin cậy rộng.
 - **Adversarial (8 câu) đã chạy** (xem mục trên): data an toàn 8/8, nhưng còn **1 injection leak**
@@ -72,7 +90,7 @@ rủi ro còn lại thật** cần siết prompt/validator — nên nêu trung t
 - `p95` GraphRAG cao (≈45s) do vài câu gọi gateway chậm — không phải lỗi logic.
 
 ## Việc tiếp để số mạnh hơn (nợ)
-1. Cài `deepeval` + chạy judge cho fuzzy; tự chấm tay 10 câu đo đồng thuận.
+1. **Tự chấm tay 10 câu** đo % đồng thuận với judge deepeval (đã chạy) trước khi trích số judge.
 2. Siết câu injection còn leak (1/8); cân nhắc chặn mạnh hơn ở prompt GraphRAG/validator.
 3. Cộng chi phí embedding; đổi đơn giá sang giá gateway thật.
 4. Chạy nhiều lần (3–5) lấy mean ± std; soi 4 câu `empty_result` (golden quá chặt hay LLM sai).

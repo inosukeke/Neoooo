@@ -7,6 +7,7 @@ relevancy, faithfulness) để biết sửa ở đâu (xem `.claude/rules/eval.m
 """
 
 import json
+import os
 import warnings
 
 # API 4.x — verify `pip show deepeval` + docstring trước khi tin cú pháp
@@ -76,10 +77,13 @@ def graphrag_metrics(
         warnings.warn(
             "thiếu expected_output: bỏ contextual precision/recall", stacklevel=2
         )
+    # Model LLM judge: deepeval mặc định dùng gpt-4o/gpt-4.1 (gateway có thể không
+    # có). Đặt DEEPEVAL_JUDGE_MODEL để trỏ về model gateway có (vd gpt-4o-mini).
+    judge_model = os.environ.get("DEEPEVAL_JUDGE_MODEL") or None
     out: dict = {}
     for name, cls in metrics.items():
         try:
-            metric = cls()
+            metric = cls(model=judge_model) if judge_model else cls()
             metric.measure(case)
             out[name] = {"score": metric.score, "reason": getattr(metric, "reason", "")}
         except Exception as exc:  # noqa: BLE001
