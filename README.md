@@ -110,7 +110,14 @@ python -m pytest -m integration           # cần Neo4j + OpenSearch đang chạ
 - 2 test phá hủy dữ liệu cần `ALLOW_DESTRUCTIVE_TESTS=1` (PowerShell: `$env:ALLOW_DESTRUCTIVE_TESTS="1"`) — chúng xóa dữ liệu Neo4j, nạp lại bằng `run_pipeline.ps1` sau đó.
 - `eval_harness.py --include-adversarial` bắn câu xóa/tạo/SET thật vào Neo4j đang chạy (chỉ an toàn nhờ validator + READ-mode) — mặc định TẮT, chỉ bật khi chủ ý.
 
-### 6. Dọn dẹp
+### 6. UI demo (Streamlit, tùy chọn)
+```bash
+pip install streamlit          # không nằm trong requirements.txt (chỉ cho UI demo)
+streamlit run src/ui/app.py    # mở http://localhost:8501
+```
+Giao diện hỏi-đáp tiếng Việt: chọn pipeline (Text2Cypher / GraphRAG), nhập câu hỏi → xem câu trả lời, Cypher sinh ra, kết quả, độ trễ + token. Cần Neo4j đã nạp pipeline (bước 3) + env LLM trong `.env`; GraphRAG cần vector index (`python src/llm/graphrag/graphrag_demo.py --create-index`).
+
+### 7. Dọn dẹp
 ```bash
 docker compose down        # tắt, giữ dữ liệu (named volume)
 docker compose down -v     # tắt và xóa toàn bộ dữ liệu Neo4j + OpenSearch
