@@ -170,7 +170,7 @@ def test_advanced_paths(driver, target):
             target=target,
         )
         results["quantified_relationship_{0,3}"] = ("OK", [(r["username"], r["entry_point"]) for r in records])
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 - probe tính năng Cypher: lỗi nào cũng ghi FAIL
         results["quantified_relationship_{0,3}"] = ("FAIL", str(exc))
 
     try:
@@ -182,7 +182,7 @@ def test_advanced_paths(driver, target):
             target=target,
         )
         results["SHORTEST_1"] = ("OK", [r["duong_di"] for r in records])
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 - probe tính năng Cypher: lỗi nào cũng ghi FAIL
         results["SHORTEST_1"] = ("FAIL", str(exc))
 
     try:
@@ -194,7 +194,7 @@ def test_advanced_paths(driver, target):
             target=target,
         )
         results["shortestPath_legacy"] = ("OK", [(r["duong_di"], r["hops"]) for r in records])
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 - probe tính năng Cypher: lỗi nào cũng ghi FAIL
         results["shortestPath_legacy"] = ("FAIL", str(exc))
 
     return results

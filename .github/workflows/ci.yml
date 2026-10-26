@@ -1,0 +1,37 @@
+name: CI
+
+# Chạy lint (ruff) + unit test (pytest) mỗi push / pull request.
+# KHÔNG chạy integration test (cần Neo4j/GDS/OpenSearch/LLM thật) — pytest.ini
+# đã có addopts `-m "not integration"` nên `pytest` mặc định bỏ qua chúng.
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install deps
+        # deepeval chỉ cần cho live LLM eval (judge), không cần cho unit test —
+        # bỏ khỏi CI để nhanh/ổn định; test judge tự `importorskip` khi thiếu.
+        run: |
+          python -m pip install --upgrade pip
+          grep -v '^deepeval' requirements.txt > ci-requirements.txt
+          pip install -r ci-requirements.txt
+
+      - name: Ruff (lint)
+        run: ruff check src/ tests/
+
+      - name: Unit tests (bỏ integration)
+        env:
+          PYTHONUTF8: "1"
+        run: python -m pytest tests/ -q

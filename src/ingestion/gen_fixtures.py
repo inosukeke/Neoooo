@@ -24,7 +24,7 @@ for _s in (sys.stdout, sys.stderr):
         _s.reconfigure(encoding="utf-8")
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from sources import generate_identity  # noqa: E402  (dùng chung logic username)
+from sources import generate_identity
 
 BASE = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(BASE, "data")
@@ -217,8 +217,7 @@ def build_truth(logs, hr_view):
 def _write(path, obj, lines=False):
     with open(path, "w", encoding="utf-8") as f:
         if lines:
-            for e in obj:
-                f.write(json.dumps(e, ensure_ascii=False) + "\n")
+            f.writelines(json.dumps(e, ensure_ascii=False) + "\n" for e in obj)
         else:
             json.dump(obj, f, ensure_ascii=False, indent=2)
 
