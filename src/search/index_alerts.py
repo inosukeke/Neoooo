@@ -152,7 +152,112 @@ def expand_log_sample(
             }
         )
 
+    # 3 scenarios bổ sung (S2 D.3): lateral movement, audit cleared, new privilege
+    _add_scenario_alerts(out, cw)
+
     return out
+
+
+def _emit_scenario_doc(
+    out: list[dict],
+    *,
+    scenario_name: str,
+    event_id: int,
+    computer: str,
+    target_user: str | None,
+    success: bool,
+    severity: str,
+    rule: str,
+    start_time: datetime,
+    count: int,
+    interval_seconds: int,
+    cw: dict,
+    extras: dict | None = None,
+) -> None:
+    """Helper chung cho 3 scenarios bổ sung (S2 D.3) — phát sinh N alert liên tiếp
+    cách nhau `interval_seconds` giây, share cùng `scenario_name`."""
+    extras = extras or {}
+    asset_id = asset_canonical_id(cw, "log", computer) if computer else None
+    user_id = user_canonical_id(cw, "idp", target_user) if target_user else None
+    for i in range(count):
+        t = start_time + timedelta(seconds=interval_seconds * i)
+        doc_id = f"AL-{scenario_name}-{i:03d}"
+        doc = {
+            "event_id": event_id,
+            "time": t.strftime(TIME_FMT),
+            "computer": computer,
+            "target_user": target_user,
+            "success": success,
+            "source": "log",
+            "alert_id": doc_id,
+            "orig_alert_id": doc_id,
+            "asset_canonical_id": asset_id,
+            "user_canonical_id": user_id,
+            "severity": severity,
+            "rule": rule,
+            "outcome": _outcome(success),
+            "message": _message(event_id, target_user or "", computer),
+            "synthetic": True,
+            "scenario": scenario_name,
+        }
+        doc.update(extras)
+        out.append(doc)
+
+
+def _add_scenario_alerts(out: list[dict], cw: dict) -> None:
+    """Thêm 3 scenarios giả lập (S2 D.3) đa dạng pattern SOC tier-1:
+    - lateral_movement_smb: 4624 type=3 (network logon) từ workstation tới server khác
+    - audit_cleared: 1102 (audit log cleared — defense evasion)
+    - new_privilege: 4672 (special privileges assigned — privilege escalation)
+    """
+    base = datetime.strptime(BURST_START, TIME_FMT).replace(tzinfo=timezone.utc)
+    # Lateral movement: workstation ws-it-01 đăng nhập vào dc-01 (server khác) trong 30 phút
+    _emit_scenario_doc(
+        out,
+        scenario_name="lateral_movement_smb",
+        event_id=4624,
+        computer="dc-01",
+        target_user="chi.tran1",
+        success=True,
+        severity="high",
+        rule="Lateral movement: workstation -> DC (type=3 logon)",
+        start_time=base + timedelta(hours=3),
+        count=20,
+        interval_seconds=90,
+        cw=cw,
+        extras={"source_ip": "10.0.2.31", "dest_ip": "10.0.3.5", "dest_port": 445},
+    )
+    # Audit log cleared (defense evasion) — admin xóa security log trên dc-01
+    _emit_scenario_doc(
+        out,
+        scenario_name="audit_cleared",
+        event_id=1102,
+        computer="dc-01",
+        target_user="chi.tran1",
+        success=True,
+        severity="critical",
+        rule="Audit log cleared (1102) — possible defense evasion",
+        start_time=base + timedelta(hours=5),
+        count=3,
+        interval_seconds=600,
+        cw=cw,
+    )
+    # Special privileges assigned (privilege escalation) — user nhận quyền admin
+    _emit_scenario_doc(
+        out,
+        scenario_name="new_privilege",
+        event_id=4672,
+        computer="ws-it-01",
+        target_user="an.nguyen0",
+        success=True,
+        severity="high",
+        rule="Special privileges assigned to new logon (4672)",
+        start_time=base + timedelta(hours=7),
+        count=10,
+        interval_seconds=300,
+        cw=cw,
+        extras={"process_name": "powershell.exe", "parent_process": "explorer.exe"},
+    )
 
 
 def _bulk_with_retry(client, *, max_retries: int = 3, **bulk_kwargs):

@@ -5,6 +5,19 @@
     "a_name": "web-01",
     "b_name": "web-01.lab.local",
     "score": 100.0,
+    "signals": [
+      "exact_name"
+    ],
+    "alternatives": [
+      {
+        "id": [
+          "ad",
+          "WEB-02"
+        ],
+        "name": "web-2",
+        "score": 72.7
+      }
+    ],
     "decision": "match",
     "kind": "asset"
   },
@@ -14,6 +27,19 @@
     "a_name": "web-02",
     "b_name": "web-2",
     "score": 90.9,
+    "signals": [
+      "fuzzy_review"
+    ],
+    "alternatives": [
+      {
+        "id": [
+          "ad",
+          "WEB-01"
+        ],
+        "name": "web-01.lab.local",
+        "score": 83.3
+      }
+    ],
     "decision": "review",
     "kind": "asset"
   },
@@ -23,6 +49,10 @@
     "a_name": "vpn-01",
     "b_name": "VPN-01",
     "score": 100.0,
+    "signals": [
+      "exact_name"
+    ],
+    "alternatives": [],
     "decision": "match",
     "kind": "asset"
   },
@@ -32,6 +62,10 @@
     "a_name": "mail-01",
     "b_name": "MAIL-01",
     "score": 100.0,
+    "signals": [
+      "exact_name"
+    ],
+    "alternatives": [],
     "decision": "match",
     "kind": "asset"
   },
@@ -41,6 +75,10 @@
     "a_name": "proxy-01",
     "b_name": "PROXY-01",
     "score": 100.0,
+    "signals": [
+      "exact_name"
+    ],
+    "alternatives": [],
     "decision": "match",
     "kind": "asset"
   },
@@ -50,6 +88,35 @@
     "a_name": "ws-hr-01",
     "b_name": "WS-HR-02",
     "score": 87.5,
+    "signals": [
+      "fuzzy_review"
+    ],
+    "alternatives": [
+      {
+        "id": [
+          "ad",
+          "WS-IT-01"
+        ],
+        "name": "WS-IT-01",
+        "score": 75.0
+      },
+      {
+        "id": [
+          "ad",
+          "WS-FIN-01"
+        ],
+        "name": "WS-FIN-01",
+        "score": 70.6
+      },
+      {
+        "id": [
+          "ad",
+          "WS-DEV-01"
+        ],
+        "name": "WS-DEV-01",
+        "score": 70.6
+      }
+    ],
     "decision": "review",
     "kind": "asset"
   },
@@ -59,6 +126,35 @@
     "a_name": "ws-hr-01",
     "b_name": "ws-hr-01",
     "score": 100.0,
+    "signals": [
+      "exact_name"
+    ],
+    "alternatives": [
+      {
+        "id": [
+          "log",
+          "ws-hr-02"
+        ],
+        "name": "ws-hr-02",
+        "score": 87.5
+      },
+      {
+        "id": [
+          "log",
+          "ws-it-01"
+        ],
+        "name": "ws-it-01",
+        "score": 75.0
+      },
+      {
+        "id": [
+          "log",
+          "ws-fin-01"
+        ],
+        "name": "ws-fin-01",
+        "score": 70.6
+      }
+    ],
     "decision": "match",
     "kind": "asset"
   },
@@ -68,6 +164,35 @@
     "a_name": "ws-hr-02",
     "b_name": "WS-HR-02",
     "score": 100.0,
+    "signals": [
+      "exact_name"
+    ],
+    "alternatives": [
+      {
+        "id": [
+          "ad",
+          "WS-IT-01"
+        ],
+        "name": "WS-IT-01",
+        "score": 62.5
+      },
+      {
+        "id": [
+          "ad",
+          "WS-FIN-01"
+        ],
+        "name": "WS-FIN-01",
+        "score": 58.8
+      },
+      {
+        "id": [
+          "ad",
+          "WS-DEV-01"
+        ],
+        "name": "WS-DEV-01",
+        "score": 58.8
+      }
+    ],
     "decision": "match",
     "kind": "asset"
   },
@@ -77,6 +202,35 @@
     "a_name": "ws-hr-02",
     "b_name": "ws-hr-02",
     "score": 100.0,
+    "signals": [
+      "exact_name"
+    ],
+    "alternatives": [
+      {
+        "id": [
+          "log",
+          "ws-hr-01"
+        ],
+        "name": "ws-hr-01",
+        "score": 87.5
+      },
+      {
+        "id": [
+          "log",
+          "ws-it-01"
+        ],
+        "name": "ws-it-01",
+        "score": 62.5
+      },
+      {
+        "id": [
+          "log",
+          "ws-fin-01"
+        ],
+        "name": "ws-fin-01",
+        "score": 58.8
+      }
+    ],
     "decision": "match",
     "kind": "asset"
   },
@@ -86,6 +240,35 @@
     "a_name": "ws-fin-01",
     "b_name": "WS-FIN-01",
     "score": 100.0,
+    "signals": [
+      "exact_name"
+    ],
+    "alternatives": [
+      {
+        "id": [
+          "ad",
+          "WS-IT-01"
+        ],
+        "name": "WS-IT-01",
+        "score": 82.4
+      },
+      {
+        "id": [
+          "ad",
+          "WS-DEV-01"
+        ],
+        "name": "WS-DEV-01",
+        "score": 66.7
+      },
+      {
+        "id": [
+          "ad",
+          "WS-HR-02"
+        ],
+        "name": "WS-HR-02",
+        "score": 58.8
+      }
+    ],
     "decision": "match",
     "kind": "asset"
   },
@@ -95,6 +278,35 @@
     "a_name": "ws-fin-01",
     "b_name": "ws-fin-01",
     "score": 100.0,
+    "signals": [
+      "exact_name"
+    ],
+    "alternatives": [
+      {
+        "id": [
+          "log",
+          "ws-it-01"
+        ],
+        "name": "ws-it-01",
+        "score": 82.4
+      },
+      {
+        "id": [
+          "log",
+          "ws-hr-01"
+        ],
+        "name": "ws-hr-01",
+        "score": 70.6
+      },
+      {
+        "id": [
+          "log",
+          "ws-dev-01"
+        ],
+        "name": "ws-dev-01",
+        "score": 66.7
+      }
+    ],
     "decision": "match",
     "kind": "asset"
   },
@@ -104,6 +316,35 @@
     "a_name": "ws-it-01",
     "b_name": "WS-IT-01",
     "score": 100.0,
+    "signals": [
+      "exact_name"
+    ],
+    "alternatives": [
+      {
+        "id": [
+          "ad",
+          "WS-FIN-01"
+        ],
+        "name": "WS-FIN-01",
+        "score": 82.4
+      },
+      {
+        "id": [
+          "ad",
+          "WS-DEV-01"
+        ],
+        "name": "WS-DEV-01",
+        "score": 70.6
+      },
+      {
+        "id": [
+          "ad",
+          "WS-HR-02"
+        ],
+        "name": "WS-HR-02",
+        "score": 62.5
+      }
+    ],
     "decision": "match",
     "kind": "asset"
   },
@@ -113,6 +354,35 @@
     "a_name": "ws-it-01",
     "b_name": "ws-it-01",
     "score": 100.0,
+    "signals": [
+      "exact_name"
+    ],
+    "alternatives": [
+      {
+        "id": [
+          "log",
+          "ws-fin-01"
+        ],
+        "name": "ws-fin-01",
+        "score": 82.4
+      },
+      {
+        "id": [
+          "log",
+          "ws-hr-01"
+        ],
+        "name": "ws-hr-01",
+        "score": 75.0
+      },
+      {
+        "id": [
+          "log",
+          "ws-dev-01"
+        ],
+        "name": "ws-dev-01",
+        "score": 70.6
+      }
+    ],
     "decision": "match",
     "kind": "asset"
   },
@@ -122,6 +392,35 @@
     "a_name": "ws-dev-01",
     "b_name": "WS-DEV-01",
     "score": 100.0,
+    "signals": [
+      "exact_name"
+    ],
+    "alternatives": [
+      {
+        "id": [
+          "ad",
+          "WS-IT-01"
+        ],
+        "name": "WS-IT-01",
+        "score": 70.6
+      },
+      {
+        "id": [
+          "ad",
+          "WS-FIN-01"
+        ],
+        "name": "WS-FIN-01",
+        "score": 66.7
+      },
+      {
+        "id": [
+          "ad",
+          "WS-HR-02"
+        ],
+        "name": "WS-HR-02",
+        "score": 58.8
+      }
+    ],
     "decision": "match",
     "kind": "asset"
   },
@@ -131,6 +430,35 @@
     "a_name": "ws-dev-01",
     "b_name": "ws-dev-01",
     "score": 100.0,
+    "signals": [
+      "exact_name"
+    ],
+    "alternatives": [
+      {
+        "id": [
+          "log",
+          "ws-hr-01"
+        ],
+        "name": "ws-hr-01",
+        "score": 70.6
+      },
+      {
+        "id": [
+          "log",
+          "ws-it-01"
+        ],
+        "name": "ws-it-01",
+        "score": 70.6
+      },
+      {
+        "id": [
+          "log",
+          "ws-fin-01"
+        ],
+        "name": "ws-fin-01",
+        "score": 66.7
+      }
+    ],
     "decision": "match",
     "kind": "asset"
   },
@@ -140,6 +468,35 @@
     "a_name": "WS-HR-02",
     "b_name": "ws-hr-02",
     "score": 100.0,
+    "signals": [
+      "exact_name"
+    ],
+    "alternatives": [
+      {
+        "id": [
+          "log",
+          "ws-hr-01"
+        ],
+        "name": "ws-hr-01",
+        "score": 87.5
+      },
+      {
+        "id": [
+          "log",
+          "ws-it-01"
+        ],
+        "name": "ws-it-01",
+        "score": 62.5
+      },
+      {
+        "id": [
+          "log",
+          "ws-fin-01"
+        ],
+        "name": "ws-fin-01",
+        "score": 58.8
+      }
+    ],
     "decision": "match",
     "kind": "asset"
   },
@@ -149,6 +506,35 @@
     "a_name": "WS-FIN-01",
     "b_name": "ws-fin-01",
     "score": 100.0,
+    "signals": [
+      "exact_name"
+    ],
+    "alternatives": [
+      {
+        "id": [
+          "log",
+          "ws-it-01"
+        ],
+        "name": "ws-it-01",
+        "score": 82.4
+      },
+      {
+        "id": [
+          "log",
+          "ws-hr-01"
+        ],
+        "name": "ws-hr-01",
+        "score": 70.6
+      },
+      {
+        "id": [
+          "log",
+          "ws-dev-01"
+        ],
+        "name": "ws-dev-01",
+        "score": 66.7
+      }
+    ],
     "decision": "match",
     "kind": "asset"
   },
@@ -158,6 +544,35 @@
     "a_name": "WS-IT-01",
     "b_name": "ws-it-01",
     "score": 100.0,
+    "signals": [
+      "exact_name"
+    ],
+    "alternatives": [
+      {
+        "id": [
+          "log",
+          "ws-fin-01"
+        ],
+        "name": "ws-fin-01",
+        "score": 82.4
+      },
+      {
+        "id": [
+          "log",
+          "ws-hr-01"
+        ],
+        "name": "ws-hr-01",
+        "score": 75.0
+      },
+      {
+        "id": [
+          "log",
+          "ws-dev-01"
+        ],
+        "name": "ws-dev-01",
+        "score": 70.6
+      }
+    ],
     "decision": "match",
     "kind": "asset"
   },
@@ -167,6 +582,35 @@
     "a_name": "WS-DEV-01",
     "b_name": "ws-dev-01",
     "score": 100.0,
+    "signals": [
+      "exact_name"
+    ],
+    "alternatives": [
+      {
+        "id": [
+          "log",
+          "ws-hr-01"
+        ],
+        "name": "ws-hr-01",
+        "score": 70.6
+      },
+      {
+        "id": [
+          "log",
+          "ws-it-01"
+        ],
+        "name": "ws-it-01",
+        "score": 70.6
+      },
+      {
+        "id": [
+          "log",
+          "ws-fin-01"
+        ],
+        "name": "ws-fin-01",
+        "score": 66.7
+      }
+    ],
     "decision": "match",
     "kind": "asset"
   },
@@ -176,6 +620,35 @@
     "a_name": "ws-hr-01",
     "b_name": "WS-HR-02",
     "score": 87.5,
+    "signals": [
+      "fuzzy_review"
+    ],
+    "alternatives": [
+      {
+        "id": [
+          "ad",
+          "WS-IT-01"
+        ],
+        "name": "WS-IT-01",
+        "score": 75.0
+      },
+      {
+        "id": [
+          "ad",
+          "WS-FIN-01"
+        ],
+        "name": "WS-FIN-01",
+        "score": 70.6
+      },
+      {
+        "id": [
+          "ad",
+          "WS-DEV-01"
+        ],
+        "name": "WS-DEV-01",
+        "score": 70.6
+      }
+    ],
     "decision": "review",
     "kind": "asset"
   },
@@ -185,6 +658,19 @@
     "a_name": "app-01",
     "b_name": "APP-01",
     "score": 100.0,
+    "signals": [
+      "exact_name"
+    ],
+    "alternatives": [
+      {
+        "id": [
+          "ad",
+          "APP-02"
+        ],
+        "name": "APP-02",
+        "score": 83.3
+      }
+    ],
     "decision": "match",
     "kind": "asset"
   },
@@ -194,6 +680,19 @@
     "a_name": "app-01",
     "b_name": "app-01",
     "score": 100.0,
+    "signals": [
+      "exact_name"
+    ],
+    "alternatives": [
+      {
+        "id": [
+          "log",
+          "app-02"
+        ],
+        "name": "app-02",
+        "score": 83.3
+      }
+    ],
     "decision": "match",
     "kind": "asset"
   },
@@ -203,6 +702,19 @@
     "a_name": "app-02",
     "b_name": "APP-02",
     "score": 100.0,
+    "signals": [
+      "exact_name"
+    ],
+    "alternatives": [
+      {
+        "id": [
+          "ad",
+          "APP-01"
+        ],
+        "name": "APP-01",
+        "score": 83.3
+      }
+    ],
     "decision": "match",
     "kind": "asset"
   },
@@ -212,6 +724,19 @@
     "a_name": "app-02",
     "b_name": "app-02",
     "score": 100.0,
+    "signals": [
+      "exact_name"
+    ],
+    "alternatives": [
+      {
+        "id": [
+          "log",
+          "app-01"
+        ],
+        "name": "app-01",
+        "score": 83.3
+      }
+    ],
     "decision": "match",
     "kind": "asset"
   },
@@ -221,6 +746,19 @@
     "a_name": "APP-01",
     "b_name": "app-01",
     "score": 100.0,
+    "signals": [
+      "exact_name"
+    ],
+    "alternatives": [
+      {
+        "id": [
+          "log",
+          "app-02"
+        ],
+        "name": "app-02",
+        "score": 83.3
+      }
+    ],
     "decision": "match",
     "kind": "asset"
   },
@@ -230,6 +768,19 @@
     "a_name": "APP-02",
     "b_name": "app-02",
     "score": 100.0,
+    "signals": [
+      "exact_name"
+    ],
+    "alternatives": [
+      {
+        "id": [
+          "log",
+          "app-01"
+        ],
+        "name": "app-01",
+        "score": 83.3
+      }
+    ],
     "decision": "match",
     "kind": "asset"
   },
@@ -239,6 +790,19 @@
     "a_name": "db-01",
     "b_name": "DB-01",
     "score": 100.0,
+    "signals": [
+      "exact_name"
+    ],
+    "alternatives": [
+      {
+        "id": [
+          "ad",
+          "DB-02"
+        ],
+        "name": "DB-02",
+        "score": 80.0
+      }
+    ],
     "decision": "match",
     "kind": "asset"
   },
@@ -248,6 +812,19 @@
     "a_name": "db-01",
     "b_name": "db-01",
     "score": 100.0,
+    "signals": [
+      "exact_name"
+    ],
+    "alternatives": [
+      {
+        "id": [
+          "log",
+          "db-02"
+        ],
+        "name": "db-02",
+        "score": 80.0
+      }
+    ],
     "decision": "match",
     "kind": "asset"
   },
@@ -257,6 +834,19 @@
     "a_name": "db-02",
     "b_name": "DB-02",
     "score": 100.0,
+    "signals": [
+      "exact_name"
+    ],
+    "alternatives": [
+      {
+        "id": [
+          "ad",
+          "DB-01"
+        ],
+        "name": "DB-01",
+        "score": 80.0
+      }
+    ],
     "decision": "match",
     "kind": "asset"
   },
@@ -266,6 +856,19 @@
     "a_name": "db-02",
     "b_name": "db-02",
     "score": 100.0,
+    "signals": [
+      "exact_name"
+    ],
+    "alternatives": [
+      {
+        "id": [
+          "log",
+          "db-01"
+        ],
+        "name": "db-01",
+        "score": 80.0
+      }
+    ],
     "decision": "match",
     "kind": "asset"
   },
@@ -275,6 +878,19 @@
     "a_name": "DB-01",
     "b_name": "db-01",
     "score": 100.0,
+    "signals": [
+      "exact_name"
+    ],
+    "alternatives": [
+      {
+        "id": [
+          "log",
+          "db-02"
+        ],
+        "name": "db-02",
+        "score": 80.0
+      }
+    ],
     "decision": "match",
     "kind": "asset"
   },
@@ -284,6 +900,19 @@
     "a_name": "DB-02",
     "b_name": "db-02",
     "score": 100.0,
+    "signals": [
+      "exact_name"
+    ],
+    "alternatives": [
+      {
+        "id": [
+          "log",
+          "db-01"
+        ],
+        "name": "db-01",
+        "score": 80.0
+      }
+    ],
     "decision": "match",
     "kind": "asset"
   },
@@ -293,6 +922,19 @@
     "a_name": "dc-01",
     "b_name": "DC-01",
     "score": 100.0,
+    "signals": [
+      "exact_name"
+    ],
+    "alternatives": [
+      {
+        "id": [
+          "ad",
+          "DC-02"
+        ],
+        "name": "DC-02",
+        "score": 80.0
+      }
+    ],
     "decision": "match",
     "kind": "asset"
   },
@@ -302,6 +944,19 @@
     "a_name": "dc-01",
     "b_name": "dc-01",
     "score": 100.0,
+    "signals": [
+      "exact_name"
+    ],
+    "alternatives": [
+      {
+        "id": [
+          "log",
+          "dc-02"
+        ],
+        "name": "dc-02",
+        "score": 80.0
+      }
+    ],
     "decision": "match",
     "kind": "asset"
   },
@@ -311,6 +966,19 @@
     "a_name": "dc-02",
     "b_name": "DC-02",
     "score": 100.0,
+    "signals": [
+      "exact_name"
+    ],
+    "alternatives": [
+      {
+        "id": [
+          "ad",
+          "DC-01"
+        ],
+        "name": "DC-01",
+        "score": 80.0
+      }
+    ],
     "decision": "match",
     "kind": "asset"
   },
@@ -320,6 +988,19 @@
     "a_name": "dc-02",
     "b_name": "dc-02",
     "score": 100.0,
+    "signals": [
+      "exact_name"
+    ],
+    "alternatives": [
+      {
+        "id": [
+          "log",
+          "dc-01"
+        ],
+        "name": "dc-01",
+        "score": 80.0
+      }
+    ],
     "decision": "match",
     "kind": "asset"
   },
@@ -329,6 +1010,19 @@
     "a_name": "DC-01",
     "b_name": "dc-01",
     "score": 100.0,
+    "signals": [
+      "exact_name"
+    ],
+    "alternatives": [
+      {
+        "id": [
+          "log",
+          "dc-02"
+        ],
+        "name": "dc-02",
+        "score": 80.0
+      }
+    ],
     "decision": "match",
     "kind": "asset"
   },
@@ -338,6 +1032,19 @@
     "a_name": "DC-02",
     "b_name": "dc-02",
     "score": 100.0,
+    "signals": [
+      "exact_name"
+    ],
+    "alternatives": [
+      {
+        "id": [
+          "log",
+          "dc-01"
+        ],
+        "name": "dc-01",
+        "score": 80.0
+      }
+    ],
     "decision": "match",
     "kind": "asset"
   },
@@ -347,6 +1054,10 @@
     "a_name": "file-01",
     "b_name": "fileserver-01",
     "score": 70.0,
+    "signals": [
+      "fuzzy_review"
+    ],
+    "alternatives": [],
     "decision": "review",
     "kind": "asset"
   },
@@ -356,6 +1067,10 @@
     "a_name": "file-01",
     "b_name": "file-01",
     "score": 100.0,
+    "signals": [
+      "exact_name"
+    ],
+    "alternatives": [],
     "decision": "match",
     "kind": "asset"
   },
@@ -365,6 +1080,10 @@
     "a_name": "fileserver-01",
     "b_name": "file-01",
     "score": 70.0,
+    "signals": [
+      "fuzzy_review"
+    ],
+    "alternatives": [],
     "decision": "review",
     "kind": "asset"
   },
@@ -374,6 +1093,10 @@
     "a_name": "vcenter-01",
     "b_name": "vcenter",
     "score": 82.4,
+    "signals": [
+      "fuzzy_review"
+    ],
+    "alternatives": [],
     "decision": "review",
     "kind": "asset"
   },
@@ -383,6 +1106,10 @@
     "a_name": "jenkins-01",
     "b_name": "JENKINS-01",
     "score": 100.0,
+    "signals": [
+      "exact_name"
+    ],
+    "alternatives": [],
     "decision": "match",
     "kind": "asset"
   },
@@ -392,6 +1119,10 @@
     "a_name": "git-01",
     "b_name": "GIT-01",
     "score": 100.0,
+    "signals": [
+      "exact_name"
+    ],
+    "alternatives": [],
     "decision": "match",
     "kind": "asset"
   },
@@ -401,6 +1132,10 @@
     "a_name": "git-01",
     "b_name": "git-01",
     "score": 100.0,
+    "signals": [
+      "exact_name"
+    ],
+    "alternatives": [],
     "decision": "match",
     "kind": "asset"
   },
@@ -410,6 +1145,10 @@
     "a_name": "GIT-01",
     "b_name": "git-01",
     "score": 100.0,
+    "signals": [
+      "exact_name"
+    ],
+    "alternatives": [],
     "decision": "match",
     "kind": "asset"
   },
@@ -419,6 +1158,19 @@
     "a_name": "binh.nguyen0",
     "b_name": "binh.nguyen0@lab.local",
     "score": 100.0,
+    "signals": [
+      "exact_name"
+    ],
+    "alternatives": [
+      {
+        "id": [
+          "hr",
+          "binh.tran6@lab.local"
+        ],
+        "name": "binh.tran6@lab.local",
+        "score": 54.5
+      }
+    ],
     "decision": "match",
     "kind": "user"
   },
@@ -428,6 +1180,19 @@
     "a_name": "binh.tran6",
     "b_name": "binh.tran6@lab.local",
     "score": 100.0,
+    "signals": [
+      "exact_name"
+    ],
+    "alternatives": [
+      {
+        "id": [
+          "hr",
+          "binh.nguyen0@lab.local"
+        ],
+        "name": "binh.nguyen0@lab.local",
+        "score": 54.5
+      }
+    ],
     "decision": "match",
     "kind": "user"
   },
@@ -437,6 +1202,10 @@
     "a_name": "an.nguyen2",
     "b_name": "an.nguyen2",
     "score": 100.0,
+    "signals": [
+      "exact_name"
+    ],
+    "alternatives": [],
     "decision": "match",
     "kind": "user"
   },
@@ -446,6 +1215,35 @@
     "a_name": "phong.nguyen3",
     "b_name": "phong.nguyen3@lab.local",
     "score": 100.0,
+    "signals": [
+      "exact_name"
+    ],
+    "alternatives": [
+      {
+        "id": [
+          "hr",
+          "phongle13"
+        ],
+        "name": "phongle13",
+        "score": 66.7
+      },
+      {
+        "id": [
+          "hr",
+          "phonghoang7"
+        ],
+        "name": "phonghoang7",
+        "score": 60.9
+      },
+      {
+        "id": [
+          "hr",
+          "phong.pham9@lab.local"
+        ],
+        "name": "phong.pham9@lab.local",
+        "score": 50.0
+      }
+    ],
     "decision": "match",
     "kind": "user"
   },
@@ -455,6 +1253,35 @@
     "a_name": "phong.hoang7",
     "b_name": "phonghoang7",
     "score": 100.0,
+    "signals": [
+      "fuzzy_high"
+    ],
+    "alternatives": [
+      {
+        "id": [
+          "hr",
+          "phong.pham9@lab.local"
+        ],
+        "name": "phong.pham9@lab.local",
+        "score": 69.6
+      },
+      {
+        "id": [
+          "hr",
+          "phong.nguyen3@lab.local"
+        ],
+        "name": "phong.nguyen3@lab.local",
+        "score": 64.0
+      },
+      {
+        "id": [
+          "hr",
+          "phongle13"
+        ],
+        "name": "phongle13",
+        "score": 50.0
+      }
+    ],
     "decision": "match",
     "kind": "user"
   },
@@ -464,6 +1291,35 @@
     "a_name": "phong.pham9",
     "b_name": "phong.pham9@lab.local",
     "score": 100.0,
+    "signals": [
+      "exact_name"
+    ],
+    "alternatives": [
+      {
+        "id": [
+          "hr",
+          "phonghoang7"
+        ],
+        "name": "phonghoang7",
+        "score": 66.7
+      },
+      {
+        "id": [
+          "hr",
+          "phongle13"
+        ],
+        "name": "phongle13",
+        "score": 52.6
+      },
+      {
+        "id": [
+          "hr",
+          "phong.nguyen3@lab.local"
+        ],
+        "name": "phong.nguyen3@lab.local",
+        "score": 50.0
+      }
+    ],
     "decision": "match",
     "kind": "user"
   },
@@ -473,6 +1329,35 @@
     "a_name": "phong.le13",
     "b_name": "phongle13",
     "score": 100.0,
+    "signals": [
+      "fuzzy_high"
+    ],
+    "alternatives": [
+      {
+        "id": [
+          "hr",
+          "phong.nguyen3@lab.local"
+        ],
+        "name": "phong.nguyen3@lab.local",
+        "score": 69.6
+      },
+      {
+        "id": [
+          "hr",
+          "phong.pham9@lab.local"
+        ],
+        "name": "phong.pham9@lab.local",
+        "score": 57.1
+      },
+      {
+        "id": [
+          "hr",
+          "phonghoang7"
+        ],
+        "name": "phonghoang7",
+        "score": 50.0
+      }
+    ],
     "decision": "match",
     "kind": "user"
   },
@@ -482,6 +1367,19 @@
     "a_name": "khanh.vu5",
     "b_name": "khanh.vu5",
     "score": 100.0,
+    "signals": [
+      "exact_name"
+    ],
+    "alternatives": [
+      {
+        "id": [
+          "hr",
+          "khanh.tran8"
+        ],
+        "name": "khanh.tran8",
+        "score": 60.0
+      }
+    ],
     "decision": "match",
     "kind": "user"
   },
@@ -491,6 +1389,19 @@
     "a_name": "khanh.tran8",
     "b_name": "khanh.tran8",
     "score": 100.0,
+    "signals": [
+      "exact_name"
+    ],
+    "alternatives": [
+      {
+        "id": [
+          "hr",
+          "khanh.vu5"
+        ],
+        "name": "khanh.vu5",
+        "score": 60.0
+      }
+    ],
     "decision": "match",
     "kind": "user"
   },
@@ -500,6 +1411,19 @@
     "a_name": "giang.tran10",
     "b_name": "giangtran10",
     "score": 100.0,
+    "signals": [
+      "fuzzy_high"
+    ],
+    "alternatives": [
+      {
+        "id": [
+          "hr",
+          "giang.ngo11"
+        ],
+        "name": "giang.ngo11",
+        "score": 69.6
+      }
+    ],
     "decision": "match",
     "kind": "user"
   },
@@ -509,6 +1433,19 @@
     "a_name": "giang.ngo11",
     "b_name": "giang.ngo11",
     "score": 100.0,
+    "signals": [
+      "exact_name"
+    ],
+    "alternatives": [
+      {
+        "id": [
+          "hr",
+          "giangtran10"
+        ],
+        "name": "giangtran10",
+        "score": 66.7
+      }
+    ],
     "decision": "match",
     "kind": "user"
   },
@@ -518,6 +1455,19 @@
     "a_name": "hieu.vu12",
     "b_name": "hieu.vu12@lab.local",
     "score": 100.0,
+    "signals": [
+      "exact_name"
+    ],
+    "alternatives": [
+      {
+        "id": [
+          "hr",
+          "hieu.nguyen15@lab.local"
+        ],
+        "name": "hieu.nguyen15@lab.local",
+        "score": 63.6
+      }
+    ],
     "decision": "match",
     "kind": "user"
   },
@@ -527,6 +1477,19 @@
     "a_name": "hieu.nguyen15",
     "b_name": "hieu.nguyen15@lab.local",
     "score": 100.0,
+    "signals": [
+      "exact_name"
+    ],
+    "alternatives": [
+      {
+        "id": [
+          "hr",
+          "hieu.vu12@lab.local"
+        ],
+        "name": "hieu.vu12@lab.local",
+        "score": 63.6
+      }
+    ],
     "decision": "match",
     "kind": "user"
   },
@@ -536,6 +1499,10 @@
     "a_name": "linh.do14",
     "b_name": "linh.do14",
     "score": 100.0,
+    "signals": [
+      "exact_name"
+    ],
+    "alternatives": [],
     "decision": "match",
     "kind": "user"
   }

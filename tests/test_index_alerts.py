@@ -22,13 +22,15 @@ def _cw():
 
 def test_expand_default_params_total_count():
     docs = expand_log_sample(_alerts(), _cw())
-    assert len(docs) == 30 * 50 + 120 == 1620
+    # 30 gốc * 50 (factor) + 120 bruteforce + 33 scenarios bổ sung (S2 D.3):
+    # 20 lateral_movement_smb + 3 audit_cleared + 10 new_privilege = 33
+    assert len(docs) == 30 * 50 + 120 + 33 == 1653
 
 
 def test_expand_ids_all_unique():
     docs = expand_log_sample(_alerts(), _cw())
     ids = [d["alert_id"] for d in docs]
-    assert len(ids) == len(set(ids)) == 1620
+    assert len(ids) == len(set(ids)) == 1653
 
 
 def test_expand_deterministic():
@@ -104,7 +106,43 @@ def test_expand_burst_scenario_and_count():
 def test_index_alerts_real(os_client):
     result = index_alerts(client=os_client)
     assert result["errors"] == 0
-    assert result["count"] == 1620
+    assert result["count"] == 1653
     os_client.indices.refresh(index=ALERTS_INDEX)
     count = os_client.count(index=ALERTS_INDEX)["count"]
-    assert count >= 1620
+    assert count >= 1653
+
+
+# ---------- S2 (D.3): 3 scenarios mới ----------
+def test_scenario_lateral_movement_count_and_event():
+    """lateral_movement_smb: 20 doc, event_id=4624 (logon success), dc-01 target."""
+    docs = expand_log_sample(_alerts(), _cw())
+    lateral = [d for d in docs if d.get("scenario") == "lateral_movement_smb"]
+    assert len(lateral) == 20
+    for d in lateral:
+        assert d["event_id"] == 4624
+        assert d["success"] is True
+        assert d["computer"] == "dc-01"
+        assert d["source_ip"] == "10.0.2.31"
+        assert d["dest_port"] == 445
+
+
+def test_scenario_audit_cleared_count_and_event():
+    """audit_cleared: 3 doc, event_id=1102 (audit log cleared — defense evasion)."""
+    docs = expand_log_sample(_alerts(), _cw())
+    cleared = [d for d in docs if d.get("scenario") == "audit_cleared"]
+    assert len(cleared) == 3
+    for d in cleared:
+        assert d["event_id"] == 1102
+        assert d["computer"] == "dc-01"
+        assert d["severity"] == "critical"
+
+
+def test_scenario_new_privilege_count_and_event():
+    """new_privilege: 10 doc, event_id=4672 (special privileges assigned)."""
+    docs = expand_log_sample(_alerts(), _cw())
+    priv = [d for d in docs if d.get("scenario") == "new_privilege"]
+    assert len(priv) == 10
+    for d in priv:
+        assert d["event_id"] == 4672
+        assert d["process_name"] == "powershell.exe"
+        assert d["parent_process"] == "explorer.exe"

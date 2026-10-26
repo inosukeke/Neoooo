@@ -5,6 +5,19 @@
     "a_name": "web-02",
     "b_name": "web-2",
     "score": 90.9,
+    "signals": [
+      "fuzzy_review"
+    ],
+    "alternatives": [
+      {
+        "id": [
+          "ad",
+          "WEB-01"
+        ],
+        "name": "web-01.lab.local",
+        "score": 83.3
+      }
+    ],
     "decision": "review",
     "kind": "asset"
   },
@@ -14,6 +27,35 @@
     "a_name": "ws-hr-01",
     "b_name": "WS-HR-02",
     "score": 87.5,
+    "signals": [
+      "fuzzy_review"
+    ],
+    "alternatives": [
+      {
+        "id": [
+          "ad",
+          "WS-IT-01"
+        ],
+        "name": "WS-IT-01",
+        "score": 75.0
+      },
+      {
+        "id": [
+          "ad",
+          "WS-FIN-01"
+        ],
+        "name": "WS-FIN-01",
+        "score": 70.6
+      },
+      {
+        "id": [
+          "ad",
+          "WS-DEV-01"
+        ],
+        "name": "WS-DEV-01",
+        "score": 70.6
+      }
+    ],
     "decision": "review",
     "kind": "asset"
   },
@@ -23,6 +65,35 @@
     "a_name": "ws-hr-01",
     "b_name": "WS-HR-02",
     "score": 87.5,
+    "signals": [
+      "fuzzy_review"
+    ],
+    "alternatives": [
+      {
+        "id": [
+          "ad",
+          "WS-IT-01"
+        ],
+        "name": "WS-IT-01",
+        "score": 75.0
+      },
+      {
+        "id": [
+          "ad",
+          "WS-FIN-01"
+        ],
+        "name": "WS-FIN-01",
+        "score": 70.6
+      },
+      {
+        "id": [
+          "ad",
+          "WS-DEV-01"
+        ],
+        "name": "WS-DEV-01",
+        "score": 70.6
+      }
+    ],
     "decision": "review",
     "kind": "asset"
   },
@@ -32,6 +103,10 @@
     "a_name": "file-01",
     "b_name": "fileserver-01",
     "score": 70.0,
+    "signals": [
+      "fuzzy_review"
+    ],
+    "alternatives": [],
     "decision": "review",
     "kind": "asset"
   },
@@ -41,6 +116,10 @@
     "a_name": "fileserver-01",
     "b_name": "file-01",
     "score": 70.0,
+    "signals": [
+      "fuzzy_review"
+    ],
+    "alternatives": [],
     "decision": "review",
     "kind": "asset"
   },
@@ -50,6 +129,10 @@
     "a_name": "vcenter-01",
     "b_name": "vcenter",
     "score": 82.4,
+    "signals": [
+      "fuzzy_review"
+    ],
+    "alternatives": [],
     "decision": "review",
     "kind": "asset"
   }

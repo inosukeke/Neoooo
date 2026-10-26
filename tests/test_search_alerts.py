@@ -13,7 +13,7 @@ from search_alerts import (
     top_failed_logon_by_asset,
 )
 
-BURST_ASSET_ID = "asset-014"  # crosswalk["log:dc-01"], xem index_alerts.BURST_COMPUTER
+BURST_ASSET_ID = "ast-004"  # crosswalk["log:dc-01"] (prefix mới ast-*), xem index_alerts.BURST_COMPUTER
 
 
 @pytest.mark.integration
