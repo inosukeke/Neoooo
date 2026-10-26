@@ -70,6 +70,16 @@ def render_schema_text(schema: GraphSchema) -> str:
     return "\n".join(lines)
 
 
+# Node kỹ thuật của loader (không thuộc Schema v2 nghiệp vụ) — loại khỏi schema text,
+# nhất quán với load_graph.py (verify_counts dùng `WHERE NOT n:LoadMeta`). Ngoài ra
+# vẫn loại mọi label prefix `_` (convention cho node internal tương lai).
+_INTERNAL_LABELS = frozenset({"LoadMeta"})
+
+
+def _is_internal_label(label: str) -> bool:
+    return label.startswith("_") or label in _INTERNAL_LABELS
+
+
 def fetch_schema(driver, database: str = "neo4j") -> GraphSchema:
     """Chạy `db.schema.nodeTypeProperties()`/`relTypeProperties()` + 1 query pattern
     trên Neo4j thật để build `GraphSchema`.
@@ -94,7 +104,7 @@ def fetch_schema(driver, database: str = "neo4j") -> GraphSchema:
     with driver.session(database=database) as session:
         for record in session.run("CALL db.schema.nodeTypeProperties()"):
             label = record["nodeLabels"][0]
-            if label.startswith("_"):
+            if _is_internal_label(label):
                 continue
             prop_name = record["propertyName"]
             prop_types = record["propertyTypes"]
@@ -118,20 +128,23 @@ def fetch_schema(driver, database: str = "neo4j") -> GraphSchema:
         )
         for record in session.run(pattern_query):
             s, t, d = record["s"], record["t"], record["d"]
-            if s.startswith("_") or d.startswith("_"):
+            if _is_internal_label(s) or _is_internal_label(d):
                 continue
             patterns.add((s, t, d))
 
-    # Cardinality (count per label) cho hint LLM — biết scale dữ liệu thật.
-    cardinality: dict[str, int] = {}
-    for record in session.run(
-        "MATCH (n) WHERE NOT n:`_SchemaVersion` "
-        "RETURN labels(n)[0] AS l, count(n) AS c"
-    ):
-        label = record["l"]
-        if label.startswith("_"):
-            continue
-        cardinality[label] = record["c"]
+        # Cardinality (count per label) cho hint LLM — biết scale dữ liệu thật.
+        # PHẢI nằm trong block `with session` — trước đây bị đặt ngoài nên
+        # `session.run` chạy trên session đã đóng → SessionError: Session closed
+        # (fetch_schema hỏng mỗi lần chạy thật, kể cả Text2Cypher live).
+        cardinality: dict[str, int] = {}
+        for record in session.run(
+            "MATCH (n) WHERE NOT n:`_SchemaVersion` "
+            "RETURN labels(n)[0] AS l, count(n) AS c"
+        ):
+            label = record["l"]
+            if _is_internal_label(label):
+                continue
+            cardinality[label] = record["c"]
 
     return GraphSchema(
         node_props=node_props,
