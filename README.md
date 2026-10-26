@@ -1,6 +1,64 @@
 # Đồ thị tri thức an ninh — Demo VinSOC
 
-Xem [CLAUDE.md](CLAUDE.md) để biết mục tiêu, tech stack và cấu trúc thư mục đầy đủ. File này chỉ ghi cách chạy phần đã code.
+Xem [CLAUDE.md](CLAUDE.md) để biết mục tiêu, tech stack và cấu trúc thư mục đầy đủ.
+
+> **Demo cá nhân** — dữ liệu **mô phỏng**, chạy lab local. Trục: **đồ thị + LLM + kỹ thuật dữ liệu** cho bài toán Exposure Management / Attack Path Prediction.
+
+## Tổng quan
+
+Pipeline end-to-end: thu thập & chuẩn hóa dữ liệu an ninh đa nguồn → entity resolution → **đồ thị tri thức** (Neo4j + GDS) → tìm kiếm log (OpenSearch) → **lớp LLM hỏi-đáp tiếng Việt** (Text2Cypher + GraphRAG tự viết, không dùng LangChain) → **attack path & risk scoring**, kèm **eval harness** đo chất lượng + chi phí + độ trễ.
+
+### Kiến trúc
+
+```
+[nguồn giả lập: Nmap/log/AD/HR] + [NVD/EPSS/KEV: API thật]
+      │  gen_fixtures + sources
+      ▼
+ normalized/*.json ──► entity_resolution (55 asset→26, 31 user→17 canonical)
+      │
+      ▼
+ Neo4j (Schema v2, ~160 node) ◄── graph_rules (CONNECTS_TO/ADMIN_TO: GIẢ ĐỊNH demo)
+   │  ├─► risk_scoring : CVSS×EPSS/KEV×criticality×reachable → ghi CONNECTS_TO.cost
+   │  ├─► attack_path  : GDS Dijkstra/BFS/betweenness → đường tấn công + choke point
+   │  ├─► Text2Cypher  : câu hỏi VN → Cypher (validate 4 lớp) → thực thi → trả lời
+   │  ├─► GraphRAG     : câu hỏi VN → embed → vector → mở rộng 1-2 hop → trả lời
+   │  └─► Eval         : golden 43 câu → accuracy + $/câu + p50/p95 + judge deepeval
+ OpenSearch (1653 alert doc) ◄─ index_alerts ; join_neo4j nối qua canonical_id
+```
+
+### Kết quả đo THẬT (chạy live trên Docker — xem [ket-qua-eval.md](docs/00-tong-quan/ket-qua-eval.md))
+
+| Hạng mục | Số đo |
+|---|---|
+| Text2Cypher execution accuracy | **16/20 (80%)** |
+| GraphRAG execution accuracy | **13/15 (87%)** |
+| Chi phí | ~**$0.00026/câu** (gpt-4o-mini) |
+| Độ trễ | Text2Cypher p50 **4.0s**; GraphRAG p50 **3.8s** |
+| Adversarial 8 câu | **8/8 dữ liệu an toàn** (node 160→160); còn 1 injection leak |
+| Judge GraphRAG (deepeval) | answer_relevancy **1.0**, faithfulness 0.68, contextual_relevancy 0.06 |
+
+LLM dùng **fallback chain theo giá** `gpt-5-nano → gpt-4.1-nano → gpt-4o-mini` (env `LLM_MODEL_CHAIN`).
+
+### Giả định vs Đo thật (đọc trước khi đánh giá)
+
+| Phần | Thật | Giả định / mô phỏng |
+|---|---|---|
+| Dữ liệu nguồn | gọi NVD/EPSS/KEV **API thật** | Nmap/log/AD/HR **sinh giả** (`gen_fixtures`) |
+| Đồ thị | node + property từ dữ liệu | `CONNECTS_TO`/`ADMIN_TO`/CVE→Service **suy từ rule viết tay** |
+| Thuật toán | GDS Dijkstra/BFS/betweenness **chạy thật** | — |
+| LLM | Text2Cypher/GraphRAG/Eval **chạy thật** qua gateway | accuracy đo 1 lần, golden nhỏ (43 câu) |
+| Attack path | tính thật từ `cost` | **phản ánh giả định rule**, không phải quan hệ đo được |
+
+→ Đây là **demo học tập trên dữ liệu mô phỏng**, nhấn phương pháp (đồ thị + LLM), **không** phải phát hiện lỗ hổng trong hệ thống thật.
+
+### Ảnh & demo
+
+<!-- TODO: chèn ảnh Neo4j Browser (attack path) + GIF demo Text2Cypher/GraphRAG. Chụp từ http://localhost:7474 sau khi chạy pipeline. -->
+*(Sẽ bổ sung ảnh đồ thị attack path trên Neo4j Browser + GIF demo hỏi-đáp — chụp từ `http://localhost:7474`.)*
+
+---
+
+File này ghi cách chạy phần đã code (bên dưới).
 
 ## Chạy local bằng Docker
 
@@ -164,7 +222,7 @@ docker run -d --name opensearch-sec \
 ```
 `DISABLE_SECURITY_PLUGIN=true` chỉ cho demo local, bind `127.0.0.1`. Chờ container sẵn sàng (`curl http://localhost:9200`) rồi:
 ```bash
-python src/search/index_alerts.py    # nhân bản 30 alert gốc → 1620 doc (factor=50 + 120 burst bruteforce), bulk index
+python src/search/index_alerts.py    # nhân bản 30 alert gốc → 1653 doc (factor=50 + 120 burst + 33 scenario S2 D.3), bulk index
 python src/search/search_alerts.py   # 4 query bool DSL mẫu: top asset bị logon thất bại, date histogram, full-text, term text-vs-keyword
 python src/search/join_neo4j.py      # nối tay OpenSearch → Neo4j: top asset bị logon thất bại + CVE KEV của asset đó
 ```
