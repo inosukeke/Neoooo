@@ -11,6 +11,9 @@ Chi tiết quy tắc: `../../.claude/rules/graphrag.md`.
 ## Lưu ý quan trọng
 **Module RAG-from-scratch 10h của kế hoạch gốc (chèn trước Giai đoạn 03) chưa được giảng riêng** — bài này chỉ gói lý thuyết RAG tối thiểu đủ để build GraphRAG, không có phần thí nghiệm chunk size/phá retrieval/hybrid search đúng nghĩa. Nên tự làm thêm trước khi vào bài Eval.
 
+## Phạm vi index hiện tại
+Hiện **chỉ index `Vulnerability.description`** (property vector `embedding`, index `vuln_description_embedding`). Alert **không** được index vì node `Alert` trong graph không có property message (chỉ có `time`/`event_id`/`success`/`severity`/`rule`); message gốc nằm ở OpenSearch, không nằm trong Neo4j. Muốn GraphRAG trên Alert phải nạp message vào graph (hoặc embed ở OpenSearch) — ngoài phạm vi bước này.
+
 ## Cắt
 Thí nghiệm chunk size/hybrid search đúng nghĩa (→ RAG-from-scratch còn nợ), re-ranking/multi-vector, agent tự chọn tool (LangGraph).
 
