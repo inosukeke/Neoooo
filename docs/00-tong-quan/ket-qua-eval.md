@@ -5,8 +5,11 @@
 > Ngày chạy: 2026-10-27.
 
 ## Thiết lập
-- **Chat model:** `gpt-4o-mini`. *(Đã thử `gpt-5-nano` theo yêu cầu nhưng gateway trả 503
-  `model_not_found` — không khả dụng — nên fallback `gpt-4o-mini`.)*
+- **Chat model:** fallback chain theo GIÁ thấp→cao `gpt-5-nano → gpt-4.1-nano → gpt-4o-mini`
+  (env `LLM_MODEL_CHAIN`, hàm `llm_client.chat_fallback` — lỗi retryable 5xx/429/timeout/
+  model-không-có thì thử model kế). Thực tế `gpt-5-nano` trả 503 (gateway "group gemini"
+  không có channel) nên pipeline **tự rơi xuống `gpt-4o-mini`** (5 kênh, ổn định) — số đo dưới
+  đây là của `gpt-4o-mini`.
 - **Embedding model:** `text-embedding-3-small` (embed 28 mô tả CVE vào vector index Neo4j).
 - **Bộ câu hỏi:** golden set 35/43 câu đã chạy — **20 structured** (Text2Cypher) + **15 fuzzy**
   (GraphRAG). Nhóm **8 adversarial CHƯA chạy** (gate `--include-adversarial`, bắn câu ghi/xóa

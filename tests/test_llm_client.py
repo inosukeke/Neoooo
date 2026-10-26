@@ -3,11 +3,20 @@
 Không gọi API thật — mock client/response bằng unittest.mock.
 """
 
+import types
 from pathlib import Path
 from unittest.mock import MagicMock
 
 import pytest
-from llm_client import ConfigError, chat, check_model, load_llm_config, make_client
+from llm_client import (
+    ConfigError,
+    chat,
+    chat_fallback,
+    check_model,
+    load_llm_config,
+    make_client,
+    model_chain,
+)
 
 # --- load_llm_config: thiếu từng biến ---
 
@@ -129,3 +138,70 @@ def test_no_hardcoded_model_name_or_legacy_env_var():
     assert '"o1' not in source
     assert '"claude' not in source
     assert "OPENAI_API_BASE" not in source
+
+
+# --- chat_fallback: thử model theo chain giá thấp->cao, bỏ qua lỗi retryable ---
+
+
+def _resp(content: str, pt: int = 2, ct: int = 3):
+    return types.SimpleNamespace(
+        choices=[types.SimpleNamespace(message=types.SimpleNamespace(content=content))],
+        usage=types.SimpleNamespace(prompt_tokens=pt, completion_tokens=ct),
+    )
+
+
+def _fake_client(behavior: dict):
+    """behavior: model -> content str (ok) hoặc Exception (raise)."""
+
+    def _create(*, model, messages, temperature=0):
+        b = behavior[model]
+        if isinstance(b, Exception):
+            raise b
+        return _resp(b)
+
+    return types.SimpleNamespace(
+        chat=types.SimpleNamespace(
+            completions=types.SimpleNamespace(create=_create)
+        )
+    )
+
+
+def test_chat_fallback_skips_retryable_to_next():
+    client = _fake_client({"m1": RuntimeError("503 no available channel"), "m2": "ok"})
+    text, usage, used = chat_fallback(client, ["m1", "m2"], [{"role": "user", "content": "x"}])
+    assert text == "ok"
+    assert used == "m2"
+    assert usage == {"prompt_tokens": 2, "completion_tokens": 3}
+
+
+def test_chat_fallback_non_retryable_raises_immediately():
+    class BadRequest(Exception):
+        status_code = 400
+
+    client = _fake_client({"m1": BadRequest("invalid request")})
+    with pytest.raises(BadRequest):
+        chat_fallback(client, ["m1", "m2"], [{"role": "user", "content": "x"}])
+
+
+def test_chat_fallback_all_retryable_raises_last():
+    client = _fake_client(
+        {"m1": RuntimeError("timeout"), "m2": RuntimeError("503 overloaded")}
+    )
+    with pytest.raises(RuntimeError, match="overloaded"):
+        chat_fallback(client, ["m1", "m2"], [{"role": "user", "content": "x"}])
+
+
+def test_chat_fallback_empty_models_raises_config():
+    with pytest.raises(ConfigError):
+        chat_fallback(_fake_client({}), [], [{"role": "user", "content": "x"}])
+
+
+def test_model_chain_from_env(monkeypatch):
+    monkeypatch.setenv("LLM_MODEL_CHAIN", "a, b ,c")
+    assert model_chain() == ["a", "b", "c"]
+
+
+def test_model_chain_fallback_to_single_model(monkeypatch):
+    monkeypatch.delenv("LLM_MODEL_CHAIN", raising=False)
+    monkeypatch.setenv("TEXT2CYPHER_MODEL", "solo-model")
+    assert model_chain() == ["solo-model"]

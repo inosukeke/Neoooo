@@ -64,6 +64,82 @@ def chat(client: OpenAI, model: str, messages: list[dict]) -> str:
     return response.choices[0].message.content
 
 
+# --- Fallback nhiều model theo GIÁ thấp→cao (gateway shopaikey) ---------------
+# Mặc định: rẻ nhất trước, kết ở model nhiều kênh nhất (gpt-4o-mini, 5 kênh) cho
+# ổn định. Đơn giá tham chiếu (input/output $/1M): gpt-5-nano 0.06/0.48,
+# gpt-4.1-nano 0.12/0.48, gpt-4o-mini 0.18/0.72. Ghi đè bằng env LLM_MODEL_CHAIN
+# (danh sách phẩy ngăn cách). gpt-5-nano hiện hay trả 503 (no available channel)
+# nên fallback là cần thiết — đã quan sát thật.
+_RETRYABLE_MARKERS = (
+    "model_not_found",
+    "no available channel",
+    "rate limit",
+    "rate_limit",
+    "overloaded",
+    "timeout",
+    "timed out",
+    "temporarily unavailable",
+    "service unavailable",
+)
+
+
+def model_chain() -> list[str]:
+    """Danh sách model chat theo thứ tự thử (giá thấp→cao). Đọc từ env
+    LLM_MODEL_CHAIN (phẩy ngăn cách); nếu không có, dùng [TEXT2CYPHER_MODEL].
+    KHÔNG hardcode tên model trong code (xem test_no_hardcoded_model_name) — chain
+    cụ thể đặt trong `.env`. Gợi ý cho gateway hiện tại (rẻ→đắt, model cuối nhiều
+    kênh nhất nên ổn định): gpt-5-nano, gpt-4.1-nano, gpt-4o-mini."""
+    raw = os.environ.get("LLM_MODEL_CHAIN", "").strip()
+    if raw:
+        return [m.strip() for m in raw.split(",") if m.strip()]
+    single = os.environ.get("TEXT2CYPHER_MODEL", "").strip()
+    return [single] if single else []
+
+
+def _is_retryable(exc: Exception) -> bool:
+    """Lỗi nên thử model kế tiếp: 5xx/429/timeout/model không khả dụng.
+    Lỗi khác (vd 400 bad request, auth 401) KHÔNG retry — raise ngay."""
+    status = getattr(exc, "status_code", None)
+    if isinstance(status, int) and (status >= 500 or status == 429):
+        return True
+    msg = str(exc).lower()
+    return any(marker in msg for marker in _RETRYABLE_MARKERS)
+
+
+def chat_fallback(
+    client: OpenAI,
+    models: list[str],
+    messages: list[dict],
+    *,
+    temperature: float = 0,
+) -> tuple[str, dict, str]:
+    """Thử lần lượt `models` (giá thấp→cao). Lỗi retryable → model kế; lỗi khác →
+    raise ngay. Trả `(content, usage_dict, model_used)`. Hết model → raise lỗi cuối.
+
+    `usage_dict` có `prompt_tokens`/`completion_tokens` (0 nếu gateway không trả)."""
+    if not models:
+        raise ConfigError("Danh sách model rỗng — set LLM_MODEL_CHAIN hoặc TEXT2CYPHER_MODEL.")
+    last_exc: Exception | None = None
+    for model in models:
+        try:
+            resp = client.chat.completions.create(
+                model=model, messages=messages, temperature=temperature
+            )
+            usage = {}
+            if resp.usage is not None:
+                usage = {
+                    "prompt_tokens": resp.usage.prompt_tokens or 0,
+                    "completion_tokens": resp.usage.completion_tokens or 0,
+                }
+            return resp.choices[0].message.content or "", usage, model
+        except Exception as exc:
+            last_exc = exc
+            if _is_retryable(exc):
+                continue
+            raise
+    raise last_exc  # type: ignore[misc]
+
+
 def check_model(client: OpenAI, model: str) -> tuple[bool, str]:
     """Kiểm model có trong danh sách model gateway hỗ trợ không."""
     try:

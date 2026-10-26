@@ -565,24 +565,25 @@ def main(argv=None) -> int:
     uri = os.environ.get("NEO4J_URI", "bolt://localhost:7687")
     password = os.environ.get("NEO4J_PASSWORD")
     auth = (os.environ.get("NEO4J_USER", "neo4j"), password) if password else None
-    price = {llm_cfg.model: {"prompt": args.price_in, "completion": args.price_out}}
+    chain = llm_client.model_chain()
+    print(f"Model chain (giá thấp->cao): {chain}", file=sys.stderr)
+    price = {
+        m: {"prompt": args.price_in, "completion": args.price_out} for m in chain
+    }
     judge_fn = (
         judge.graphrag_metrics if (judge.HAS_DEEPEVAL and not args.no_judge) else None
     )
     if judge_fn is None:
         print("Judge deepeval: bỏ qua (chưa cài hoặc --no-judge).", file=sys.stderr)
 
+    used_box = {"model": chain[-1]}
+
     def chat_with_usage(messages: list[dict]) -> tuple[str, dict]:
-        resp = chat_client.chat.completions.create(
-            model=llm_cfg.model, messages=messages, temperature=0
-        )
-        usage = {}
-        if resp.usage is not None:
-            usage = {
-                "prompt_tokens": resp.usage.prompt_tokens or 0,
-                "completion_tokens": resp.usage.completion_tokens or 0,
-            }
-        return resp.choices[0].message.content or "", usage
+        # Fallback theo chain giá thấp->cao; ghi lại model thực tế dùng để tính
+        # chi phí đúng đơn giá.
+        text, usage, model_used = llm_client.chat_fallback(chat_client, chain, messages)
+        used_box["model"] = model_used
+        return text, usage
 
     with GraphDatabase.driver(uri, auth=auth) as driver:
         schema = fetch_schema(driver)
@@ -607,7 +608,7 @@ def main(argv=None) -> int:
             return (r["nodes"], r["rels"], r["archived"], r["props"])
 
         def run_t2c(question: str):
-            return t2c.answer_question(
+            res = t2c.answer_question(
                 question,
                 schema=schema,
                 few_shots=few_shots,
@@ -615,9 +616,11 @@ def main(argv=None) -> int:
                 interpret=lambda m: chat_with_usage(m)[0],
                 explain=explain,
                 execute=execute,
-                model=llm_cfg.model,
+                model=chain[0],
                 chat_with_usage=chat_with_usage,
             )
+            res.model = used_box["model"]  # model thực tế dùng (sau fallback)
+            return res
 
         def embed(text: str) -> list[float]:
             return embeddings.embed_texts(emb_client, emb_cfg.model, [text])[0]
@@ -639,15 +642,17 @@ def main(argv=None) -> int:
             return [dict(r) for r in records]
 
         def run_rag(question: str):
-            return graphrag_demo.answer_question(
+            res = graphrag_demo.answer_question(
                 question,
                 embed=embed,
                 vector_search=vector_search,
                 expand=expand,
                 generate=lambda m: chat_with_usage(m)[0],
                 generate_with_usage=chat_with_usage,
-                model=llm_cfg.model,
+                model=chain[0],
             )
+            res.model = used_box["model"]
+            return res
 
         results = run_eval(
             golden,
