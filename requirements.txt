@@ -9,3 +9,4 @@ PyYAML==6.0.2
 pytest==9.1.1
 pytest-cov==6.0.0
 ruff==0.16.10
+deepeval==4.1.10  # Eval GraphRAG metrics (optional import; API 4.x khác docs cũ — verify docstring trước khi dùng)
