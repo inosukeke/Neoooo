@@ -340,17 +340,15 @@ def main(argv=None) -> int:
 
         chat_client = llm_client.make_client(llm_cfg)
 
+        chain = llm_client.model_chain()
+        used_box = {"model": chain[-1] if chain else llm_cfg.model}
+
         def generate_with_usage(messages: list[dict]) -> tuple[str, dict]:
-            resp = chat_client.chat.completions.create(
-                model=llm_cfg.model, messages=messages, temperature=0
+            # Fallback theo chain giá thấp->cao (xem llm_client.chat_fallback).
+            text, usage, model_used = llm_client.chat_fallback(
+                chat_client, chain, messages
             )
-            text = resp.choices[0].message.content or ""  # gateway có thể trả None
-            usage = {}
-            if resp.usage is not None:
-                usage = {
-                    "prompt_tokens": resp.usage.prompt_tokens or 0,
-                    "completion_tokens": resp.usage.completion_tokens or 0,
-                }
+            used_box["model"] = model_used
             return text, usage
 
         result = answer_question(
@@ -361,8 +359,9 @@ def main(argv=None) -> int:
             generate=lambda m: generate_with_usage(m)[0],
             generate_with_usage=generate_with_usage,
             top_k=args.top_k,
-            model=llm_cfg.model,
+            model=chain[0] if chain else llm_cfg.model,
         )
+        result.model = used_box["model"]  # model thực tế sau fallback
 
     if args.json:
         print(json.dumps(asdict(result), ensure_ascii=False))

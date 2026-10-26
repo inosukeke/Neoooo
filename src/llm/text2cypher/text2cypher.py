@@ -23,7 +23,14 @@ from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Literal
 
-from llm_client import ConfigError, chat, check_model, load_llm_config, make_client
+from llm_client import (
+    ConfigError,
+    chat_fallback,
+    check_model,
+    load_llm_config,
+    make_client,
+    model_chain,
+)
 from neo4j import GraphDatabase, Query
 from prompts import (
     build_generation_messages,
@@ -312,11 +319,13 @@ def main(argv=None) -> int:
 
     uri = os.environ.get("NEO4J_URI", "bolt://localhost:7687")
 
+    chain = model_chain()
+
     def generate(messages: list[dict]) -> str:
-        return chat(client, cfg.model, messages)
+        return chat_fallback(client, chain, messages)[0]
 
     def interpret(messages: list[dict]) -> str:
-        return chat(client, cfg.model, messages)
+        return chat_fallback(client, chain, messages)[0]
 
     # `default_access_mode="READ"` CHỈ là routing hint, không phải security
     # control thật trên Neo4j Community (xem `.claude/rules/text2cypher.md`) —
