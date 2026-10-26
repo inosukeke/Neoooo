@@ -12,3 +12,5 @@
 Tiến độ bài giảng (lý thuyết) chi tiết: theo dõi trong Claude Project `claude/tien-do-bai-giang.md`. Tính đến 2026-10-07: Giai đoạn 01-04 đã có bài giảng đầy đủ (11 module), Giai đoạn 05 chưa tới.
 
 **Thứ tự code đề xuất**: bám đúng thứ tự lộ trình (01 → 02 → 03 → 04) vì mỗi giai đoạn sau phụ thuộc dữ liệu/schema giai đoạn trước (ví dụ Text2Cypher cần schema v2 đã nạp dữ liệu thật, risk scoring cần `HAS_VULN` đã nạp từ Giai đoạn 02).
+
+**Tiến độ code (cập nhật 2026-10-26)**: Giai đoạn 01, 02 đã chạy thật. Giai đoạn 03 (Text2Cypher, GraphRAG, Eval) + Giai đoạn 04 (Risk scoring, Attack path) đã code xong qua quy trình worker → review (subagent) → fix, unit test (fake) pass + ruff sạch — **nhưng G03(GraphRAG/Eval)+G04 chưa verify live** trên Neo4j/GDS/OpenSearch/LLM thật (cần dựng `docker-compose.yml` + env LLM). Giai đoạn 05: đã có `docker-compose.yml` + `scripts/run_pipeline.ps1` + README; còn lại (video demo, CV/GitHub, luyện phỏng vấn) không phải code.
