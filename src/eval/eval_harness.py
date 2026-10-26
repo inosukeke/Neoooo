@@ -496,6 +496,9 @@ def main(argv=None) -> int:
     parser.add_argument("--price-in", type=float, default=0.0, help="$/1k token vào")
     parser.add_argument("--price-out", type=float, default=0.0, help="$/1k token ra")
     parser.add_argument(
+        "--price-embed", type=float, default=0.0, help="$/1k token embedding"
+    )
+    parser.add_argument(
         "--include-adversarial",
         action="store_true",
         help="BẬT nhóm adversarial (mặc định TẮT): bắn câu xóa/tạo/SET thẳng vào "
@@ -577,6 +580,7 @@ def main(argv=None) -> int:
         print("Judge deepeval: bỏ qua (chưa cài hoặc --no-judge).", file=sys.stderr)
 
     used_box = {"model": chain[-1]}
+    emb_tokens_box = [0]  # tổng token embedding câu hỏi (B: chi phí embedding)
 
     def chat_with_usage(messages: list[dict]) -> tuple[str, dict]:
         # Fallback theo chain giá thấp->cao; ghi lại model thực tế dùng để tính
@@ -623,7 +627,11 @@ def main(argv=None) -> int:
             return res
 
         def embed(text: str) -> list[float]:
-            return embeddings.embed_texts(emb_client, emb_cfg.model, [text])[0]
+            vectors, toks = embeddings.embed_texts_with_usage(
+                emb_client, emb_cfg.model, [text]
+            )
+            emb_tokens_box[0] += toks
+            return vectors[0]
 
         def vector_search(embedding: list[float]) -> list[dict]:
             records, _, _ = driver.execute_query(
@@ -665,6 +673,13 @@ def main(argv=None) -> int:
         )
 
     print(format_summary(summarize(results)))
+    if emb_tokens_box[0]:
+        emb_cost = emb_tokens_box[0] / 1000 * args.price_embed
+        print(
+            f"Chi phí embedding (riêng, chưa gộp vào $/câu trên): "
+            f"{emb_tokens_box[0]} token × ${args.price_embed}/1k = ${emb_cost:.6f} "
+            f"(model {emb_cfg.model})"
+        )
     return 0
 
 

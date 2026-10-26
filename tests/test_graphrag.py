@@ -2,7 +2,12 @@
 callback là hàm giả."""
 
 import pytest
-from embeddings import ConfigError, embed_texts, load_embedding_config
+from embeddings import (
+    ConfigError,
+    embed_texts,
+    embed_texts_with_usage,
+    load_embedding_config,
+)
 from graphrag_demo import (
     EMPTY_ANSWER,
     EXPAND_QUERY,
@@ -211,3 +216,30 @@ def test_embed_texts_preserves_input_order_by_index():
 
     client = NS(embeddings=FakeEmb())
     assert embed_texts(client, "m", ["a", "b"]) == [[1.0], [2.0]]
+
+
+def test_embed_texts_with_usage_returns_tokens():
+    from types import SimpleNamespace as NS
+
+    class FakeEmb:
+        def create(self, model, input):
+            return NS(
+                data=[NS(index=0, embedding=[1.0])],
+                usage=NS(prompt_tokens=7, total_tokens=7),
+            )
+
+    vectors, tokens = embed_texts_with_usage(NS(embeddings=FakeEmb()), "m", ["a"])
+    assert vectors == [[1.0]]
+    assert tokens == 7
+
+
+def test_embed_texts_with_usage_no_usage_returns_zero():
+    from types import SimpleNamespace as NS
+
+    class FakeEmb:
+        def create(self, model, input):
+            return NS(data=[NS(index=0, embedding=[1.0])])  # gateway không trả usage
+
+    vectors, tokens = embed_texts_with_usage(NS(embeddings=FakeEmb()), "m", ["a"])
+    assert vectors == [[1.0]]
+    assert tokens == 0

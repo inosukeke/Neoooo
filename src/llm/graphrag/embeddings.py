@@ -51,6 +51,22 @@ def make_client(cfg: EmbeddingConfig) -> OpenAI:
 
 def embed_texts(client: OpenAI, model: str, texts: list[str]) -> list[list[float]]:
     """Embed một lô text, giữ nguyên thứ tự đầu vào."""
+    vectors, _ = embed_texts_with_usage(client, model, texts)
+    return vectors
+
+
+def embed_texts_with_usage(
+    client: OpenAI, model: str, texts: list[str]
+) -> tuple[list[list[float]], int]:
+    """Như `embed_texts` nhưng trả thêm tổng token embedding (0 nếu gateway không
+    trả usage) — dùng để tính chi phí embedding."""
     response = client.embeddings.create(model=model, input=texts)
     ordered = sorted(response.data, key=lambda d: d.index)
-    return [list(d.embedding) for d in ordered]
+    vectors = [list(d.embedding) for d in ordered]
+    tokens = 0
+    usage = getattr(response, "usage", None)
+    if usage is not None:
+        tokens = getattr(usage, "prompt_tokens", 0) or getattr(
+            usage, "total_tokens", 0
+        ) or 0
+    return vectors, tokens
