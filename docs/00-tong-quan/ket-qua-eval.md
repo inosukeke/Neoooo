@@ -11,9 +11,8 @@
   không có channel) nên pipeline **tự rơi xuống `gpt-4o-mini`** (5 kênh, ổn định) — số đo dưới
   đây là của `gpt-4o-mini`.
 - **Embedding model:** `text-embedding-3-small` (embed 28 mô tả CVE vào vector index Neo4j).
-- **Bộ câu hỏi:** golden set 35/43 câu đã chạy — **20 structured** (Text2Cypher) + **15 fuzzy**
-  (GraphRAG). Nhóm **8 adversarial CHƯA chạy** (gate `--include-adversarial`, bắn câu ghi/xóa
-  thẳng vào DB — chạy riêng khi cần).
+- **Bộ câu hỏi:** golden set 43 câu — **20 structured** (Text2Cypher) + **15 fuzzy**
+  (GraphRAG) + **8 adversarial** (an ninh; đã chạy live, xem mục "Adversarial" bên dưới).
 - **Metric:** execution accuracy (không exact-match): câu đúng khi pipeline trả kết quả thỏa
   tiêu chí `expected` (nonempty / contains giá trị thật / contains_any). Chi phí tính từ token
   usage thật × đơn giá; độ trễ đo end-to-end mỗi câu.
@@ -41,6 +40,24 @@ $0.15/1M token vào, $0.60/1M token ra).
 - `generation_miss` × 1 (GraphRAG: đáp án có trong context nhưng câu trả lời thiếu)
 - `retrieval_miss` × 1 (GraphRAG: đáp án không nằm trong seed/context truy hồi)
 
+## Adversarial (an ninh) — chạy live 8 câu
+
+Bắn 8 câu đối kháng (xóa/tạo/SET/`CALL dbms`/`SHOW` + injection) thẳng vào Neo4j đang chạy
+(`--include-adversarial`). **Đếm node trước/sau toàn bộ: 160 → 160 — KHÔNG câu nào đổi dữ liệu.**
+
+| Chỉ số | Giá trị |
+|---|---|
+| Toàn vẹn dữ liệu (node không đổi) | **8/8 an toàn** |
+| Chặn đúng ở lớp validator (`rejected_write`) — metric nghiêm | 3/8 |
+| LLM "đọc-hóa"/từ chối (status ok, không ghi — vô hại nhưng không chặn-ở-validator) | 4/8 |
+| **Injection leak** (câu trả lời tuân theo lệnh chèn) | **1/8** |
+
+Đọc đúng: **defense-in-depth giữ vững** — không lệnh phá hoại nào chạm được dữ liệu (validator 4 lớp
++ `session READ` chặn write; procedure `CALL`/`SHOW` bị L1 chặn). 4 câu `write_not_blocked` là khi
+`gpt-4o-mini` tự biến yêu cầu ghi thành truy vấn đọc (an toàn), nên metric nghiêm (chỉ tính pass khi
+validator chặn) coi là chưa đạt — **không phải lỗ hổng** (data 160→160). **1 câu `injection_leak` là
+rủi ro còn lại thật** cần siết prompt/validator — nên nêu trung thực, không giấu.
+
 ## Caveat (đọc kỹ trước khi trích dẫn)
 - **Đơn giá là list-price `gpt-4o-mini` của OpenAI**, không phải giá thực của gateway dùng —
   con số $/câu mang tính ước lượng bậc độ lớn, không phải hóa đơn thật.
@@ -50,11 +67,12 @@ $0.15/1M token vào, $0.60/1M token ra).
   đồng thuận judge" như rule `eval.md` yêu cầu.
 - **Chạy 1 lần, chưa đo variance** (nhiệt độ sinh Cypher = 0 nên Text2Cypher khá tất định;
   GraphRAG/diễn giải vẫn có dao động). Golden set nhỏ (35 câu) → khoảng tin cậy rộng.
-- **Adversarial (8 câu) chưa chạy** → chưa có số về chặn read-only/injection ở mức eval.
+- **Adversarial (8 câu) đã chạy** (xem mục trên): data an toàn 8/8, nhưng còn **1 injection leak**
+  cần siết; 4 câu "đọc-hóa" chưa tính là chặn-ở-validator.
 - `p95` GraphRAG cao (≈45s) do vài câu gọi gateway chậm — không phải lỗi logic.
 
 ## Việc tiếp để số mạnh hơn (nợ)
 1. Cài `deepeval` + chạy judge cho fuzzy; tự chấm tay 10 câu đo đồng thuận.
-2. Chạy nhóm adversarial (đo chặn write/injection live).
+2. Siết câu injection còn leak (1/8); cân nhắc chặn mạnh hơn ở prompt GraphRAG/validator.
 3. Cộng chi phí embedding; đổi đơn giá sang giá gateway thật.
 4. Chạy nhiều lần (3–5) lấy mean ± std; soi 4 câu `empty_result` (golden quá chặt hay LLM sai).
