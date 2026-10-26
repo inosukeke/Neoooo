@@ -21,6 +21,19 @@ import logging
 import os
 import sys
 
+# Cho phép chạy standalone (`python src/graph/load_graph.py`): thêm các thư mục
+# sibling lên sys.path để import graph_rows/graph_rules (src/graph) và canonical
+# (src/ingestion, graph_rows cần). Khi chạy qua pytest/run_pipeline.ps1 thì
+# PYTHONPATH đã có sẵn — insert này idempotent (bỏ qua nếu đã có).
+_SRC = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+for _p in (
+    os.path.join(_SRC, "graph"),
+    os.path.join(_SRC, "ingestion"),
+    os.path.join(_SRC, "ingestion", "resolution"),
+):
+    if _p not in sys.path:
+        sys.path.insert(0, _p)
+
 from graph_rows import (
     build_account_rows,
     build_alert_rows,
@@ -137,10 +150,10 @@ LOAD_TIMESTAMP = "2026-10-05T00:00:00Z"
 
 ASSET_QUERY = f"""UNWIND $rows AS row
 MERGE (a:Asset {{canonical_id: row.canonical_id}})
+ON CREATE SET a.first_seen = datetime('{LOAD_TIMESTAMP}')
 SET a.hostname = row.hostname, a.ip = row.ip, a.sources = row.sources,
     a.source_ids = row.source_ids, a.in_review = row.in_review, a.role = row.role,
-    a.last_seen = datetime('{LOAD_TIMESTAMP}')
-ON CREATE SET a.first_seen = datetime('{LOAD_TIMESTAMP}')"""
+    a.last_seen = datetime('{LOAD_TIMESTAMP}')"""
 
 NETWORK_QUERY = """UNWIND $rows AS row
 MERGE (n:Network {cidr: row.cidr})
@@ -152,10 +165,10 @@ MERGE (a)-[:IN_NETWORK]->(n)"""
 
 SERVICE_QUERY = f"""UNWIND $rows AS row
 MERGE (s:Service {{id: row.id}})
+ON CREATE SET s.first_seen = datetime('{LOAD_TIMESTAMP}')
 SET s.port = row.port, s.protocol = row.protocol, s.name = row.name,
     s.product = row.product, s.version = row.version,
-    s.last_seen = datetime('{LOAD_TIMESTAMP}')
-ON CREATE SET s.first_seen = datetime('{LOAD_TIMESTAMP}')"""
+    s.last_seen = datetime('{LOAD_TIMESTAMP}')"""
 
 RUNS_QUERY = """UNWIND $rows AS row
 MATCH (a:Asset {canonical_id: row.asset_canonical_id}), (s:Service {id: row.id})
@@ -163,13 +176,13 @@ MERGE (a)-[:RUNS]->(s)"""
 
 VULN_QUERY = f"""UNWIND $rows AS row
 MERGE (v:Vulnerability {{cve: row.cve}})
+ON CREATE SET v.first_seen = datetime('{LOAD_TIMESTAMP}')
 SET v.cvss = row.cvss, v.cvss_severity = row.cvss_severity, v.epss = row.epss,
     v.epss_percentile = row.epss_percentile, v.kev = row.kev,
     v.kev_date_added = CASE WHEN row.kev_date_added IS NULL THEN NULL ELSE date(row.kev_date_added) END,
     v.kev_due_date = CASE WHEN row.kev_due_date IS NULL THEN NULL ELSE date(row.kev_due_date) END,
     v.kev_ransomware = row.kev_ransomware, v.description = row.description,
-    v.last_seen = datetime('{LOAD_TIMESTAMP}')
-ON CREATE SET v.first_seen = datetime('{LOAD_TIMESTAMP}')"""
+    v.last_seen = datetime('{LOAD_TIMESTAMP}')"""
 
 HAS_VULN_QUERY = f"""UNWIND $rows AS row
 MATCH (s:Service {{id: row.service_id}}), (v:Vulnerability {{cve: row.cve}})
@@ -179,16 +192,16 @@ SET r.derived_by = 'cve_service_rule'"""
 
 USER_QUERY = f"""UNWIND $rows AS row
 MERGE (u:User {{canonical_id: row.canonical_id}})
+ON CREATE SET u.first_seen = datetime('{LOAD_TIMESTAMP}')
 SET u.username = row.username, u.display_name = row.display_name, u.sources = row.sources,
     u.source_ids = row.source_ids,
-    u.last_seen = datetime('{LOAD_TIMESTAMP}')
-ON CREATE SET u.first_seen = datetime('{LOAD_TIMESTAMP}')"""
+    u.last_seen = datetime('{LOAD_TIMESTAMP}')"""
 
 ACCOUNT_QUERY = f"""UNWIND $rows AS row
 MERGE (c:Account {{name: row.name}})
+ON CREATE SET c.first_seen = datetime('{LOAD_TIMESTAMP}')
 SET c.account_type = row.account_type, c.enabled = row.enabled,
-    c.last_seen = datetime('{LOAD_TIMESTAMP}')
-ON CREATE SET c.first_seen = datetime('{LOAD_TIMESTAMP}')"""
+    c.last_seen = datetime('{LOAD_TIMESTAMP}')"""
 
 HAS_ACCOUNT_QUERY = """UNWIND $rows AS row
 MATCH (u:User {canonical_id: row.user_canonical_id}), (c:Account {name: row.name})
@@ -196,8 +209,8 @@ MERGE (u)-[:HAS_ACCOUNT]->(c)"""
 
 GROUP_QUERY = f"""UNWIND $rows AS row
 MERGE (g:Group {{name: row.group}})
-SET g.last_seen = datetime('{LOAD_TIMESTAMP}')
-ON CREATE SET g.first_seen = datetime('{LOAD_TIMESTAMP}')"""
+ON CREATE SET g.first_seen = datetime('{LOAD_TIMESTAMP}')
+SET g.last_seen = datetime('{LOAD_TIMESTAMP}')"""
 
 MEMBER_OF_QUERY = """UNWIND $rows AS row
 MATCH (c:Account {name: row.account}), (g:Group {name: row.group})
