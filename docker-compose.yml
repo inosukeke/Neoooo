@@ -1,0 +1,81 @@
+# Hạ tầng LOCAL cho demo đồ thị tri thức an ninh (Neo4j + GDS, OpenSearch).
+#
+# CHỈ DÙNG LOCAL DEMO: không auth (Neo4j NEO4J_AUTH=none, OpenSearch tắt security
+# plugin), mọi port bind 127.0.0.1 (loopback) — KHÔNG đổi sang 0.0.0.0, KHÔNG
+# expose ra ngoài máy / mạng / cloud. Đồ thị sau chấm rủi ro là bản đồ tấn công
+# (xem .claude/rules/security.md).
+#
+# Dùng:
+#   docker compose up -d          # dựng, rồi chờ cả hai service "healthy":
+#   docker compose ps
+#   docker compose down           # tắt, giữ dữ liệu (named volume)
+#   docker compose down -v        # tắt + XÓA toàn bộ dữ liệu
+#
+# Sau khi healthy: powershell -ExecutionPolicy Bypass -File scripts/run_pipeline.ps1
+
+services:
+  neo4j:
+    image: neo4j:5.26-community
+    container_name: neo4j-sec
+    restart: unless-stopped
+    environment:
+      # No-auth cho demo local. Chỉ có hiệu lực khi volume neo4j_data còn trống
+      # (lần đầu); đổi sau đó cần `docker compose down -v`.
+      NEO4J_AUTH: "none"
+      # GDS: Neo4j 5.26 đi kèm GDS 2.13.x. Image tự tải plugin lần đầu khởi động
+      # (cần mạng). RỦI RO: NEO4J_PLUGINS tải bản GDS mới nhất tương thích 5.26;
+      # nếu lệch 2.13.x (dự án verify trên 2.13.13) thì pin bằng cách tải jar
+      # neo4j-graph-data-science-2.13.13.jar từ graphdatascience.ninja / GitHub
+      # releases vào ./neo4j-plugins/, bỏ dòng NEO4J_PLUGINS và bỏ comment mount
+      # `./neo4j-plugins:/plugins` ở phần volumes bên dưới.
+      NEO4J_PLUGINS: '["graph-data-science"]'
+      # Cho phép procedure GDS (mặc định bị chặn bởi sandbox procedure).
+      NEO4J_dbms_security_procedures_unrestricted: "gds.*"
+      NEO4J_dbms_security_procedures_allowlist: "gds.*"
+    ports:
+      - "127.0.0.1:7474:7474"   # HTTP / Neo4j Browser
+      - "127.0.0.1:7687:7687"   # Bolt
+    volumes:
+      - neo4j_data:/data
+      - neo4j_logs:/logs
+      # - ./neo4j-plugins:/plugins   # bỏ comment khi pin GDS bằng jar thủ công
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO /dev/null http://localhost:7474 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 60s   # lần đầu tải plugin GDS nên chậm
+
+  opensearch:
+    image: opensearchproject/opensearch:2.17.1
+    container_name: opensearch-sec
+    restart: unless-stopped
+    environment:
+      - discovery.type=single-node
+      # DISABLE_SECURITY_PLUGIN=true: tắt auth + TLS, CHỈ cho dev local
+      # (đã bind 127.0.0.1). Không dùng cấu hình này ngoài máy cá nhân.
+      - DISABLE_SECURITY_PLUGIN=true
+      - OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m
+      - bootstrap.memory_lock=true
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+    ports:
+      - "127.0.0.1:9200:9200"   # REST API
+    volumes:
+      - opensearch_data:/usr/share/opensearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:9200 >/dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+
+volumes:
+  neo4j_data:
+  neo4j_logs:
+  opensearch_data:

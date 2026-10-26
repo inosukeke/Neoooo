@@ -2,6 +2,65 @@
 
 Xem [CLAUDE.md](CLAUDE.md) để biết mục tiêu, tech stack và cấu trúc thư mục đầy đủ. File này chỉ ghi cách chạy phần đã code.
 
+## Chạy local bằng Docker
+
+Cách nhanh nhất để dựng toàn bộ hạ tầng + nạp dữ liệu. **Chỉ dùng local demo**: Neo4j no-auth và OpenSearch tắt security plugin, mọi port bind `127.0.0.1` — không expose ra ngoài máy.
+
+### Yêu cầu
+- Docker Desktop (Compose v2), ~2 GB RAM trống; lần đầu cần mạng (tải image + plugin GDS).
+- Python 3.x và deps: `pip install -r requirements.txt`.
+- PowerShell 5.1+ (để chạy `scripts/run_pipeline.ps1`).
+
+### 1. Cấu hình `.env`
+```bash
+cp .env.example .env
+```
+- Neo4j no-auth: **để trống** `NEO4J_PASSWORD` (script tự dùng `auth=None`).
+- `NVD_API_KEY` (tùy chọn): nhanh hơn khi gọi NVD lần đầu; có cache nên thường không cần.
+- Phần LLM (chỉ Text2Cypher / GraphRAG / eval cần — **bạn tự điền gateway/API key của mình**, không có sẵn): `OPENAI_API_KEY`, `OPENAI_BASE_URL`, `TEXT2CYPHER_MODEL`, `EMBEDDING_MODEL`. Không commit `.env`.
+
+### 2. Dựng hạ tầng
+```bash
+docker compose up -d
+docker compose ps        # chờ cả neo4j-sec và opensearch-sec ở trạng thái "healthy" (Neo4j lần đầu ~1–2 phút do tải GDS)
+```
+Phiên bản: Neo4j `5.26-community` + GDS 2.13.x (cài qua `NEO4J_PLUGINS`), OpenSearch `2.17.1`. Kiểm GDS: `docker exec neo4j-sec cypher-shell "RETURN gds.version();"`. Nếu GDS tải về lệch 2.13.x, pin bằng cách mount jar (xem comment trong `docker-compose.yml`).
+
+### 3. Nạp toàn bộ pipeline
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/run_pipeline.ps1
+```
+Thứ tự: fixtures + chuẩn hóa nguồn (`gen_fixtures.py`, `sources.py`) → entity resolution → `load_graph.py --reset` (**xóa dữ liệu Neo4j cũ**) → `index_alerts.py` → `risk_scoring.py` (ghi `CONNECTS_TO.cost`, exposure/criticality) → `attack_path.py` → (tùy chọn) GraphRAG `--create-index`. Bước 1–6 **không cần** env LLM; bước GraphRAG cần `OPENAI_API_KEY`, `OPENAI_BASE_URL`, `EMBEDDING_MODEL`. Tham số: `-SkipRegenerate`, `-SkipReset`, `-SkipAttackPath`, `-WithGraphRag`, `-DryRun`.
+
+### 4. Chạy từng module
+Các lệnh dưới cần Neo4j đã nạp (bước 3); Text2Cypher/GraphRAG/eval cần env LLM trong shell (set tay hoặc nạp `.env`).
+```bash
+python src/llm/text2cypher/text2cypher.py "Máy nào chạy dịch vụ có lỗ hổng nằm trong KEV?"
+python src/llm/graphrag/graphrag_demo.py --create-index        # 1 lần (hoặc dùng -WithGraphRag ở trên)
+python src/llm/graphrag/graphrag_demo.py "<câu hỏi tiếng Việt>"
+python src/analysis/risk/risk_scoring.py --dry-run             # chỉ in bảng, không ghi cost
+python src/analysis/attack_path/attack_path.py --top 10
+python src/eval/eval_harness.py --pipeline all                 # gọi LLM thật, tốn token
+```
+Nếu import lỗi (`ModuleNotFoundError`), đặt `PYTHONPATH` gồm các thư mục con `src/` như trong `scripts/run_pipeline.ps1`.
+
+### 5. Test
+```bash
+python -m pytest                          # unit, không cần service (mặc định bỏ marker integration)
+python -m pytest -m integration           # cần Neo4j + OpenSearch đang chạy; một số test cần thêm env LLM
+```
+- 2 test phá hủy dữ liệu cần `ALLOW_DESTRUCTIVE_TESTS=1` (PowerShell: `$env:ALLOW_DESTRUCTIVE_TESTS="1"`) — chúng xóa dữ liệu Neo4j, nạp lại bằng `run_pipeline.ps1` sau đó.
+- `eval_harness.py --include-adversarial` bắn câu xóa/tạo/SET thật vào Neo4j đang chạy (chỉ an toàn nhờ validator + READ-mode) — mặc định TẮT, chỉ bật khi chủ ý.
+
+### 6. Dọn dẹp
+```bash
+docker compose down        # tắt, giữ dữ liệu (named volume)
+docker compose down -v     # tắt và xóa toàn bộ dữ liệu Neo4j + OpenSearch
+```
+Lưu ý: `NEO4J_AUTH=none` chỉ có hiệu lực khi volume trống; nếu từng tạo volume có mật khẩu, dùng `down -v` rồi `up -d` lại.
+
+> Các mục "Giai đoạn 01/02/03" bên dưới là hướng dẫn chạy tay từng module (kể cả `docker run` thủ công — tương đương compose, đừng chạy song song vì trùng port/tên container).
+
 ## Giai đoạn 01 — Neo4j & Cypher (schema v1)
 
 ### 1. Dựng Neo4j + GDS
