@@ -57,9 +57,15 @@ LLM dùng **fallback chain theo giá** `gpt-5-nano → gpt-4.1-nano → gpt-4o-m
 
 ![Attack path trên Neo4j Browser](docs/images/attack-path-neo4j.jpg)
 
-**UI hỏi-đáp (Streamlit)** — Text2Cypher chạy thật, trả lời câu hỏi tiếng Việt:
+**UI web (Next.js + FastAPI)** — màn Hỏi-đáp: Text2Cypher chạy thật, trả lời câu hỏi tiếng Việt kèm Cypher sinh ra + kết quả + nhãn "Có bằng chứng", token/độ trễ/model thật (fallback chain `gpt-5-nano → gpt-4.1-nano → gpt-4o-mini`):
 
-![Streamlit demo Text2Cypher](docs/images/streamlit-demo.jpg)
+![UI web — màn Hỏi-đáp (Next.js)](docs/images/web-qa-demo.jpg)
+
+**Màn Đồ thị & đường tấn công** — KPI + đồ thị Asset/CONNECTS_TO tự vẽ (SVG) + xếp hạng đường tấn công từ GDS thật (Dijkstra/BFS/Betweenness, dry-run):
+
+![UI web — màn Đồ thị & đường tấn công](docs/images/web-graph-demo.jpg)
+
+> UI Streamlit nhỏ (`src/ui/app.py`) vẫn giữ làm bản demo tối giản (xem mục 6).
 
 ---
 
@@ -124,7 +130,7 @@ Giao diện hỏi-đáp tiếng Việt: chọn pipeline (Text2Cypher / GraphRAG)
 
 ### 6b. UI web mới (Next.js + FastAPI, dựng từ thiết kế Figma)
 
-Dashboard dark-theme đầy đủ sidebar/topbar cho trang **Hỏi-đáp** (các trang Tổng quan/Đồ thị/Risk & Patch/Alert hiện để "Sắp có" — chưa code). Dùng chung logic với Streamlit qua `src/pipelines/service.py`, không có bộ nhớ hội thoại (mỗi câu hỏi 1 request độc lập).
+Dashboard dark-theme đầy đủ sidebar/topbar với **cả 5 trang đã code**: Tổng quan (`GET /overview`), Hỏi-đáp (`POST /ask`), Đồ thị & đường tấn công (`GET /attack-path`), Risk & Patch (`GET /risk`), Alert & tìm kiếm log (`GET /alerts`). Backend FastAPI dùng chung logic với Streamlit qua `src/pipelines/service.py` (framework-agnostic), mọi endpoint chỉ-đọc (risk chạy dry-run, attack path chỉ `gds.*.stream` + drop projection — không ghi Neo4j), không có bộ nhớ hội thoại (mỗi câu hỏi 1 request độc lập). Số liệu hạ tầng (Neo4j/vector/model chain/đếm node) là thật, không fake; cờ `pagerank_wired=false`/`read_only=true` phơi rõ trên UI.
 
 ```bash
 # 1) Backend FastAPI (cần Neo4j đã nạp pipeline + env LLM trong .env, giống bước 6)
