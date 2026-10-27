@@ -1,0 +1,69 @@
+@import "tailwindcss";
+
+/* Design token lấy từ thiết kế Figma (dark SOC dashboard) — chỉ có bản tối,
+   xem README/CLAUDE.md phần UI: theme sáng chưa thiết kế nên không giả vờ hỗ trợ. */
+:root {
+  --color-bg: #0f1115;
+  --color-panel: #11151b;
+  --color-card: #161b22;
+  --color-input: #10151c;
+  --color-border: #2b3440;
+
+  --color-text-primary: #e5ebf3;
+  --color-text-secondary: #9aa8b9;
+  --color-text-muted: #68798c;
+
+  --color-accent: #55d5d0;
+  --color-accent-bg: #143437;
+  --color-accent-border: #367b7b;
+  --color-accent-border-strong: #327d7b;
+
+  --color-danger: #f47878;
+  --color-danger-bg: #3b2229;
+  --color-success: #7dc9a0;
+  --color-success-bg: #1e332c;
+  --color-warning: #e3cb78;
+
+  --color-chip: #1c232d;
+  --color-question-bg: #1c3038;
+  --color-question-border: #2d4c57;
+
+  --font-sans: var(--font-inter);
+  --font-mono: var(--font-jetbrains-mono);
+}
+
+@theme inline {
+  --color-bg: var(--color-bg);
+  --color-panel: var(--color-panel);
+  --color-card: var(--color-card);
+  --color-input: var(--color-input);
+  --color-border: var(--color-border);
+  --color-text-primary: var(--color-text-primary);
+  --color-text-secondary: var(--color-text-secondary);
+  --color-text-muted: var(--color-text-muted);
+  --color-accent: var(--color-accent);
+  --color-accent-bg: var(--color-accent-bg);
+  --color-accent-border: var(--color-accent-border);
+  --color-accent-border-strong: var(--color-accent-border-strong);
+  --color-danger: var(--color-danger);
+  --color-danger-bg: var(--color-danger-bg);
+  --color-success: var(--color-success);
+  --color-success-bg: var(--color-success-bg);
+  --color-warning: var(--color-warning);
+  --color-chip: var(--color-chip);
+  --color-question-bg: var(--color-question-bg);
+  --color-question-border: var(--color-question-border);
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-text-primary);
+  font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+}
+
+::selection {
+  background: var(--color-accent-bg);
+  color: var(--color-accent);
+}

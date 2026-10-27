@@ -9,4 +9,7 @@ PyYAML==6.0.2
 pytest==9.1.1
 pytest-cov==6.0.0
 ruff==0.16.10
+fastapi==0.143.3
+uvicorn[standard]==0.53.0
+httpx==0.28.1  # TestClient (test) + transport dùng chung với openai SDK
 deepeval==4.1.10  # Eval GraphRAG metrics (optional import; API 4.x khác docs cũ — verify docstring trước khi dùng)

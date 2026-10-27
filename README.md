@@ -122,6 +122,22 @@ streamlit run src/ui/app.py    # mở http://localhost:8501
 ```
 Giao diện hỏi-đáp tiếng Việt: chọn pipeline (Text2Cypher / GraphRAG), nhập câu hỏi → xem câu trả lời, Cypher sinh ra, kết quả, độ trễ + token. Cần Neo4j đã nạp pipeline (bước 3) + env LLM trong `.env`; GraphRAG cần vector index (`python src/llm/graphrag/graphrag_demo.py --create-index`).
 
+### 6b. UI web mới (Next.js + FastAPI, dựng từ thiết kế Figma)
+
+Dashboard dark-theme đầy đủ sidebar/topbar cho trang **Hỏi-đáp** (các trang Tổng quan/Đồ thị/Risk & Patch/Alert hiện để "Sắp có" — chưa code). Dùng chung logic với Streamlit qua `src/pipelines/service.py`, không có bộ nhớ hội thoại (mỗi câu hỏi 1 request độc lập).
+
+```bash
+# 1) Backend FastAPI (cần Neo4j đã nạp pipeline + env LLM trong .env, giống bước 6)
+uvicorn main:app --reload --port 8000 --app-dir src/api
+
+# 2) Frontend Next.js (terminal khác)
+cd web
+npm install        # lần đầu
+cp env.example .env.local   # tùy chọn — mặc định đã trỏ localhost:8000
+npm run dev         # mở http://localhost:3000 (redirect sang /qa)
+```
+`GET /health` cho trạng thái Neo4j/vector index/model chain/số asset-user thật (không fake). Lỗi backend (thiếu env LLM, Neo4j down, thiếu vector index...) hiển thị trực tiếp trong UI dưới dạng card lỗi.
+
 ### 7. Dọn dẹp
 ```bash
 docker compose down        # tắt, giữ dữ liệu (named volume)
