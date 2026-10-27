@@ -54,6 +54,53 @@ export interface HealthResponse {
   checked_at: string;
 }
 
+export interface OverviewCounts {
+  asset_count: number | null;
+  user_count: number | null;
+  vulnerability_count: number | null;
+  vulnerability_kev_count: number | null;
+  service_count: number | null;
+  account_count: number | null;
+  group_count: number | null;
+  alert_count: number | null;
+}
+
+export interface OverviewResponse extends HealthResponse {
+  counts: OverviewCounts;
+}
+
+export interface RiskAssetDrivers {
+  asset_criticality: number;
+  reachable: boolean;
+  vuln_count: number;
+  top_cve: string | null;
+  cvss: number | null;
+  epss: number | null;
+  in_kev: boolean;
+}
+
+export interface RiskAssetItem {
+  canonical_id: string;
+  hostname: string;
+  risk_score: number;
+  cost: number;
+  patch_priority: number;
+  drivers: RiskAssetDrivers;
+}
+
+export interface RiskSummary {
+  scored_asset_count: number;
+  high_risk_count: number;
+  high_risk_threshold: number;
+  avg_risk_score: number | null;
+  pagerank_wired: boolean;
+}
+
+export interface RiskResponse {
+  items: RiskAssetItem[];
+  summary: RiskSummary;
+}
+
 export class ApiError extends Error {
   status: number;
   constructor(message: string, status: number) {
@@ -91,6 +138,14 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
 export function getHealth(): Promise<HealthResponse> {
   return request<HealthResponse>("/health");
+}
+
+export function getOverview(): Promise<OverviewResponse> {
+  return request<OverviewResponse>("/overview");
+}
+
+export function getRisk(): Promise<RiskResponse> {
+  return request<RiskResponse>("/risk");
 }
 
 export function askQuestion(pipeline: Pipeline, question: string): Promise<AskAnswer> {

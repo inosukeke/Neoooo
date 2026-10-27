@@ -1,7 +1,14 @@
 "use client";
 
+import { usePathname } from "next/navigation";
 import { ChevronDown } from "lucide-react";
 import type { HealthResponse } from "@/lib/api";
+
+const PAGE_LABELS: Record<string, string> = {
+  "/overview": "Tổng quan",
+  "/qa": "Hỏi-đáp",
+  "/risk": "Risk & Patch",
+};
 
 export function Topbar({
   health,
@@ -12,6 +19,8 @@ export function Topbar({
   loading: boolean;
   error: string | null;
 }) {
+  const pathname = usePathname();
+  const pageLabel = PAGE_LABELS[pathname] ?? pathname;
   const connected = health?.neo4j.connected ?? false;
   // `checked_at` đến từ `/health` (state do effect khác set) — render thuần từ
   // props/state có sẵn, không cần effect/setState riêng ở component này.
@@ -31,7 +40,7 @@ export function Topbar({
         <span className="text-text-muted">/</span>
         <span className="text-text-secondary">CORP-LAB</span>
         <span className="text-text-muted">/</span>
-        <span className="text-text-primary">Hỏi-đáp</span>
+        <span className="text-text-primary">{pageLabel}</span>
       </div>
       <div className="flex items-center gap-[18px]">
         <div className="flex items-center gap-[7px]" title={error ?? undefined}>

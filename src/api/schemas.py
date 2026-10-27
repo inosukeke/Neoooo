@@ -72,3 +72,63 @@ class HealthResponse(BaseModel):
     graph_summary: GraphSummary
     read_only: bool
     checked_at: str
+
+
+class OverviewCounts(BaseModel):
+    """Đếm thật theo nhãn Schema v2 — không có risk score/đường tấn công (chưa
+    có API cho attack_path.py/risk_scoring.py)."""
+
+    asset_count: int | None = None
+    user_count: int | None = None
+    vulnerability_count: int | None = None
+    vulnerability_kev_count: int | None = None
+    service_count: int | None = None
+    account_count: int | None = None
+    group_count: int | None = None
+    alert_count: int | None = None
+
+
+class OverviewResponse(BaseModel):
+    neo4j: Neo4jHealth
+    vector_index: VectorIndexHealth
+    model_chain: list[str]
+    graph_summary: GraphSummary
+    read_only: bool
+    checked_at: str
+    counts: OverviewCounts
+
+
+class RiskAssetDrivers(BaseModel):
+    """Nhân tử đầu vào của risk_score cao nhất (xem `risk_scoring.compute_risk_score`)."""
+
+    asset_criticality: int
+    reachable: bool
+    vuln_count: int
+    top_cve: str | None = None
+    cvss: float | None = None
+    epss: float | None = None
+    in_kev: bool = False
+
+
+class RiskAssetItem(BaseModel):
+    canonical_id: str
+    hostname: str
+    risk_score: float
+    cost: float
+    patch_priority: float
+    drivers: RiskAssetDrivers
+
+
+class RiskSummary(BaseModel):
+    """KPI tính rẻ từ chính list risk — không query thêm gì ngoài risk_scoring."""
+
+    scored_asset_count: int
+    high_risk_count: int
+    high_risk_threshold: float
+    avg_risk_score: float | None = None
+    pagerank_wired: bool = False
+
+
+class RiskResponse(BaseModel):
+    items: list[RiskAssetItem]
+    summary: RiskSummary

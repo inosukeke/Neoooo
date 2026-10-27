@@ -23,6 +23,7 @@ for _p in (
     "src/llm/graphrag",
     "src/graph",
     "src/search",
+    "src/analysis/risk",
 ):
     sys.path.insert(0, str(ROOT / _p))
 
@@ -34,6 +35,7 @@ with contextlib.suppress(Exception):
 import embeddings
 import graphrag_demo
 import llm_client
+import risk_scoring
 import text2cypher as t2c
 from neo4j import GraphDatabase, Query
 from schema_text import fetch_schema
@@ -197,4 +199,94 @@ def get_health() -> dict:
         "graph_summary": {"asset_count": asset_count, "user_count": user_count},
         "read_only": True,
         "checked_at": checked_at,
+    }
+
+
+# Đếm theo nhãn thật trong Schema v2 (xem docs/giai-doan-01-graph-foundations/
+# mo-hinh-hoa-du-lieu.md) — dùng cho trang Tổng quan. Không đụng attack_path.py/
+# risk_scoring.py (chưa có API) nên không có risk score/đường tấn công ở đây.
+_OVERVIEW_COUNT_QUERY = (
+    "MATCH (a:Asset) WITH count(a) AS asset "
+    "MATCH (u:User) WITH asset, count(u) AS usr "
+    "MATCH (v:Vulnerability) WITH asset, usr, count(v) AS vuln, "
+    "  sum(CASE WHEN v.kev THEN 1 ELSE 0 END) AS vuln_kev "
+    "MATCH (sv:Service) WITH asset, usr, vuln, vuln_kev, count(sv) AS service "
+    "MATCH (ac:Account) WITH asset, usr, vuln, vuln_kev, service, count(ac) AS account "
+    "MATCH (g:Group) WITH asset, usr, vuln, vuln_kev, service, account, count(g) AS grp "
+    "MATCH (al:Alert) "
+    "RETURN asset, usr, vuln, vuln_kev, service, account, grp, count(al) AS alert"
+)
+
+
+def get_overview() -> dict:
+    """Số liệu KPI thật cho trang Tổng quan — tái dùng `get_health()` cho phần
+    hạ tầng, chỉ thêm đếm node theo nhãn (không có số bịa)."""
+    health = get_health()
+    counts = {
+        "asset_count": None,
+        "user_count": None,
+        "vulnerability_count": None,
+        "vulnerability_kev_count": None,
+        "service_count": None,
+        "account_count": None,
+        "group_count": None,
+        "alert_count": None,
+    }
+    if health["neo4j"]["connected"]:
+        try:
+            with get_driver().session(default_access_mode="READ") as s:
+                rec = s.run(_OVERVIEW_COUNT_QUERY).single()
+                if rec:
+                    counts = {
+                        "asset_count": rec["asset"],
+                        "user_count": rec["usr"],
+                        "vulnerability_count": rec["vuln"],
+                        "vulnerability_kev_count": rec["vuln_kev"],
+                        "service_count": rec["service"],
+                        "account_count": rec["account"],
+                        "group_count": rec["grp"],
+                        "alert_count": rec["alert"],
+                    }
+        except Exception:  # noqa: BLE001 - đếm thất bại không nên chặn phần còn lại
+            counts = dict.fromkeys(counts)
+    return {**health, "counts": counts}
+
+
+# Ngưỡng demo tự chọn để đếm KPI "rủi ro cao" — không phải chuẩn ngành, chỉ để
+# phân nhóm trực quan trên UI (risk_score trong 0..1, xem risk_scoring.py).
+HIGH_RISK_THRESHOLD = 0.5
+
+
+def get_risk_ranking() -> dict:
+    """Xếp hạng risk thật (Giai đoạn 04, `risk_scoring.run_risk_scoring`) cho trang
+    Risk & Patch. Luôn chạy dry-run (`write=False, assign_context=False`, đúng khớp
+    CLI `--dry-run`) — GET không được phép biến đổi đồ thị khi tải trang.
+
+    `patch_priority` hiện chỉ phản ánh `asset_criticality/5` vì PageRank chưa được
+    nối vào runner (nợ có chủ đích, xem CLAUDE.md) — `pagerank_wired=False` để UI
+    hiển thị rõ, không giả vờ đã có."""
+    risks = risk_scoring.run_risk_scoring(
+        get_driver(), write=False, assign_context=False
+    )
+    items = [
+        {
+            "canonical_id": r.canonical_id,
+            "hostname": r.hostname,
+            "risk_score": r.risk_score,
+            "cost": r.cost,
+            "patch_priority": r.patch_priority,
+            "drivers": r.drivers,
+        }
+        for r in risks
+    ]
+    scores = [r.risk_score for r in risks]
+    return {
+        "items": items,
+        "summary": {
+            "scored_asset_count": len(risks),
+            "high_risk_count": sum(1 for s in scores if s > HIGH_RISK_THRESHOLD),
+            "high_risk_threshold": HIGH_RISK_THRESHOLD,
+            "avg_risk_score": (sum(scores) / len(scores)) if scores else None,
+            "pagerank_wired": False,
+        },
     }

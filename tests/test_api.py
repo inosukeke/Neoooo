@@ -38,6 +38,110 @@ def test_health_ok(monkeypatch):
     assert body["read_only"] is True
 
 
+def test_overview_ok(monkeypatch):
+    fake_overview = {
+        "neo4j": {"connected": True, "uri": "bolt://localhost:7687", "error": None},
+        "vector_index": {
+            "name": "vuln_description_embedding",
+            "state": "ONLINE",
+            "error": None,
+        },
+        "model_chain": ["gpt-5-nano", "gpt-4o-mini"],
+        "graph_summary": {"asset_count": 26, "user_count": 17},
+        "read_only": True,
+        "checked_at": "2026-10-27T00:00:00+00:00",
+        "counts": {
+            "asset_count": 26,
+            "user_count": 17,
+            "vulnerability_count": 28,
+            "vulnerability_kev_count": 28,
+            "service_count": 33,
+            "account_count": 16,
+            "group_count": 5,
+            "alert_count": 30,
+        },
+    }
+    monkeypatch.setattr(main, "get_overview", lambda: fake_overview)
+
+    resp = client.get("/overview")
+
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["counts"]["asset_count"] == 26
+    assert body["counts"]["vulnerability_kev_count"] == 28
+    assert body["counts"]["alert_count"] == 30
+    assert body["read_only"] is True
+
+
+def test_risk_ok(monkeypatch):
+    fake_risk = {
+        "items": [
+            {
+                "canonical_id": "ast-004",
+                "hostname": "dc-01",
+                "risk_score": 0.88,
+                "cost": 2.08,
+                "patch_priority": 1.0,
+                "drivers": {
+                    "asset_criticality": 5,
+                    "reachable": True,
+                    "vuln_count": 2,
+                    "top_cve": "CVE-2017-0144",
+                    "cvss": 9.8,
+                    "epss": 0.9,
+                    "in_kev": True,
+                },
+            },
+            {
+                "canonical_id": "ast-002",
+                "hostname": "db-01",
+                "risk_score": 0.0,
+                "cost": 10.0,
+                "patch_priority": 1.0,
+                "drivers": {
+                    "asset_criticality": 5,
+                    "reachable": False,
+                    "vuln_count": 0,
+                    "top_cve": None,
+                    "cvss": None,
+                    "epss": None,
+                    "in_kev": False,
+                },
+            },
+        ],
+        "summary": {
+            "scored_asset_count": 2,
+            "high_risk_count": 1,
+            "high_risk_threshold": 0.5,
+            "avg_risk_score": 0.44,
+            "pagerank_wired": False,
+        },
+    }
+    monkeypatch.setattr(main, "get_risk_ranking", lambda: fake_risk)
+
+    resp = client.get("/risk")
+
+    assert resp.status_code == 200
+    body = resp.json()
+    assert len(body["items"]) == 2
+    assert body["items"][0]["canonical_id"] == "ast-004"
+    assert body["items"][0]["drivers"]["top_cve"] == "CVE-2017-0144"
+    assert body["summary"]["high_risk_count"] == 1
+    assert body["summary"]["pagerank_wired"] is False
+
+
+def test_risk_backend_error_returns_502(monkeypatch):
+    def _boom():
+        raise RuntimeError("Neo4j không kết nối được")
+
+    monkeypatch.setattr(main, "get_risk_ranking", _boom)
+
+    resp = client.get("/risk")
+
+    assert resp.status_code == 502
+    assert "Neo4j" in resp.json()["detail"]
+
+
 def test_ask_text2cypher_ok(monkeypatch):
     fake_result = Text2CypherResult(
         question="Máy nào chạy dịch vụ có lỗ hổng nằm trong KEV?",

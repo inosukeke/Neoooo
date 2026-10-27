@@ -32,11 +32,20 @@ from schemas import (
     GraphSummary,
     HealthResponse,
     Neo4jHealth,
+    OverviewCounts,
+    OverviewResponse,
     RetrievedSource,
+    RiskResponse,
     Text2CypherAnswer,
     VectorIndexHealth,
 )
-from service import get_health, run_graphrag, run_text2cypher
+from service import (
+    get_health,
+    get_overview,
+    get_risk_ranking,
+    run_graphrag,
+    run_text2cypher,
+)
 
 app = FastAPI(title="Đồ thị tri thức an ninh — API", version="0.1.0")
 
@@ -89,6 +98,31 @@ def health() -> HealthResponse:
         read_only=data["read_only"],
         checked_at=data["checked_at"],
     )
+
+
+@app.get("/overview", response_model=OverviewResponse)
+def overview() -> OverviewResponse:
+    data = get_overview()
+    return OverviewResponse(
+        neo4j=Neo4jHealth(**data["neo4j"]),
+        vector_index=VectorIndexHealth(**data["vector_index"]),
+        model_chain=data["model_chain"],
+        graph_summary=GraphSummary(**data["graph_summary"]),
+        read_only=data["read_only"],
+        checked_at=data["checked_at"],
+        counts=OverviewCounts(**data["counts"]),
+    )
+
+
+@app.get("/risk", response_model=RiskResponse)
+def risk() -> RiskResponse:
+    try:
+        data = get_risk_ranking()
+        return RiskResponse(**data)
+    except Exception as exc:
+        raise HTTPException(
+            status_code=502, detail=f"{type(exc).__name__}: {exc}"
+        ) from exc
 
 
 @app.post("/ask", response_model=Text2CypherAnswer | GraphRAGAnswer)
