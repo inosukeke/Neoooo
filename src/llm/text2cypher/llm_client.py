@@ -80,6 +80,9 @@ _RETRYABLE_MARKERS = (
     "timed out",
     "temporarily unavailable",
     "service unavailable",
+    "access denied",
+    "quota",
+    "permission",
 )
 
 
@@ -100,7 +103,9 @@ def _is_retryable(exc: Exception) -> bool:
     """Lỗi nên thử model kế tiếp: 5xx/429/timeout/model không khả dụng.
     Lỗi khác (vd 400 bad request, auth 401) KHÔNG retry — raise ngay."""
     status = getattr(exc, "status_code", None)
-    if isinstance(status, int) and (status >= 500 or status == 429):
+    # 403 = model bị từ chối/hết quota RIÊNG model đó (gateway cấp access theo từng
+    # model) → thử model kế trong chain. 401 (sai key) KHÔNG retry — mọi model fail.
+    if isinstance(status, int) and (status >= 500 or status in (429, 403)):
         return True
     msg = str(exc).lower()
     return any(marker in msg for marker in _RETRYABLE_MARKERS)

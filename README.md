@@ -53,8 +53,13 @@ LLM dùng **fallback chain theo giá** `gpt-5-nano → gpt-4.1-nano → gpt-4o-m
 
 ### Ảnh & demo
 
-<!-- TODO: chèn ảnh Neo4j Browser (attack path) + GIF demo Text2Cypher/GraphRAG. Chụp từ http://localhost:7474 sau khi chạy pipeline. -->
-*(Sẽ bổ sung ảnh đồ thị attack path trên Neo4j Browser + GIF demo hỏi-đáp — chụp từ `http://localhost:7474`.)*
+**Đồ thị attack path (Neo4j Browser)** — đường `CONNECTS_TO` tới asset `asset_criticality ≥ 4`:
+
+![Attack path trên Neo4j Browser](docs/images/attack-path-neo4j.jpg)
+
+**UI hỏi-đáp (Streamlit)** — Text2Cypher chạy thật, trả lời câu hỏi tiếng Việt:
+
+![Streamlit demo Text2Cypher](docs/images/streamlit-demo.jpg)
 
 ---
 

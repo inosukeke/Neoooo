@@ -183,6 +183,17 @@ def test_chat_fallback_non_retryable_raises_immediately():
         chat_fallback(client, ["m1", "m2"], [{"role": "user", "content": "x"}])
 
 
+def test_chat_fallback_403_per_model_falls_through():
+    # 403 = model bị từ chối/hết quota riêng -> thử model kế trong chain.
+    class Forbidden(Exception):
+        status_code = 403
+
+    client = _fake_client({"m1": Forbidden("access denied or quota exhausted"), "m2": "ok"})
+    text, _, used = chat_fallback(client, ["m1", "m2"], [{"role": "user", "content": "x"}])
+    assert text == "ok"
+    assert used == "m2"
+
+
 def test_chat_fallback_all_retryable_raises_last():
     client = _fake_client(
         {"m1": RuntimeError("timeout"), "m2": RuntimeError("503 overloaded")}
