@@ -23,10 +23,11 @@ _SRC = Path(__file__).resolve().parents[1]
 for _p in (_SRC / "pipelines", _SRC / "llm" / "text2cypher"):
     sys.path.insert(0, str(_p))
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from prompts import to_jsonable
 from schemas import (
+    AlertsResponse,
     AskRequest,
     GraphRAGAnswer,
     GraphSummary,
@@ -40,6 +41,7 @@ from schemas import (
     VectorIndexHealth,
 )
 from service import (
+    get_alerts,
     get_health,
     get_overview,
     get_risk_ranking,
@@ -119,6 +121,35 @@ def risk() -> RiskResponse:
     try:
         data = get_risk_ranking()
         return RiskResponse(**data)
+    except Exception as exc:
+        raise HTTPException(
+            status_code=502, detail=f"{type(exc).__name__}: {exc}"
+        ) from exc
+
+
+@app.get("/alerts", response_model=AlertsResponse)
+def alerts(
+    text: str | None = None,
+    asset_canonical_id: str | None = None,
+    rule: str | None = None,
+    success: bool | None = None,
+    start: str | None = None,
+    end: str | None = None,
+    size: int = Query(20, ge=1, le=200),
+    from_: int = Query(0, ge=0, alias="from"),
+) -> AlertsResponse:
+    try:
+        data = get_alerts(
+            text=text,
+            asset_canonical_id=asset_canonical_id,
+            rule=rule,
+            success=success,
+            start=start,
+            end=end,
+            size=size,
+            from_=from_,
+        )
+        return AlertsResponse(**data)
     except Exception as exc:
         raise HTTPException(
             status_code=502, detail=f"{type(exc).__name__}: {exc}"

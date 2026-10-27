@@ -142,6 +142,81 @@ def test_risk_backend_error_returns_502(monkeypatch):
     assert "Neo4j" in resp.json()["detail"]
 
 
+def test_alerts_ok(monkeypatch):
+    fake_alerts = {
+        "total": 2,
+        "hits": [
+            {
+                "alert_id": "AL-1",
+                "time": "2026-10-05T10:59:00Z",
+                "event_id": 4625,
+                "success": False,
+                "outcome": "failure",
+                "severity": "low",
+                "rule": "Failed logon (4625)",
+                "message": "An account failed to log on.",
+                "computer": "app-02",
+                "asset_canonical_id": "ast-001",
+            },
+            {
+                "alert_id": "AL-2",
+                "time": "2026-10-05T11:00:00Z",
+                "event_id": 4624,
+                "success": True,
+                "outcome": "success",
+                "severity": "info",
+                "rule": "Successful logon (4624)",
+                "message": "An account was successfully logged on.",
+                "computer": "dc-01",
+                "asset_canonical_id": "ast-004",
+            },
+        ],
+        "facets": {
+            "asset": [{"key": "ast-001", "doc_count": 1}, {"key": "ast-004", "doc_count": 1}],
+            "rule": [
+                {"key": "Failed logon (4625)", "doc_count": 1},
+                {"key": "Successful logon (4624)", "doc_count": 1},
+            ],
+            "success": [
+                {"key": "false", "doc_count": 1},
+                {"key": "true", "doc_count": 1},
+            ],
+        },
+        "histogram": [{"date": "2026-10-05T00:00:00.000Z", "doc_count": 2}],
+    }
+    captured: dict = {}
+
+    def fake_get_alerts(**kwargs):
+        captured.update(kwargs)
+        return fake_alerts
+
+    monkeypatch.setattr(main, "get_alerts", fake_get_alerts)
+
+    resp = client.get("/alerts", params={"success": "false", "size": 5, "from": 0})
+
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["total"] == 2
+    assert len(body["hits"]) == 2
+    assert body["facets"]["asset"][0]["key"] == "ast-001"
+    assert body["histogram"][0]["doc_count"] == 2
+    assert captured["success"] is False
+    assert captured["size"] == 5
+    assert captured["from_"] == 0
+
+
+def test_alerts_backend_error_returns_502(monkeypatch):
+    def _boom(**kwargs):
+        raise RuntimeError("OpenSearch không kết nối được")
+
+    monkeypatch.setattr(main, "get_alerts", _boom)
+
+    resp = client.get("/alerts")
+
+    assert resp.status_code == 502
+    assert "OpenSearch" in resp.json()["detail"]
+
+
 def test_ask_text2cypher_ok(monkeypatch):
     fake_result = Text2CypherResult(
         question="Máy nào chạy dịch vụ có lỗ hổng nằm trong KEV?",

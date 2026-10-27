@@ -132,3 +132,60 @@ class RiskSummary(BaseModel):
 class RiskResponse(BaseModel):
     items: list[RiskAssetItem]
     summary: RiskSummary
+
+
+class AlertItem(BaseModel):
+    """1 doc thật trong index OpenSearch `security-alerts` — field khớp
+    `os_client.ALERTS_MAPPING`. Các field SIEM mở rộng (source_ip...) chỉ có ở
+    3 scenario bổ sung (lateral_movement/audit_cleared/new_privilege)."""
+
+    alert_id: str
+    orig_alert_id: str | None = None
+    time: str
+    event_id: int
+    success: bool
+    outcome: str
+    severity: str
+    rule: str
+    message: str
+    computer: str | None = None
+    target_user: str | None = None
+    asset_canonical_id: str | None = None
+    user_canonical_id: str | None = None
+    source: str | None = None
+    synthetic: bool | None = None
+    scenario: str | None = None
+    source_ip: str | None = None
+    dest_ip: str | None = None
+    source_port: int | None = None
+    dest_port: int | None = None
+    process_name: str | None = None
+    process_path: str | None = None
+    parent_process: str | None = None
+    file_hash: str | None = None
+    file_path: str | None = None
+
+
+class FacetBucket(BaseModel):
+    key: str
+    doc_count: int
+
+
+class AlertFacets(BaseModel):
+    """Terms agg tính trên CÙNG query đã lọc — không phải thống kê toàn index."""
+
+    asset: list[FacetBucket]
+    rule: list[FacetBucket]
+    success: list[FacetBucket]
+
+
+class HistogramBucket(BaseModel):
+    date: str
+    doc_count: int
+
+
+class AlertsResponse(BaseModel):
+    total: int
+    hits: list[AlertItem]
+    facets: AlertFacets
+    histogram: list[HistogramBucket]

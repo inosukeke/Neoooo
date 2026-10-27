@@ -21,7 +21,7 @@ const NAV_ITEMS = [
   { href: "/qa", label: "Hỏi-đáp", icon: MessagesSquare, enabled: true },
   { href: "/graph", label: "Đồ thị", icon: Network, enabled: false },
   { href: "/risk", label: "Risk & Patch", icon: ShieldAlert, enabled: true },
-  { href: "/alerts", label: "Alert", icon: Logs, enabled: false },
+  { href: "/alerts", label: "Alert", icon: Logs, enabled: true },
 ] as const;
 
 export function Sidebar({

@@ -61,6 +61,101 @@ def search_message(client, text: str) -> dict:
     }
 
 
+def query_alerts(
+    client,
+    *,
+    text: str | None = None,
+    asset_canonical_id: str | None = None,
+    rule: str | None = None,
+    success: bool | None = None,
+    start: str | None = None,
+    end: str | None = None,
+    size: int = 20,
+    from_: int = 0,
+    facet_size: int = 10,
+) -> dict:
+    """Tìm kiếm + lọc alert cho UI (thanh search + facet + histogram + bảng).
+
+    `text`: full-text trên field `message` (analyzed). `asset_canonical_id`/`rule`:
+    exact match (`rule` dùng subfield `rule.keyword` vì field gốc là text).
+    `success`: lọc đúng/sai. `start`/`end`: range trên field `time` (ISO 8601,
+    cùng định dạng index_alerts ghi vào — field type `date` nên OpenSearch parse
+    thật, không so sánh chuỗi). Không có filter nào -> `match_all`.
+
+    Facet (`asset`/`rule` terms agg) + `histogram` (date_histogram theo ngày) tính
+    trên CÙNG query đã lọc (không phải toàn bộ index) — phản ánh đúng phạm vi đang
+    xem, không phải thống kê toàn cục.
+
+    Trả {"total": n, "hits": [...], "facets": {"asset": [...], "rule": [...]},
+    "histogram": [...]}."""
+    must: list[dict] = []
+    filters: list[dict] = []
+    if text:
+        must.append({"match": {"message": text}})
+    if asset_canonical_id:
+        filters.append({"term": {"asset_canonical_id": asset_canonical_id}})
+    if rule:
+        filters.append({"term": {"rule.keyword": rule}})
+    if success is not None:
+        filters.append({"term": {"success": success}})
+    if start or end:
+        range_bounds: dict[str, str] = {}
+        if start:
+            range_bounds["gte"] = start
+        if end:
+            range_bounds["lte"] = end
+        filters.append({"range": {"time": range_bounds}})
+
+    bool_query: dict = {}
+    if must:
+        bool_query["must"] = must
+    if filters:
+        bool_query["filter"] = filters
+    query = {"bool": bool_query} if bool_query else {"match_all": {}}
+
+    body = {
+        "size": size,
+        "from": from_,
+        "query": query,
+        "sort": [{"time": {"order": "desc"}}],
+        "aggs": {
+            "by_asset": {
+                "terms": {"field": "asset_canonical_id", "size": facet_size}
+            },
+            "by_rule": {"terms": {"field": "rule.keyword", "size": facet_size}},
+            "by_success": {"terms": {"field": "success"}},
+            "by_day": {
+                "date_histogram": {"field": "time", "calendar_interval": "day"}
+            },
+        },
+    }
+    resp = client.search(index=ALERTS_INDEX, body=body)
+    aggs = resp["aggregations"]
+    return {
+        "total": resp["hits"]["total"]["value"],
+        "hits": [h["_source"] for h in resp["hits"]["hits"]],
+        "facets": {
+            "asset": [
+                {"key": b["key"], "doc_count": b["doc_count"]}
+                for b in aggs["by_asset"]["buckets"]
+            ],
+            "rule": [
+                {"key": b["key"], "doc_count": b["doc_count"]}
+                for b in aggs["by_rule"]["buckets"]
+            ],
+            # terms agg trên field boolean -> key_as_string "true"/"false" (key số 1/0).
+            "success": [
+                {"key": b["key_as_string"], "doc_count": b["doc_count"]}
+                for b in aggs["by_success"]["buckets"]
+            ],
+        },
+        "histogram": [
+            {"date": b["key_as_string"], "doc_count": b["doc_count"]}
+            for b in aggs["by_day"]["buckets"]
+        ],
+    }
+
+
 def term_vs_keyword_demo(client, computer_value: str) -> dict:
     """Minh họa rule opensearch.md: term trên field text (computer) vs computer.keyword.
 

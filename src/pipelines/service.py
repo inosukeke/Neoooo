@@ -35,7 +35,9 @@ with contextlib.suppress(Exception):
 import embeddings
 import graphrag_demo
 import llm_client
+import os_client
 import risk_scoring
+import search_alerts
 import text2cypher as t2c
 from neo4j import GraphDatabase, Query
 from schema_text import fetch_schema
@@ -67,6 +69,11 @@ def get_embed():
 @lru_cache(maxsize=1)
 def get_schema_text():
     return fetch_schema(get_driver())
+
+
+@lru_cache(maxsize=1)
+def get_search_client():
+    return os_client.make_client()
 
 
 def _chat_with_usage(messages):
@@ -290,3 +297,30 @@ def get_risk_ranking() -> dict:
             "pagerank_wired": False,
         },
     }
+
+
+def get_alerts(
+    *,
+    text: str | None = None,
+    asset_canonical_id: str | None = None,
+    rule: str | None = None,
+    success: bool | None = None,
+    start: str | None = None,
+    end: str | None = None,
+    size: int = 20,
+    from_: int = 0,
+) -> dict:
+    """Tìm kiếm/lọc alert thật (Giai đoạn 02, index OpenSearch `security-alerts`)
+    cho trang Alert & tìm kiếm log — bọc mỏng `search_alerts.query_alerts`, không
+    bịa field (xem `.claude/rules/opensearch.md`)."""
+    return search_alerts.query_alerts(
+        get_search_client(),
+        text=text,
+        asset_canonical_id=asset_canonical_id,
+        rule=rule,
+        success=success,
+        start=start,
+        end=end,
+        size=size,
+        from_=from_,
+    )

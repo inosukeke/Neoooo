@@ -8,12 +8,106 @@ skip bởi pytest.ini addopts (-m "not integration") nếu không thêm -m integ
 import pytest
 from search_alerts import (
     daily_histogram,
+    query_alerts,
     search_message,
     term_vs_keyword_demo,
     top_failed_logon_by_asset,
 )
 
 BURST_ASSET_ID = "ast-004"  # crosswalk["log:dc-01"] (prefix mới ast-*), xem index_alerts.BURST_COMPUTER
+
+
+class FakeOpenSearch:
+    """Fake client capture body gửi đi + trả response giả lập (unit test, không
+    cần OpenSearch thật) — cùng kiểu FakeOpenSearch ở tests/test_os_client.py."""
+
+    def __init__(self, response: dict):
+        self._response = response
+        self.last_call: dict | None = None
+
+    def search(self, index, body):
+        self.last_call = {"index": index, "body": body}
+        return self._response
+
+
+_CANNED_RESPONSE = {
+    "hits": {
+        "total": {"value": 2},
+        "hits": [
+            {"_source": {"alert_id": "AL-1", "message": "failed logon"}},
+            {"_source": {"alert_id": "AL-2", "message": "ok logon"}},
+        ],
+    },
+    "aggregations": {
+        "by_asset": {
+            "buckets": [{"key": "ast-004", "doc_count": 5}, {"key": "ast-001", "doc_count": 3}]
+        },
+        "by_rule": {"buckets": [{"key": "Failed logon (4625)", "doc_count": 5}]},
+        "by_success": {
+            "buckets": [
+                {"key_as_string": "false", "doc_count": 5},
+                {"key_as_string": "true", "doc_count": 3},
+            ]
+        },
+        "by_day": {
+            "buckets": [
+                {"key_as_string": "2026-10-04T00:00:00.000Z", "doc_count": 4},
+                {"key_as_string": "2026-10-05T00:00:00.000Z", "doc_count": 1},
+            ]
+        },
+    },
+}
+
+
+def test_query_alerts_no_filters_uses_match_all():
+    client = FakeOpenSearch(_CANNED_RESPONSE)
+    query_alerts(client)
+    assert client.last_call["body"]["query"] == {"match_all": {}}
+    assert client.last_call["body"]["sort"] == [{"time": {"order": "desc"}}]
+
+
+def test_query_alerts_builds_bool_with_must_and_filters():
+    client = FakeOpenSearch(_CANNED_RESPONSE)
+    query_alerts(
+        client,
+        text="failed",
+        asset_canonical_id="ast-004",
+        rule="Failed logon (4625)",
+        success=False,
+        start="2026-10-01T00:00:00Z",
+        end="2026-10-10T00:00:00Z",
+    )
+    body = client.last_call["body"]
+    assert body["query"]["bool"]["must"] == [{"match": {"message": "failed"}}]
+    assert {"term": {"asset_canonical_id": "ast-004"}} in body["query"]["bool"]["filter"]
+    assert {"term": {"rule.keyword": "Failed logon (4625)"}} in body["query"]["bool"]["filter"]
+    assert {"term": {"success": False}} in body["query"]["bool"]["filter"]
+    assert {
+        "range": {"time": {"gte": "2026-10-01T00:00:00Z", "lte": "2026-10-10T00:00:00Z"}}
+    } in body["query"]["bool"]["filter"]
+
+
+def test_query_alerts_parses_response_shape():
+    client = FakeOpenSearch(_CANNED_RESPONSE)
+    result = query_alerts(client, size=2)
+    assert result["total"] == 2
+    assert result["hits"] == [
+        {"alert_id": "AL-1", "message": "failed logon"},
+        {"alert_id": "AL-2", "message": "ok logon"},
+    ]
+    assert result["facets"]["asset"] == [
+        {"key": "ast-004", "doc_count": 5},
+        {"key": "ast-001", "doc_count": 3},
+    ]
+    assert result["facets"]["rule"] == [{"key": "Failed logon (4625)", "doc_count": 5}]
+    assert result["facets"]["success"] == [
+        {"key": "false", "doc_count": 5},
+        {"key": "true", "doc_count": 3},
+    ]
+    assert result["histogram"] == [
+        {"date": "2026-10-04T00:00:00.000Z", "doc_count": 4},
+        {"date": "2026-10-05T00:00:00.000Z", "doc_count": 1},
+    ]
 
 
 @pytest.mark.integration

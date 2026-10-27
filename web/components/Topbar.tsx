@@ -8,6 +8,7 @@ const PAGE_LABELS: Record<string, string> = {
   "/overview": "Tổng quan",
   "/qa": "Hỏi-đáp",
   "/risk": "Risk & Patch",
+  "/alerts": "Alert",
 };
 
 export function Topbar({

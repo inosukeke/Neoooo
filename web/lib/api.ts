@@ -101,6 +101,68 @@ export interface RiskResponse {
   summary: RiskSummary;
 }
 
+export interface AlertItem {
+  alert_id: string;
+  orig_alert_id: string | null;
+  time: string;
+  event_id: number;
+  success: boolean;
+  outcome: string;
+  severity: string;
+  rule: string;
+  message: string;
+  computer: string | null;
+  target_user: string | null;
+  asset_canonical_id: string | null;
+  user_canonical_id: string | null;
+  source: string | null;
+  synthetic: boolean | null;
+  scenario: string | null;
+  source_ip: string | null;
+  dest_ip: string | null;
+  source_port: number | null;
+  dest_port: number | null;
+  process_name: string | null;
+  process_path: string | null;
+  parent_process: string | null;
+  file_hash: string | null;
+  file_path: string | null;
+}
+
+export interface FacetBucket {
+  key: string;
+  doc_count: number;
+}
+
+export interface AlertFacets {
+  asset: FacetBucket[];
+  rule: FacetBucket[];
+  success: FacetBucket[];
+}
+
+export interface HistogramBucket {
+  date: string;
+  doc_count: number;
+}
+
+export interface AlertsResponse {
+  total: number;
+  hits: AlertItem[];
+  facets: AlertFacets;
+  histogram: HistogramBucket[];
+}
+
+export interface AlertsQuery {
+  text?: string;
+  asset_canonical_id?: string;
+  rule?: string;
+  success?: boolean;
+  start?: string;
+  end?: string;
+  size?: number;
+  from?: number;
+}
+
 export class ApiError extends Error {
   status: number;
   constructor(message: string, status: number) {
@@ -153,4 +215,17 @@ export function askQuestion(pipeline: Pipeline, question: string): Promise<AskAn
     method: "POST",
     body: JSON.stringify({ pipeline, question }),
   });
+}
+
+export function getAlerts(query: AlertsQuery = {}): Promise<AlertsResponse> {
+  const params = new URLSearchParams();
+  if (query.text) params.set("text", query.text);
+  if (query.asset_canonical_id) params.set("asset_canonical_id", query.asset_canonical_id);
+  if (query.rule) params.set("rule", query.rule);
+  if (query.success !== undefined) params.set("success", String(query.success));
+  if (query.start) params.set("start", query.start);
+  if (query.end) params.set("end", query.end);
+  params.set("size", String(query.size ?? 20));
+  params.set("from", String(query.from ?? 0));
+  return request<AlertsResponse>(`/alerts?${params.toString()}`);
 }
