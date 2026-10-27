@@ -24,6 +24,7 @@ for _p in (
     "src/graph",
     "src/search",
     "src/analysis/risk",
+    "src/analysis/attack_path",
 ):
     sys.path.insert(0, str(ROOT / _p))
 
@@ -32,6 +33,7 @@ with contextlib.suppress(Exception):
 
     load_dotenv(ROOT / ".env")
 
+import attack_path
 import embeddings
 import graphrag_demo
 import llm_client
@@ -324,3 +326,77 @@ def get_alerts(
         size=size,
         from_=from_,
     )
+
+
+# Đọc toàn bộ Asset + CONNECTS_TO cho canvas đồ thị (UI tự vẽ, xem
+# .claude/rules/graph-schema.md). CHỈ ĐỌC — không liên quan tới GDS.
+_GRAPH_ASSETS_QUERY = """MATCH (a:Asset)
+RETURN a.canonical_id AS canonical_id, a.hostname AS hostname,
+       a.asset_criticality AS asset_criticality
+ORDER BY canonical_id"""
+
+_GRAPH_EDGES_QUERY = """MATCH (a:Asset)-[r:CONNECTS_TO]->(b:Asset)
+RETURN a.canonical_id AS src, b.canonical_id AS dst, r.cost AS cost"""
+
+
+def get_attack_path(*, min_criticality: int = 4) -> dict:
+    """Đồ thị Asset + CONNECTS_TO + kết quả 3 thuật toán tấn công thật (Giai đoạn 04,
+    `attack_path.run_attack_path`: Dijkstra theo cost, BFS reachability, betweenness
+    choke point) cho trang Đồ thị & đường tấn công.
+
+    CHỈ ĐỌC: node/edge đọc bằng session READ, `run_attack_path` chỉ gọi
+    `gds.*.stream` (không `.write`/`.mutate`) trên bản chiếu GDS tạm thời tự drop
+    ngay sau khi tính (xem `attack_path.drop_projections`) — không ghi gì vào
+    Neo4j khi tải trang. Nếu `CONNECTS_TO.cost` thiếu/sai (risk_scoring.py chưa
+    chạy), `attack_path.MissingCostError` sẽ raise ra ngoài — KHÔNG tự ý chạy
+    risk_scoring để "sửa", để API layer trả lỗi rõ ràng."""
+    driver = get_driver()
+    with driver.session(default_access_mode="READ") as s:
+        asset_rows = [r.data() for r in s.run(_GRAPH_ASSETS_QUERY)]
+        edge_rows = [r.data() for r in s.run(_GRAPH_EDGES_QUERY)]
+
+    entries = attack_path.find_entry_points(driver)
+    crowns = attack_path.find_crown_jewels(driver, min_criticality=min_criticality)
+    paths, chokes, freq, reachable = attack_path.run_attack_path(
+        driver, min_criticality=min_criticality
+    )
+
+    entry_set, crown_set = set(entries), set(crowns)
+    nodes = [
+        {
+            "canonical_id": a["canonical_id"],
+            "hostname": a["hostname"],
+            "asset_criticality": a["asset_criticality"],
+            "is_entry_point": a["canonical_id"] in entry_set,
+            "is_crown_jewel": a["canonical_id"] in crown_set,
+        }
+        for a in asset_rows
+    ]
+    edges = [{"src": e["src"], "dst": e["dst"], "cost": e["cost"]} for e in edge_rows]
+
+    return {
+        "nodes": nodes,
+        "edges": edges,
+        "entry_points": entries,
+        "crown_jewels": crowns,
+        "paths": [
+            {
+                "source": p.source,
+                "target": p.target,
+                "total_cost": p.total_cost,
+                "hops": p.hops,
+            }
+            for p in paths
+        ],
+        "choke_points": [
+            {
+                "canonical_id": c.canonical_id,
+                "hostname": c.hostname,
+                "betweenness": c.betweenness,
+            }
+            for c in chokes
+        ],
+        "path_frequency": [{"canonical_id": cid, "count": n} for cid, n in freq],
+        "reachable": sorted(reachable),
+        "min_criticality": min_criticality,
+    }

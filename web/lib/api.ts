@@ -163,6 +163,50 @@ export interface AlertsQuery {
   from?: number;
 }
 
+export interface AttackGraphNode {
+  canonical_id: string;
+  hostname: string;
+  asset_criticality: number | null;
+  is_entry_point: boolean;
+  is_crown_jewel: boolean;
+}
+
+export interface AttackGraphEdge {
+  src: string;
+  dst: string;
+  cost: number;
+}
+
+export interface AttackPathItem {
+  source: string;
+  target: string;
+  total_cost: number;
+  hops: string[];
+}
+
+export interface ChokePointItem {
+  canonical_id: string;
+  hostname: string;
+  betweenness: number;
+}
+
+export interface PathFrequencyItem {
+  canonical_id: string;
+  count: number;
+}
+
+export interface AttackPathResponse {
+  nodes: AttackGraphNode[];
+  edges: AttackGraphEdge[];
+  entry_points: string[];
+  crown_jewels: string[];
+  paths: AttackPathItem[];
+  choke_points: ChokePointItem[];
+  path_frequency: PathFrequencyItem[];
+  reachable: string[];
+  min_criticality: number;
+}
+
 export class ApiError extends Error {
   status: number;
   constructor(message: string, status: number) {
@@ -228,4 +272,8 @@ export function getAlerts(query: AlertsQuery = {}): Promise<AlertsResponse> {
   params.set("size", String(query.size ?? 20));
   params.set("from", String(query.from ?? 0));
   return request<AlertsResponse>(`/alerts?${params.toString()}`);
+}
+
+export function getAttackPath(minCriticality = 4): Promise<AttackPathResponse> {
+  return request<AttackPathResponse>(`/attack-path?min_criticality=${minCriticality}`);
 }

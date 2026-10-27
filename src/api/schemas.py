@@ -189,3 +189,50 @@ class AlertsResponse(BaseModel):
     hits: list[AlertItem]
     facets: AlertFacets
     histogram: list[HistogramBucket]
+
+
+class AttackGraphNode(BaseModel):
+    canonical_id: str
+    hostname: str
+    asset_criticality: int | None = None
+    is_entry_point: bool = False
+    is_crown_jewel: bool = False
+
+
+class AttackGraphEdge(BaseModel):
+    src: str
+    dst: str
+    cost: float
+
+
+class AttackPathItem(BaseModel):
+    source: str
+    target: str
+    total_cost: float
+    hops: list[str]
+
+
+class ChokePointItem(BaseModel):
+    canonical_id: str
+    hostname: str
+    betweenness: float
+
+
+class PathFrequencyItem(BaseModel):
+    canonical_id: str
+    count: int
+
+
+class AttackPathResponse(BaseModel):
+    """Đồ thị Asset + CONNECTS_TO + kết quả 3 thuật toán (Dijkstra/BFS/betweenness)
+    thật (Giai đoạn 04, `attack_path.run_attack_path`) — dry-run, không ghi Neo4j."""
+
+    nodes: list[AttackGraphNode]
+    edges: list[AttackGraphEdge]
+    entry_points: list[str]
+    crown_jewels: list[str]
+    paths: list[AttackPathItem]
+    choke_points: list[ChokePointItem]
+    path_frequency: list[PathFrequencyItem]
+    reachable: list[str]
+    min_criticality: int

@@ -19,7 +19,7 @@ import type { HealthResponse } from "@/lib/api";
 const NAV_ITEMS = [
   { href: "/overview", label: "Tổng quan", icon: LayoutDashboard, enabled: true },
   { href: "/qa", label: "Hỏi-đáp", icon: MessagesSquare, enabled: true },
-  { href: "/graph", label: "Đồ thị", icon: Network, enabled: false },
+  { href: "/graph", label: "Đồ thị", icon: Network, enabled: true },
   { href: "/risk", label: "Risk & Patch", icon: ShieldAlert, enabled: true },
   { href: "/alerts", label: "Alert", icon: Logs, enabled: true },
 ] as const;

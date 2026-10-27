@@ -29,6 +29,7 @@ from prompts import to_jsonable
 from schemas import (
     AlertsResponse,
     AskRequest,
+    AttackPathResponse,
     GraphRAGAnswer,
     GraphSummary,
     HealthResponse,
@@ -42,6 +43,7 @@ from schemas import (
 )
 from service import (
     get_alerts,
+    get_attack_path,
     get_health,
     get_overview,
     get_risk_ranking,
@@ -150,6 +152,19 @@ def alerts(
             from_=from_,
         )
         return AlertsResponse(**data)
+    except Exception as exc:
+        raise HTTPException(
+            status_code=502, detail=f"{type(exc).__name__}: {exc}"
+        ) from exc
+
+
+@app.get("/attack-path", response_model=AttackPathResponse)
+def attack_path_endpoint(
+    min_criticality: int = Query(4, ge=1, le=5),
+) -> AttackPathResponse:
+    try:
+        data = get_attack_path(min_criticality=min_criticality)
+        return AttackPathResponse(**data)
     except Exception as exc:
         raise HTTPException(
             status_code=502, detail=f"{type(exc).__name__}: {exc}"

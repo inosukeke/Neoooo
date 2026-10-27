@@ -217,6 +217,99 @@ def test_alerts_backend_error_returns_502(monkeypatch):
     assert "OpenSearch" in resp.json()["detail"]
 
 
+def test_attack_path_ok(monkeypatch):
+    fake_data = {
+        "nodes": [
+            {
+                "canonical_id": "ast-010",
+                "hostname": "mail-01",
+                "asset_criticality": 3,
+                "is_entry_point": True,
+                "is_crown_jewel": False,
+            },
+            {
+                "canonical_id": "ast-004",
+                "hostname": "dc-01",
+                "asset_criticality": 5,
+                "is_entry_point": False,
+                "is_crown_jewel": True,
+            },
+        ],
+        "edges": [{"src": "ast-010", "dst": "ast-004", "cost": 2.08}],
+        "entry_points": ["ast-010"],
+        "crown_jewels": ["ast-004"],
+        "paths": [
+            {
+                "source": "ast-010",
+                "target": "ast-004",
+                "total_cost": 2.08,
+                "hops": ["ast-010", "ast-004"],
+            }
+        ],
+        "choke_points": [
+            {"canonical_id": "ast-000", "hostname": "app-01", "betweenness": 4.0}
+        ],
+        "path_frequency": [{"canonical_id": "ast-010", "count": 1}],
+        "reachable": ["ast-010", "ast-004"],
+        "min_criticality": 4,
+    }
+    captured: dict = {}
+
+    def fake_get_attack_path(**kwargs):
+        captured.update(kwargs)
+        return fake_data
+
+    monkeypatch.setattr(main, "get_attack_path", fake_get_attack_path)
+
+    resp = client.get("/attack-path")
+
+    assert resp.status_code == 200
+    body = resp.json()
+    assert len(body["nodes"]) == 2
+    assert body["nodes"][0]["is_entry_point"] is True
+    assert body["paths"][0]["total_cost"] == 2.08
+    assert body["choke_points"][0]["canonical_id"] == "ast-000"
+    assert captured["min_criticality"] == 4
+
+
+def test_attack_path_custom_min_criticality(monkeypatch):
+    captured: dict = {}
+
+    def fake_get_attack_path(**kwargs):
+        captured.update(kwargs)
+        return {
+            "nodes": [],
+            "edges": [],
+            "entry_points": [],
+            "crown_jewels": [],
+            "paths": [],
+            "choke_points": [],
+            "path_frequency": [],
+            "reachable": [],
+            "min_criticality": kwargs["min_criticality"],
+        }
+
+    monkeypatch.setattr(main, "get_attack_path", fake_get_attack_path)
+
+    resp = client.get("/attack-path", params={"min_criticality": 5})
+
+    assert resp.status_code == 200
+    assert captured["min_criticality"] == 5
+    assert resp.json()["min_criticality"] == 5
+
+
+def test_attack_path_backend_error_returns_502(monkeypatch):
+    def _boom(**kwargs):
+        raise RuntimeError("thiếu CONNECTS_TO.cost")
+
+    monkeypatch.setattr(main, "get_attack_path", _boom)
+
+    resp = client.get("/attack-path")
+
+    assert resp.status_code == 502
+    assert "cost" in resp.json()["detail"]
+
+
 def test_ask_text2cypher_ok(monkeypatch):
     fake_result = Text2CypherResult(
         question="Máy nào chạy dịch vụ có lỗ hổng nằm trong KEV?",
