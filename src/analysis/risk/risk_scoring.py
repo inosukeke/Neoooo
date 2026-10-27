@@ -332,9 +332,9 @@ def run_risk_scoring(
     `assign_context`: điền asset_criticality/exposure từ bảng tay trước khi đọc, chỉ
     chỗ đang null (coalesce, không đè giá trị gán tay).
     `write=False`: không ghi cost. (CLI --dry-run còn tắt cả assign_context.)
-    `pagerank`: NỢ có chủ đích — runner chưa tự gọi GDS PageRank; mặc định 0.0 nên
-    patch_priority hiện chỉ phản ánh criticality/5. Hook tham số đã sẵn để nối sau
-    (module Attack path).
+    `pagerank`: {canonical_id → PageRank chuẩn hoá 0..1}; caller tính qua GDS
+    (`attack_path.pagerank`) rồi truyền vào — runner giữ thuần (không import GDS) để
+    dễ test. Mặc định None/{} → pagerank_norm=0 nên patch_priority = criticality/5.
     """
     if assign_context:
         base = _read(
@@ -382,6 +382,11 @@ def main(argv=None) -> int:
         "--dry-run", action="store_true", help="chỉ in bảng, không ghi cost"
     )
     parser.add_argument("--top", type=int, default=15)
+    parser.add_argument(
+        "--no-pagerank",
+        action="store_true",
+        help="bỏ qua PageRank (GDS) — patch_priority chỉ còn asset_criticality/5",
+    )
     args = parser.parse_args(argv)
 
     from neo4j import GraphDatabase
@@ -391,8 +396,19 @@ def main(argv=None) -> int:
     password = os.environ.get("NEO4J_PASSWORD")
     auth = (user, password) if password else None
     with GraphDatabase.driver(uri, auth=auth) as driver:
+        pr: dict[str, float] = {}
+        if not args.no_pagerank:
+            try:
+                import attack_path
+
+                pr = attack_path.pagerank(driver)
+            except Exception as exc:  # noqa: BLE001 - GDS lỗi: cảnh báo, không chặn
+                print(f"[cảnh báo] PageRank bỏ qua ({type(exc).__name__}: {exc})")
         risks = run_risk_scoring(
-            driver, write=not args.dry_run, assign_context=not args.dry_run
+            driver,
+            write=not args.dry_run,
+            assign_context=not args.dry_run,
+            pagerank=pr,
         )
     print(format_ranking(risks, args.top))
     print(

@@ -121,6 +121,18 @@ YIELD nodeId, score
 RETURN gds.util.asNode(nodeId).hostname AS hostname,
        gds.util.asNode(nodeId).canonical_id AS canonical_id, score"""
 
+# PageRank: chiếu TOPOLOGY (không cần cost — khác Dijkstra) rồi stream. Dùng cho
+# patch_priority (gộp max() với asset_criticality). CHƯA verify trên GDS thật.
+PROJECT_TOPOLOGY_QUERY = """MATCH (s:Asset)-[:CONNECTS_TO]->(t:Asset)
+WITH gds.graph.project($name, s, t) AS g
+RETURN g.nodeCount AS nodes, g.relationshipCount AS rels"""
+
+PAGERANK_QUERY = """CALL gds.pageRank.stream($name)
+YIELD nodeId, score
+RETURN gds.util.asNode(nodeId).canonical_id AS canonical_id, score"""
+
+GRAPH_PAGERANK = "attack_path_pagerank"
+
 
 # ---------- I/O helper (driver tiêm từ ngoài) ----------
 def _read(driver, query: str, **params) -> list[dict]:
@@ -298,6 +310,34 @@ def choke_points(
     ]
     result.sort(key=lambda c: (-c.betweenness, c.canonical_id))
     return result
+
+
+def pagerank(
+    driver, *, graph_name: str = GRAPH_PAGERANK, normalize: bool = True
+) -> dict[str, float]:
+    """PageRank trên đồ thị Asset–CONNECTS_TO (có hướng, KHÔNG dùng trọng số cost)
+    qua GDS stream → ``{canonical_id: score}``.
+
+    ``normalize=True`` chia cho max để đưa về 0..1, khớp
+    ``risk_scoring.patch_priority`` (nhận ``pagerank_norm`` 0..1). Trả ``{}`` nếu
+    không có cạnh nào để chiếu. Luôn drop bản chiếu sau khi xong (kể cả khi lỗi) —
+    không để đồ thị nằm lại RAM. CHƯA verify trên GDS thật."""
+    try:
+        if _project(driver, graph_name, PROJECT_TOPOLOGY_QUERY) is None:
+            return {}
+        rows = _read(driver, PAGERANK_QUERY, name=graph_name)
+    finally:
+        _drop_if_exists(driver, graph_name)
+    scores = {
+        r["canonical_id"]: float(r["score"])
+        for r in rows
+        if r.get("canonical_id") is not None
+    }
+    if normalize and scores:
+        mx = max(scores.values())
+        if mx > 0:
+            scores = {k: v / mx for k, v in scores.items()}
+    return scores
 
 
 # ---------- CLI ----------

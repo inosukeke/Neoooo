@@ -239,6 +239,49 @@ def test_choke_points_empty_subgraph_and_full_graph():
     assert any(q == ap.PROJECT_FULL_QUERY for q, _ in d.calls)
 
 
+def test_pagerank_normalizes_and_drops_projection():
+    d = _FakeDriver(
+        {
+            ap.GRAPH_EXISTS_QUERY: [{"exists": False}],
+            ap.PROJECT_TOPOLOGY_QUERY: [{"nodes": 3, "rels": 2}],
+            ap.PAGERANK_QUERY: [
+                {"canonical_id": "a", "score": 2.0},
+                {"canonical_id": "b", "score": 1.0},
+                {"canonical_id": "c", "score": 0.5},
+            ],
+        }
+    )
+    pr = ap.pagerank(d)
+    assert pr == {"a": 1.0, "b": 0.5, "c": 0.25}  # chuẩn hoá theo max
+    # chiếu topology (KHÔNG cost) + drop sau khi xong
+    assert any(q == ap.PROJECT_TOPOLOGY_QUERY for q, _ in d.calls)
+    assert any(q == ap.GRAPH_EXISTS_QUERY for q, _ in d.calls)
+
+
+def test_pagerank_empty_when_no_edges_to_project():
+    d = _FakeDriver(
+        {
+            ap.GRAPH_EXISTS_QUERY: [{"exists": False}],
+            ap.PROJECT_TOPOLOGY_QUERY: [{"nodes": 0, "rels": 0}],
+        }
+    )
+    assert ap.pagerank(d) == {}
+
+
+def test_pagerank_raw_scores_when_normalize_false():
+    d = _FakeDriver(
+        {
+            ap.GRAPH_EXISTS_QUERY: [{"exists": False}],
+            ap.PROJECT_TOPOLOGY_QUERY: [{"nodes": 2, "rels": 1}],
+            ap.PAGERANK_QUERY: [
+                {"canonical_id": "a", "score": 2.0},
+                {"canonical_id": "b", "score": 1.0},
+            ],
+        }
+    )
+    assert ap.pagerank(d, normalize=False) == {"a": 2.0, "b": 1.0}
+
+
 def test_queries_are_module_constants_with_params_no_interpolation():
     import inspect
 

@@ -271,11 +271,17 @@ def get_risk_ranking() -> dict:
     Risk & Patch. Luôn chạy dry-run (`write=False, assign_context=False`, đúng khớp
     CLI `--dry-run`) — GET không được phép biến đổi đồ thị khi tải trang.
 
-    `patch_priority` hiện chỉ phản ánh `asset_criticality/5` vì PageRank chưa được
-    nối vào runner (nợ có chủ đích, xem CLAUDE.md) — `pagerank_wired=False` để UI
-    hiển thị rõ, không giả vờ đã có."""
+    `patch_priority` = max(PageRank chuẩn hoá, asset_criticality/5). PageRank tính
+    thật qua GDS (`attack_path.pagerank`, chiếu topology tạm thời tự drop) rồi
+    truyền vào runner — `pagerank_wired=True`. Nếu GDS lỗi thì fallback về {} (khi
+    đó patch_priority chỉ còn asset_criticality/5) và `pagerank_wired=False`."""
+    driver = get_driver()
+    try:
+        pr = attack_path.pagerank(driver)
+    except Exception:  # noqa: BLE001 - GDS lỗi không nên chặn trang Risk; fallback criticality
+        pr = {}
     risks = risk_scoring.run_risk_scoring(
-        get_driver(), write=False, assign_context=False
+        driver, write=False, assign_context=False, pagerank=pr
     )
     items = [
         {
@@ -296,7 +302,7 @@ def get_risk_ranking() -> dict:
             "high_risk_count": sum(1 for s in scores if s > HIGH_RISK_THRESHOLD),
             "high_risk_threshold": HIGH_RISK_THRESHOLD,
             "avg_risk_score": (sum(scores) / len(scores)) if scores else None,
-            "pagerank_wired": False,
+            "pagerank_wired": bool(pr),
         },
     }
 
