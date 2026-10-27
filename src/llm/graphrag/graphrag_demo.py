@@ -142,6 +142,10 @@ class GraphRAGResult:
     prompt_tokens: int
     completion_tokens: int
     model: str
+    # Token embedding CÂU HỎI (model embedding, giá riêng) — để Eval gộp chi phí
+    # embedding vào $/câu. 0 nếu caller không đo (answer_question không tự đo:
+    # callback `embed` chỉ trả vector; runner gán giá trị này sau khi chạy).
+    embedding_tokens: int = 0
 
 
 def _escape_angle_brackets(text: str) -> str:

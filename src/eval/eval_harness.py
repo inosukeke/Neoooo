@@ -85,6 +85,7 @@ class EvalResult:
     latency_ms: int
     prompt_tokens: int
     completion_tokens: int
+    embedding_tokens: int = 0  # token embedding câu hỏi (GraphRAG) — đã gộp vào cost_usd
     judge: dict | None = None  # điểm deepeval (chỉ câu fuzzy, khi có deepeval)
 
 
@@ -275,6 +276,7 @@ def run_eval(
     node_count: Callable[[], object] | None = None,
     log_path: Path | str | None = None,
     judge_fn: Callable | None = None,
+    embedding_price_per_1k: float = 0.0,
 ) -> list[EvalResult]:
     """Chạy từng câu qua đúng pipeline, GHI LOG ĐẦY ĐỦ (JSONL, nếu có `log_path`)
     trước khi chấm.
@@ -365,11 +367,25 @@ def run_eval(
                 status = "ok"
             pt = int(getattr(res, "prompt_tokens", 0) or 0)
             ct = int(getattr(res, "completion_tokens", 0) or 0)
-            cost = compute_cost(pt, ct, getattr(res, "model", "") or "", price_per_1k)
+            emb_tok = int(getattr(res, "embedding_tokens", 0) or 0)
+            # $/câu = chi phí chat (vào+ra) + chi phí embedding câu hỏi (GraphRAG),
+            # gộp chung để con số $/câu phản ánh ĐÚNG toàn bộ lời gọi LLM mỗi câu.
+            cost = compute_cost(
+                pt, ct, getattr(res, "model", "") or "", price_per_1k
+            ) + emb_tok / 1000 * embedding_price_per_1k
             latency = int(getattr(res, "latency_ms", 0) or 0)
             results.append(
                 EvalResult(
-                    *base, status, passed, reason, cost, latency, pt, ct, judge_scores
+                    *base,
+                    status,
+                    passed,
+                    reason,
+                    cost,
+                    latency,
+                    pt,
+                    ct,
+                    emb_tok,
+                    judge=judge_scores,
                 )
             )
     return results
@@ -412,10 +428,13 @@ def summarize(results: list[EvalResult]) -> dict:
             "CHƯA TÍNH CHI PHÍ: giá/1k token = 0 hoặc chưa cấu hình "
             "(--price-in/--price-out); $/câu hiển thị không có nghĩa."
         )
-    if any(r.pipeline == "graphrag" for r in results):
+    graphrag_rs = [r for r in results if r.pipeline == "graphrag"]
+    if graphrag_rs and not any(
+        getattr(r, "embedding_tokens", 0) for r in graphrag_rs
+    ):
         warns.append(
             "Chi phí GraphRAG CHƯA gồm lệnh embedding câu hỏi (usage embedding "
-            "không được pipeline trả về)."
+            "không đo được ở lần chạy này)."
         )
     return {
         "accuracy_by_category": by_cat,
@@ -650,6 +669,7 @@ def main(argv=None) -> int:
             return [dict(r) for r in records]
 
         def run_rag(question: str):
+            before = emb_tokens_box[0]
             res = graphrag_demo.answer_question(
                 question,
                 embed=embed,
@@ -660,6 +680,8 @@ def main(argv=None) -> int:
                 model=chain[0],
             )
             res.model = used_box["model"]
+            # Token embedding tiêu thụ ĐÚNG trong câu này (để run_eval gộp vào $/câu).
+            res.embedding_tokens = emb_tokens_box[0] - before
             return res
 
         results = run_eval(
@@ -670,13 +692,15 @@ def main(argv=None) -> int:
             node_count=graph_fingerprint,
             log_path=args.log,
             judge_fn=judge_fn,
+            embedding_price_per_1k=args.price_embed,
         )
 
     print(format_summary(summarize(results)))
     if emb_tokens_box[0]:
         emb_cost = emb_tokens_box[0] / 1000 * args.price_embed
+        included = " (ĐÃ gộp vào $/câu)" if args.price_embed else " (giá=0, chưa tính tiền)"
         print(
-            f"Chi phí embedding (riêng, chưa gộp vào $/câu trên): "
+            f"Chi phí embedding câu hỏi{included}: "
             f"{emb_tokens_box[0]} token × ${args.price_embed}/1k = ${emb_cost:.6f} "
             f"(model {emb_cfg.model})"
         )

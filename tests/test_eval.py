@@ -33,7 +33,7 @@ def t2c(status="ok", rows=None, answer="", errors=None, pt=1000, ct=1000, lat=10
     )
 
 
-def rag(answer="CVE-1 ok", context='{"id": "CVE-1"}', seeds=("CVE-1",), lat=50):
+def rag(answer="CVE-1 ok", context='{"id": "CVE-1"}', seeds=("CVE-1",), lat=50, emb_tokens=0):
     return SimpleNamespace(
         answer=answer,
         context=context,
@@ -42,6 +42,7 @@ def rag(answer="CVE-1 ok", context='{"id": "CVE-1"}', seeds=("CVE-1",), lat=50):
         completion_tokens=100,
         latency_ms=lat,
         model="m",
+        embedding_tokens=emb_tokens,
     )
 
 
@@ -465,6 +466,29 @@ def test_summarize_warns_when_cost_not_configured():
     res = [EvalResult("1", "q", "fuzzy", "graphrag", "ok", True, None, 0.0, 10, 5, 5)]
     w = " ".join(summarize(res)["warnings"])
     assert "CHƯA TÍNH CHI PHÍ" in w and "embedding" in w
+
+
+def test_embedding_cost_folded_into_cost_per_question():
+    """$/câu GraphRAG phải gồm cả chi phí embedding câu hỏi (B)."""
+    it = item(cat="fuzzy", pipe="graphrag", expected={"nonempty": True})
+    out = run_one(it, r=rag(emb_tokens=400), embedding_price_per_1k=2.0)
+    # chat: 200/1000*0.5 + 100/1000*1.5 = 0.25 ; embedding: 400/1000*2.0 = 0.8
+    assert out.embedding_tokens == 400
+    assert out.cost_usd == pytest.approx(0.25 + 0.8)
+
+
+def test_embedding_cost_zero_when_price_zero():
+    it = item(cat="fuzzy", pipe="graphrag", expected={"nonempty": True})
+    out = run_one(it, r=rag(emb_tokens=400))  # embedding_price_per_1k mặc định 0
+    assert out.cost_usd == pytest.approx(0.25)
+    assert out.embedding_tokens == 400  # vẫn ĐO được, chỉ chưa quy ra tiền
+
+
+def test_summarize_drops_embedding_warning_when_folded():
+    """Khi embedding đã đo & gộp (embedding_tokens > 0) thì KHÔNG cảnh báo thiếu."""
+    res = [EvalResult("1", "q", "fuzzy", "graphrag", "ok", True, None, 0.25, 50, 200, 100, 400)]
+    w = " ".join(summarize(res)["warnings"])
+    assert "embedding" not in w
 
 
 def test_main_gates_adversarial(monkeypatch, capsys):
