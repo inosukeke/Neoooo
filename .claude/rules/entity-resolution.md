@@ -1,6 +1,6 @@
 ---
 paths:
-  - "src/ingestion/resolution/**"
+  - "src/secgraph/ingestion/resolution/**"
 ---
 
 # Entity resolution — quy tắc

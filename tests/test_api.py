@@ -5,10 +5,11 @@ monkeypatch — không gọi Neo4j/LLM thật, theo đúng convention
 `tests/test_text2cypher.py`.
 """
 
-import main
 from fastapi.testclient import TestClient
-from graphrag_demo import GraphRAGResult
-from text2cypher import Text2CypherResult
+
+from secgraph.api import main
+from secgraph.llm.graphrag.graphrag_demo import GraphRAGResult
+from secgraph.llm.text2cypher.text2cypher import Text2CypherResult
 
 client = TestClient(main.app)
 

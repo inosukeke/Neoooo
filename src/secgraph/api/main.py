@@ -1,0 +1,200 @@
+"""FastAPI backend bọc 2 pipeline Text2Cypher/GraphRAG (xem `src/pipelines/service.py`)
+cho UI web mới (`web/`). Dùng chung logic với `src/ui/app.py` (Streamlit) — không
+có bộ nhớ hội thoại: mỗi `POST /ask` xử lý độc lập.
+
+Chạy:  uvicorn main:app --reload --port 8000 --app-dir src/api
+(`--app-dir` thêm `src/api` vào sys.path để import `main`/`schemas` như module
+top-level — cùng kiểu sys.path phẳng mà các script khác trong repo dùng, xem
+`pytest.ini`.)
+Yêu cầu: Neo4j đang chạy + đã nạp pipeline, env LLM trong `.env`/shell (xem
+`src/pipelines/service.py`). CORS origin đọc từ env `API_CORS_ORIGINS`
+(phẩy ngăn cách, mặc định `http://localhost:3000`).
+"""
+
+import json
+import os
+
+from fastapi import FastAPI, HTTPException, Query
+from fastapi.middleware.cors import CORSMiddleware
+
+from secgraph.api.schemas import (
+    AlertsResponse,
+    AskRequest,
+    AttackPathResponse,
+    GraphRAGAnswer,
+    GraphSummary,
+    HealthResponse,
+    Neo4jHealth,
+    OverviewCounts,
+    OverviewResponse,
+    RetrievedSource,
+    RiskResponse,
+    Text2CypherAnswer,
+    VectorIndexHealth,
+)
+from secgraph.llm.text2cypher.prompts import to_jsonable
+from secgraph.pipelines.service import (
+    get_alerts,
+    get_attack_path,
+    get_health,
+    get_overview,
+    get_risk_ranking,
+    run_graphrag,
+    run_text2cypher,
+)
+
+app = FastAPI(title="Đồ thị tri thức an ninh — API", version="0.1.0")
+
+_origins = [
+    o.strip()
+    for o in os.environ.get("API_CORS_ORIGINS", "http://localhost:3000").split(",")
+    if o.strip()
+]
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=_origins,
+    allow_methods=["GET", "POST"],
+    allow_headers=["*"],
+)
+
+
+def _parse_graphrag_sources(
+    context: str, seed_scores: dict[str, float]
+) -> list[RetrievedSource]:
+    """`context` là JSON-lines (một record/dòng, xem `graphrag_demo.build_context`).
+    Gắn `score` thật nếu record đó là 1 trong các seed vector search."""
+    sources: list[RetrievedSource] = []
+    for line in context.splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            record = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        rid = record.get("id")
+        sources.append(
+            RetrievedSource(
+                id=str(rid) if rid is not None else "",
+                score=seed_scores.get(rid),
+                data=record,
+            )
+        )
+    return sources
+
+
+@app.get("/health", response_model=HealthResponse)
+def health() -> HealthResponse:
+    data = get_health()
+    return HealthResponse(
+        neo4j=Neo4jHealth(**data["neo4j"]),
+        vector_index=VectorIndexHealth(**data["vector_index"]),
+        model_chain=data["model_chain"],
+        graph_summary=GraphSummary(**data["graph_summary"]),
+        read_only=data["read_only"],
+        checked_at=data["checked_at"],
+    )
+
+
+@app.get("/overview", response_model=OverviewResponse)
+def overview() -> OverviewResponse:
+    data = get_overview()
+    return OverviewResponse(
+        neo4j=Neo4jHealth(**data["neo4j"]),
+        vector_index=VectorIndexHealth(**data["vector_index"]),
+        model_chain=data["model_chain"],
+        graph_summary=GraphSummary(**data["graph_summary"]),
+        read_only=data["read_only"],
+        checked_at=data["checked_at"],
+        counts=OverviewCounts(**data["counts"]),
+    )
+
+
+@app.get("/risk", response_model=RiskResponse)
+def risk() -> RiskResponse:
+    try:
+        data = get_risk_ranking()
+        return RiskResponse(**data)
+    except Exception as exc:
+        raise HTTPException(
+            status_code=502, detail=f"{type(exc).__name__}: {exc}"
+        ) from exc
+
+
+@app.get("/alerts", response_model=AlertsResponse)
+def alerts(
+    text: str | None = None,
+    asset_canonical_id: str | None = None,
+    rule: str | None = None,
+    success: bool | None = None,
+    start: str | None = None,
+    end: str | None = None,
+    size: int = Query(20, ge=1, le=200),
+    from_: int = Query(0, ge=0, alias="from"),
+) -> AlertsResponse:
+    try:
+        data = get_alerts(
+            text=text,
+            asset_canonical_id=asset_canonical_id,
+            rule=rule,
+            success=success,
+            start=start,
+            end=end,
+            size=size,
+            from_=from_,
+        )
+        return AlertsResponse(**data)
+    except Exception as exc:
+        raise HTTPException(
+            status_code=502, detail=f"{type(exc).__name__}: {exc}"
+        ) from exc
+
+
+@app.get("/attack-path", response_model=AttackPathResponse)
+def attack_path_endpoint(
+    min_criticality: int = Query(4, ge=1, le=5),
+) -> AttackPathResponse:
+    try:
+        data = get_attack_path(min_criticality=min_criticality)
+        return AttackPathResponse(**data)
+    except Exception as exc:
+        raise HTTPException(
+            status_code=502, detail=f"{type(exc).__name__}: {exc}"
+        ) from exc
+
+
+@app.post("/ask", response_model=Text2CypherAnswer | GraphRAGAnswer)
+def ask(req: AskRequest) -> Text2CypherAnswer | GraphRAGAnswer:
+    try:
+        if req.pipeline == "text2cypher":
+            result = run_text2cypher(req.question)
+            return Text2CypherAnswer(
+                question=result.question,
+                status=result.status,
+                answer=result.answer,
+                cypher=result.cypher,
+                rows=to_jsonable(result.rows),
+                errors=result.errors,
+                attempts=result.attempts,
+                fixes=result.fixes,
+                latency_ms=result.latency_ms,
+                prompt_tokens=result.prompt_tokens,
+                completion_tokens=result.completion_tokens,
+                model=result.model,
+            )
+
+        result, seed_scores = run_graphrag(req.question)
+        return GraphRAGAnswer(
+            question=result.question,
+            answer=result.answer,
+            sources=_parse_graphrag_sources(result.context, seed_scores),
+            seed_ids=result.seed_ids,
+            latency_ms=result.latency_ms,
+            prompt_tokens=result.prompt_tokens,
+            completion_tokens=result.completion_tokens,
+            model=result.model,
+        )
+    except Exception as exc:
+        raise HTTPException(
+            status_code=502, detail=f"{type(exc).__name__}: {exc}"
+        ) from exc

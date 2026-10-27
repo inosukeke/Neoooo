@@ -1,6 +1,6 @@
 ---
 paths:
-  - "src/llm/graphrag/**"
+  - "src/secgraph/llm/graphrag/**"
 ---
 
 # GraphRAG — quy tắc

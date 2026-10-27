@@ -2,8 +2,9 @@
 
 import os
 
-import attack_path as ap
 import pytest
+
+import secgraph.analysis.attack_path.attack_path as ap
 
 
 class _Rec:

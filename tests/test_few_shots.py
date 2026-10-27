@@ -8,11 +8,12 @@ import json
 from pathlib import Path
 
 import pytest
-from schema_text import fetch_schema
-from validator import validate_cypher
+
+from secgraph.llm.text2cypher.schema_text import fetch_schema
+from secgraph.llm.text2cypher.validator import validate_cypher
 
 FEW_SHOTS_PATH = (
-    Path(__file__).parent.parent / "src" / "llm" / "text2cypher" / "few_shots.json"
+    Path(__file__).parent.parent / "src" / "secgraph" / "llm" / "text2cypher" / "few_shots.json"
 )
 
 REQUIRED_COVERAGE = {

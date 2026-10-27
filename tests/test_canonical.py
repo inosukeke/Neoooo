@@ -4,7 +4,7 @@ import json
 import os
 import re
 
-from canonical import (
+from secgraph.ingestion.canonical import (
     alert_id,
     asset_canonical_id,
     event_meta,
@@ -13,7 +13,9 @@ from canonical import (
 )
 
 INGESTION_DIR = os.path.normpath(
-    os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "src", "ingestion")
+    os.path.join(
+        os.path.dirname(os.path.abspath(__file__)), "..", "src", "secgraph", "ingestion"
+    )
 )
 ALERTS_PATH = os.path.join(INGESTION_DIR, "normalized", "alerts.json")
 

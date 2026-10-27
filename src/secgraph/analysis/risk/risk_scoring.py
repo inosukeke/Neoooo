@@ -34,13 +34,6 @@ import os
 import sys
 from collections import deque
 from dataclasses import dataclass, field
-from pathlib import Path
-
-# Chạy trực tiếp `python src/analysis/risk/risk_scoring.py` thì sys.path[0] chỉ là thư
-# mục risk/ -> thêm src/graph để import được graph_rules (pytest đã có pythonpath riêng).
-_GRAPH_DIR = str(Path(__file__).resolve().parents[2] / "graph")
-if _GRAPH_DIR not in sys.path:
-    sys.path.insert(0, _GRAPH_DIR)
 
 log = logging.getLogger(__name__)
 
@@ -82,7 +75,7 @@ CRITICALITY_BY_ROLE: dict[str, int] = {
 
 def asset_role_of(hostname: str) -> str:
     """Role của asset theo prefix hostname — tái sử dụng rule của graph_rules."""
-    from graph_rules import (
+    from secgraph.graph.graph_rules import (
         asset_role,
     )  # import trễ: hàm thuần phía trên không phụ thuộc yaml
 
@@ -399,7 +392,7 @@ def main(argv=None) -> int:
         pr: dict[str, float] = {}
         if not args.no_pagerank:
             try:
-                import attack_path
+                from secgraph.analysis.attack_path import attack_path
 
                 pr = attack_path.pagerank(driver)
             except Exception as exc:  # noqa: BLE001 - GDS lỗi: cảnh báo, không chặn

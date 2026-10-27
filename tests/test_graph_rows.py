@@ -1,6 +1,6 @@
 """Unit test cho src/graph/graph_rows.py — dùng dữ liệu thật trong src/ingestion/."""
 
-from graph_rows import (
+from secgraph.graph.graph_rows import (
     build_account_rows,
     build_alert_rows,
     build_asset_rows,

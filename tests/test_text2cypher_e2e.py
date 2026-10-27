@@ -12,9 +12,10 @@ Mỗi lần chạy tốn tiền thật (gọi LLM) — không chạy lại khôn
 """
 
 import pytest
-from llm_client import chat, load_llm_config, make_client
-from schema_text import fetch_schema
-from text2cypher import answer_question, load_few_shots, main
+
+from secgraph.llm.text2cypher.llm_client import chat, load_llm_config, make_client
+from secgraph.llm.text2cypher.schema_text import fetch_schema
+from secgraph.llm.text2cypher.text2cypher import answer_question, load_few_shots, main
 
 # Môi trường có thể có engineer khác (eng-loader) chạy loader cùng lúc, thêm
 # node hợp lệ (vd `LoadMeta`) — không hardcode số tuyệt đối, chỉ so sánh

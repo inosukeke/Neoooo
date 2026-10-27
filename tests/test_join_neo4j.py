@@ -6,7 +6,8 @@ pytest.ini addopts (-m "not integration") nếu không thêm -m integration.
 """
 
 import pytest
-from join_neo4j import top_assets_with_kev
+
+from secgraph.search.join_neo4j import top_assets_with_kev
 
 BURST_ASSET_ID = "ast-004"  # crosswalk["log:dc-01"] (prefix mới ast-*), khớp T013 (search_alerts)
 

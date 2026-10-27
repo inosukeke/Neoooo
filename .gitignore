@@ -4,3 +4,8 @@ __pycache__/
 .venv/
 venv/
 eval_log*.jsonl
+
+# Packaging (editable install)
+*.egg-info/
+build/
+dist/

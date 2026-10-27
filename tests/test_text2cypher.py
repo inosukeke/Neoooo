@@ -5,9 +5,9 @@ là hàm Python giả tiêm vào (callback), đếm số lần gọi bằng Magi
 
 from unittest.mock import MagicMock
 
-from prompts import MAX_CELL_CHARS, build_interpret_messages
-from schema_text import GraphSchema
-from text2cypher import (
+from secgraph.llm.text2cypher.prompts import MAX_CELL_CHARS, build_interpret_messages
+from secgraph.llm.text2cypher.schema_text import GraphSchema
+from secgraph.llm.text2cypher.text2cypher import (
     EMPTY_ANSWER,
     MAX_ROWS_TO_LLM,
     answer_question,

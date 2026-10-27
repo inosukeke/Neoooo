@@ -1,7 +1,7 @@
 ---
 paths:
-  - "src/graph/algo/**"
-  - "src/analysis/**"
+  - "src/secgraph/graph/algo/**"
+  - "src/secgraph/analysis/**"
 ---
 
 # Thuật toán đồ thị — quy tắc dùng

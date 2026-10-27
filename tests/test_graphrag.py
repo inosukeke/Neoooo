@@ -2,13 +2,14 @@
 callback là hàm giả."""
 
 import pytest
-from embeddings import (
+
+from secgraph.llm.graphrag.embeddings import (
     ConfigError,
     embed_texts,
     embed_texts_with_usage,
     load_embedding_config,
 )
-from graphrag_demo import (
+from secgraph.llm.graphrag.graphrag_demo import (
     EMPTY_ANSWER,
     EXPAND_QUERY,
     INJECTION_REFUSAL,

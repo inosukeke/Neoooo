@@ -1,6 +1,6 @@
 ---
 paths:
-  - "src/search/**"
+  - "src/secgraph/search/**"
 ---
 
 # OpenSearch — quy tắc

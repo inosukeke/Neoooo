@@ -1,6 +1,6 @@
 """Unit test cho src/config.py — centralized config (S0.2)."""
 
-from config import (
+from secgraph.config import (
     LLMConfig,
     Neo4jConfig,
     NVDConfig,

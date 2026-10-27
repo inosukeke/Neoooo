@@ -3,7 +3,7 @@ Mock OpenSearch client để verify retry/backoff logic không cần OpenSearch 
 
 from unittest.mock import MagicMock, patch
 
-import index_alerts
+from secgraph.search import index_alerts
 
 
 def _mock_bulk_with_errors(errors_per_call):

@@ -2,7 +2,7 @@
 phải dữ liệu đo thật, xem đầu graph_rules.py). AssetRow/ServiceRow dựng tay, KHÔNG
 import graph_rows ở phần unit test (chỉ import ở 2 test tích hợp nhẹ cuối file)."""
 
-from graph_rules import (
+from secgraph.graph.graph_rules import (
     asset_role,
     derive_admin_to,
     derive_connects_to,
@@ -258,7 +258,7 @@ def test_connects_to_no_open_port_no_edge():
 
 # ---------- tích hợp nhẹ trên dữ liệu thật (không cần Neo4j) --------------------------
 def test_map_service_vulns_on_real_data():
-    from graph_rows import build_service_rows, load_inputs
+    from secgraph.graph.graph_rows import build_service_rows, load_inputs
 
     data = load_inputs()
     services = build_service_rows(data["services"], data["crosswalk"])
@@ -269,7 +269,11 @@ def test_map_service_vulns_on_real_data():
 
 
 def test_derive_admin_to_and_connects_to_on_real_data():
-    from graph_rows import build_asset_rows, build_service_rows, load_inputs
+    from secgraph.graph.graph_rows import (
+        build_asset_rows,
+        build_service_rows,
+        load_inputs,
+    )
 
     data = load_inputs()
     assets = build_asset_rows(data["assets"], data["crosswalk"], data["review_queue"])
@@ -288,7 +292,7 @@ def test_derive_admin_to_and_connects_to_on_real_data():
 # ---------- S1.2: rules.yaml metadata ----------
 def test_rules_yaml_loaded_and_backward_compat():
     """Rules load từ rules.yaml giữ nguyên shape dict — code cũ không phải đổi."""
-    from graph_rules import (
+    from secgraph.graph.graph_rules import (
         ADMIN_RULES,
         CONNECT_RULES,
         CVE_SERVICE_RULES,
@@ -313,7 +317,7 @@ def test_rules_yaml_loaded_and_backward_compat():
 def test_connect_rules_strip_metadata_to_legacy_shape():
     """CONNECT_RULES expose cho code cũ chỉ có id/src/dst/ports — metadata bị strip
     để backward compat với `derive_connects_to`."""
-    from graph_rules import CONNECT_RULES
+    from secgraph.graph.graph_rules import CONNECT_RULES
 
     for rule in CONNECT_RULES:
         assert set(rule.keys()) >= {"id", "src", "dst", "ports"}
@@ -322,7 +326,7 @@ def test_connect_rules_strip_metadata_to_legacy_shape():
 
 def test_cve_service_rules_preserve_version_none():
     """version=None (match mọi version) phải giữ nguyên qua YAML load."""
-    from graph_rules import CVE_SERVICE_RULES
+    from secgraph.graph.graph_rules import CVE_SERVICE_RULES
 
     terminal_rule = next(
         r for r in CVE_SERVICE_RULES if r["product"] == "Microsoft Terminal Services"

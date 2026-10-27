@@ -19,17 +19,18 @@ import logging
 import os
 import random
 import time
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
-from canonical import (
+from opensearchpy import helpers
+
+from secgraph.ingestion.canonical import (
     asset_canonical_id,
     enrich_alert,
     event_meta,
     load_crosswalk,
     user_canonical_id,
 )
-from opensearchpy import helpers
-from os_client import ALERTS_INDEX, ensure_index, make_client
+from secgraph.search.os_client import ALERTS_INDEX, ensure_index, make_client
 
 logger = logging.getLogger(__name__)
 
@@ -99,7 +100,7 @@ def expand_log_sample(
         )
 
         orig_time = datetime.strptime(alert["time"], TIME_FMT).replace(
-            tzinfo=timezone.utc
+            tzinfo=UTC
         )
         for k in range(1, factor):
             rng = random.Random(seed + idx * factor + k)
@@ -127,7 +128,7 @@ def expand_log_sample(
     burst_asset_id = asset_canonical_id(cw, "log", BURST_COMPUTER)
     burst_user_id = user_canonical_id(cw, "idp", BURST_USER)
     severity, rule = event_meta(4625)
-    start = datetime.strptime(BURST_START, TIME_FMT).replace(tzinfo=timezone.utc)
+    start = datetime.strptime(BURST_START, TIME_FMT).replace(tzinfo=UTC)
     for i in range(burst):
         t = start + timedelta(seconds=30 * i)
         burst_id = f"AL-burst-{i:03d}"
@@ -210,7 +211,7 @@ def _add_scenario_alerts(out: list[dict], cw: dict) -> None:
     - audit_cleared: 1102 (audit log cleared — defense evasion)
     - new_privilege: 4672 (special privileges assigned — privilege escalation)
     """
-    base = datetime.strptime(BURST_START, TIME_FMT).replace(tzinfo=timezone.utc)
+    base = datetime.strptime(BURST_START, TIME_FMT).replace(tzinfo=UTC)
     # Lateral movement: workstation ws-it-01 đăng nhập vào dc-01 (server khác) trong 30 phút
     _emit_scenario_doc(
         out,

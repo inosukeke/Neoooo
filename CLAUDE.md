@@ -31,9 +31,9 @@ Chi tiết "Đã chạy thật" trong `docs/giai-doan-02-data-pipeline/{nguon-du
 
 **Giai đoạn 05 (UI) đã code xong 2 lớp UI dùng chung logic:** *service layer* `src/pipelines/service.py` (framework-agnostic, bọc Text2Cypher/GraphRAG/risk/attack_path/search + `get_health/get_overview/get_risk_ranking/get_alerts/get_attack_path`, mọi truy vấn chỉ-đọc, risk dry-run, attack path chỉ `gds.*.stream`+drop projection). *UI Streamlit* `src/ui/app.py` (demo tối giản màn Hỏi-đáp). *UI web* `src/api/` (FastAPI: `/health /overview /ask /risk /alerts /attack-path`, Pydantic schema, CORS) + `web/` (Next.js App Router, dark-theme, **cả 5 màn đã code**: Tổng quan/Hỏi-đáp/Đồ thị & đường tấn công/Risk & Patch/Alert; đồ thị tấn công vẽ SVG force-layout tự viết). 15 unit test FastAPI (`tests/test_api.py`, mock service). UI phơi rõ cờ `read_only=true`/`pagerank_wired=false`, không bịa số.
 
-**Trạng thái verify (2026-10-27)**: G03 + G04 đã qua code → review (subagent) → fix → unit test (fake) + ruff sạch, **và đã chạy LIVE** trên stack Docker (Neo4j 5.26 + GDS 2.13.14 + OpenSearch 2.17.1): load/risk/attack_path/schema_text/search integration pass; **eval lớp LLM chạy thật** — 35/43 câu: structured 80%, fuzzy 87%, $0.000259/câu, xem `docs/00-tong-quan/ket-qua-eval.md`. **Adversarial 8 câu ĐÃ chạy live** (data an toàn 8/8 — node 160→160; **injection leak đã vá** bằng guard đầu vào xác định `graphrag_demo.is_injection_attempt` + siết prompt, verify live 0 leak, 0 false-positive trên 35 câu golden). **Judge `deepeval` ĐÃ chạy live** (model qua env `DEEPEVAL_JUDGE_MODEL`) — số còn **sơ bộ** vì "tự chấm tay 10 câu đo đồng thuận judge" **CHƯA làm** (cần người). Fallback chain hiện `gpt-5-nano → gpt-4.1-nano → gpt-4o-mini`; đã verify live cả Text2Cypher lẫn UI web trả lời thật qua gateway (có lúc gpt-5-nano trả 403/503 per-model → tự rơi model kế, xem `llm_client._is_retryable`). **Chi phí embedding câu hỏi ĐÃ gộp vào $/câu** (GraphRAG: `embedding_tokens` per-câu × `--price-embed`, verify live). **Còn CHƯA làm**: chấm tay 10 câu validate judge (cần người), đóng gói pyproject bỏ `sys.path` hack (refactor ~26 file, để riêng), scale >10k node. Embedding dùng `text-embedding-3-small`.
+**Trạng thái verify (2026-10-27)**: G03 + G04 đã qua code → review (subagent) → fix → unit test (fake) + ruff sạch, **và đã chạy LIVE** trên stack Docker (Neo4j 5.26 + GDS 2.13.14 + OpenSearch 2.17.1): load/risk/attack_path/schema_text/search integration pass; **eval lớp LLM chạy thật** — 35/43 câu: structured 80%, fuzzy 87%, $0.000259/câu, xem `docs/00-tong-quan/ket-qua-eval.md`. **Adversarial 8 câu ĐÃ chạy live** (data an toàn 8/8 — node 160→160; **injection leak đã vá** bằng guard đầu vào xác định `graphrag_demo.is_injection_attempt` + siết prompt, verify live 0 leak, 0 false-positive trên 35 câu golden). **Judge `deepeval` ĐÃ chạy live** (model qua env `DEEPEVAL_JUDGE_MODEL`) — số còn **sơ bộ** vì "tự chấm tay 10 câu đo đồng thuận judge" **CHƯA làm** (cần người). Fallback chain hiện `gpt-5-nano → gpt-4.1-nano → gpt-4o-mini`; đã verify live cả Text2Cypher lẫn UI web trả lời thật qua gateway (có lúc gpt-5-nano trả 403/503 per-model → tự rơi model kế, xem `llm_client._is_retryable`). **Chi phí embedding câu hỏi ĐÃ gộp vào $/câu** (GraphRAG: `embedding_tokens` per-câu × `--price-embed`, verify live). **Đã đóng gói package `secgraph`** (`pyproject.toml` src-layout, `pip install -e .`) — **bỏ hết `sys.path` hack** (8 file) và PYTHONPATH; import tuyệt đối `secgraph.*`, chạy bằng `python -m secgraph...`. **Còn CHƯA làm**: chấm tay 10 câu validate judge (cần người), scale >10k node. Embedding dùng `text-embedding-3-small`.
 
-Neo4j chạy no-auth cho demo local (`NEO4J_AUTH=none`); script dùng `auth=None` khi không có `NEO4J_PASSWORD`. Có `pytest.ini` + `tests/` (≈345 unit không cần service, pass 100% + ~35 integration cần Neo4j/OpenSearch/LLM thật — 2 trong số đó phá hủy dữ liệu, gate bằng `ALLOW_DESTRUCTIVE_TESTS=1`; `python -m pytest tests/ -v` mặc định bỏ qua integration) và `ruff==0.16.10` + `deepeval==4.1.10` đã pin trong `requirements.txt` (ruff sạch toàn repo). CI GitHub Actions (`.github/workflows/ci.yml`) chạy ruff + unit test mỗi push/PR (cài requirements trừ deepeval để nhanh). Các integration test Neo4j/GDS/OpenSearch (load/risk/attack_path/schema_text/search) đã chạy LIVE pass trên Docker trong phiên verify. Tiến độ bài giảng (lý thuyết, không phải code) theo dõi trong Claude Project (`claude/tien-do-bai-giang.md`), không duplicate ở đây. Lộ trình đầy đủ: `docs/00-tong-quan/lo-trinh.md`.
+Neo4j chạy no-auth cho demo local (`NEO4J_AUTH=none`); script dùng `auth=None` khi không có `NEO4J_PASSWORD`. Cấu hình pytest ở `pyproject.toml` (`[tool.pytest.ini_options]`, src-layout — không còn `pytest.ini`/PYTHONPATH) + `tests/` (≈345 unit không cần service, pass 100% + ~35 integration cần Neo4j/OpenSearch/LLM thật — 2 trong số đó phá hủy dữ liệu, gate bằng `ALLOW_DESTRUCTIVE_TESTS=1`; `python -m pytest tests/ -v` mặc định bỏ qua integration) và `ruff==0.16.10` + `deepeval==4.1.10` đã pin trong `requirements.txt` (ruff sạch toàn repo). CI GitHub Actions (`.github/workflows/ci.yml`) chạy ruff + unit test mỗi push/PR (cài requirements trừ deepeval để nhanh). Các integration test Neo4j/GDS/OpenSearch (load/risk/attack_path/schema_text/search) đã chạy LIVE pass trên Docker trong phiên verify. Tiến độ bài giảng (lý thuyết, không phải code) theo dõi trong Claude Project (`claude/tien-do-bai-giang.md`), không duplicate ở đây. Lộ trình đầy đủ: `docs/00-tong-quan/lo-trinh.md`.
 
 ## Tech stack
 - Neo4j 5.26 Community (Docker, bind 127.0.0.1) + GDS 2.13.x
@@ -43,10 +43,10 @@ Neo4j chạy no-auth cho demo local (`NEO4J_AUTH=none`); script dùng `auth=None
 
 ## Cấu trúc thư mục
 ```
-src/
+src/secgraph/            Package Python (cài `pip install -e .` → import `secgraph.*`, hết sys.path hack)
   graph/                 Giai đoạn 01 — schema, seed, migration (model_v2.py); Giai đoạn 02 — loader (load_graph.py)
   graph/algo/            Giai đoạn 01/04 — GDS algorithms, attack path, betweenness
-  ingestion/             Giai đoạn 02 — parser Nmap/NVD/EPSS/KEV/identity/log
+  ingestion/             Giai đoạn 02 — parser Nmap/NVD/EPSS/KEV/identity/log (+ data/cache/normalized/resolved)
   ingestion/resolution/  Giai đoạn 02 — entity resolution
   search/                Giai đoạn 02 — OpenSearch index/query
   llm/text2cypher/       Giai đoạn 03
@@ -58,9 +58,11 @@ src/
   ui/                    Giai đoạn 05 — UI Streamlit (app.py)
   api/                   Giai đoạn 05 — FastAPI backend (main.py, schemas.py)
 web/                     Giai đoạn 05 — UI web Next.js (App Router, 5 màn)
+pyproject.toml           Metadata package secgraph + cấu hình pytest (src-layout)
 docs/                    Tài liệu kỹ thuật theo module + link bài giảng gốc (đọc khi cần, không tự load)
 .claude/rules/           Quy tắc bắt buộc, tự load khi mở file khớp path
 ```
+Chạy module: `python -m secgraph.<đường.dẫn>` (vd `python -m secgraph.analysis.risk.risk_scoring --dry-run`), API `uvicorn secgraph.api.main:app`, UI `streamlit run src/secgraph/ui/app.py`.
 
 ## Rule tự load theo path (`.claude/rules/`)
 Mỗi rule chỉ load khi mở file trong path khớp glob của nó — không cần tự đi đọc hết, hệ thống tự nạp đúng lúc.
@@ -68,15 +70,15 @@ Mỗi rule chỉ load khi mở file trong path khớp glob của nó — không 
 | Rule file | Path glob | Phạm vi |
 |---|---|---|
 | `security.md` | *(luôn load mọi session)* | Secret, injection, entity resolution risk, PII, GDS allowlist |
-| `graph-schema.md` | `src/graph/**`, `src/pipeline/**` | Schema v2: node/relationship, quy tắc MERGE |
-| `data-sources.md` | `src/ingestion/**` | Parser Nmap/NVD/EPSS/KEV/identity/log |
-| `entity-resolution.md` | `src/ingestion/resolution/**` | Blocking/compare/decision/crosswalk |
-| `opensearch.md` | `src/search/**` | Mapping, Query DSL, khi nào dùng OpenSearch vs Neo4j |
-| `text2cypher.md` | `src/llm/text2cypher/**` | 6 bước, validate 4 lớp (lớp chính thực tế — Neo4j Community không có RBAC) |
-| `graphrag.md` | `src/llm/graphrag/**` | Vector index, Cypher mở rộng cố định, prompt injection |
-| `graph-algorithms.md` | `src/graph/algo/**`, `src/analysis/**` | GDS: BFS/Dijkstra/PageRank/Louvain/betweenness |
-| `attack-risk.md` | `src/analysis/attack_path/**`, `src/analysis/risk/**` | Công thức risk score, entry point/crown jewel |
-| `eval.md` | `src/eval/**` | Golden set, execution accuracy, deepeval |
+| `graph-schema.md` | `src/secgraph/graph/**`, `src/secgraph/pipelines/**` | Schema v2: node/relationship, quy tắc MERGE |
+| `data-sources.md` | `src/secgraph/ingestion/**` | Parser Nmap/NVD/EPSS/KEV/identity/log |
+| `entity-resolution.md` | `src/secgraph/ingestion/resolution/**` | Blocking/compare/decision/crosswalk |
+| `opensearch.md` | `src/secgraph/search/**` | Mapping, Query DSL, khi nào dùng OpenSearch vs Neo4j |
+| `text2cypher.md` | `src/secgraph/llm/text2cypher/**` | 6 bước, validate 4 lớp (lớp chính thực tế — Neo4j Community không có RBAC) |
+| `graphrag.md` | `src/secgraph/llm/graphrag/**` | Vector index, Cypher mở rộng cố định, prompt injection |
+| `graph-algorithms.md` | `src/secgraph/graph/algo/**`, `src/secgraph/analysis/**` | GDS: BFS/Dijkstra/PageRank/Louvain/betweenness |
+| `attack-risk.md` | `src/secgraph/analysis/attack_path/**`, `src/secgraph/analysis/risk/**` | Công thức risk score, entry point/crown jewel |
+| `eval.md` | `src/secgraph/eval/**` | Golden set, execution accuracy, deepeval |
 
 ## Quy tắc chung
 1. **Schema v2** (`docs/giai-doan-01-graph-foundations/mo-hinh-hoa-du-lieu.md`) là nguồn sự thật duy nhất cho đồ thị. Không tự đổi field/relationship khi chưa cập nhật file đó.

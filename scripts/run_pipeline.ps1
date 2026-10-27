@@ -33,20 +33,9 @@ $RepoRoot = Split-Path -Parent $PSScriptRoot
 Set-Location $RepoRoot
 Write-Host "Working directory: $RepoRoot" -ForegroundColor Cyan
 
-# --- PYTHONPATH: cac module import ngang hang nhau (os_client, graph_rules, embeddings, llm_client...) ---
-$env:PYTHONPATH = @(
-    "$RepoRoot\src",
-    "$RepoRoot\src\ingestion",
-    "$RepoRoot\src\ingestion\resolution",
-    "$RepoRoot\src\graph",
-    "$RepoRoot\src\graph\algo",
-    "$RepoRoot\src\search",
-    "$RepoRoot\src\llm\text2cypher",
-    "$RepoRoot\src\llm\graphrag",
-    "$RepoRoot\src\analysis\risk",
-    "$RepoRoot\src\analysis\attack_path",
-    "$RepoRoot\src\eval"
-) -join ";"
+# --- Package secgraph: cai editable de import duoc (het can PYTHONPATH/sys.path) ---
+Write-Host "pip install -e . (editable, idempotent)..."
+python -m pip install -e . --no-deps -q
 $env:PYTHONUTF8 = "1"
 
 # --- Nap .env (neu co) vao bien moi truong tien trinh; khong in gia tri (co the la secret) ---
@@ -105,11 +94,11 @@ if (-not $SkipRegenerate) {
     Write-Host "`n[Buoc 1/7] Sinh fixtures + chuan hoa nguon..." -ForegroundColor Yellow
     # gen_fixtures: sinh du lieu nguon gia (tat dinh). sources: chuan hoa + goi NVD/EPSS/KEV (co cache offline,
     # lan dau khong cache co the mat ~3 phut; dat NVD_API_KEY de nhanh hon).
-    Invoke-Step "gen_fixtures.py" { python src/ingestion/gen_fixtures.py }
-    Invoke-Step "sources.py" { python src/ingestion/sources.py }
+    Invoke-Step "gen_fixtures.py" { python -m secgraph.ingestion.gen_fixtures }
+    Invoke-Step "sources.py" { python -m secgraph.ingestion.sources }
 
     Write-Host "`n[Buoc 2/7] Entity resolution..." -ForegroundColor Yellow
-    Invoke-Step "entity_resolution.py" { python src/ingestion/resolution/entity_resolution.py }
+    Invoke-Step "entity_resolution.py" { python -m secgraph.ingestion.resolution.entity_resolution }
 } else {
     Write-Host "`n[Buoc 1-2/7] BO QUA (-SkipRegenerate)." -ForegroundColor DarkYellow
 }
@@ -119,30 +108,30 @@ if (-not $SkipRegenerate) {
 # ====================================================================
 Write-Host "`n[Buoc 3/7] Nap graph vao Neo4j..." -ForegroundColor Yellow
 if ($SkipReset) {
-    Invoke-Step "load_graph.py (idempotent, khong xoa)" { python src/graph/load_graph.py }
+    Invoke-Step "load_graph.py (idempotent, khong xoa)" { python -m secgraph.graph.load_graph }
 } else {
-    Invoke-Step "load_graph.py --reset (XOA du lieu cu)" { python src/graph/load_graph.py --reset }
+    Invoke-Step "load_graph.py --reset (XOA du lieu cu)" { python -m secgraph.graph.load_graph --reset }
 }
 
 # ====================================================================
 # Buoc 4 — Index alert vao OpenSearch (1653 doc, idempotent)
 # ====================================================================
 Write-Host "`n[Buoc 4/7] Index alert vao OpenSearch..." -ForegroundColor Yellow
-Invoke-Step "index_alerts.py" { python src/search/index_alerts.py }
+Invoke-Step "index_alerts.py" { python -m secgraph.search.index_alerts }
 
 # ====================================================================
 # Buoc 5 — Cham rui ro: gan exposure/asset_criticality + ghi CONNECTS_TO.cost
 # (phai chay SAU load_graph; attack path doc cost nay)
 # ====================================================================
 Write-Host "`n[Buoc 5/7] Cham rui ro (risk_scoring)..." -ForegroundColor Yellow
-Invoke-Step "risk_scoring.py" { python src/analysis/risk/risk_scoring.py }
+Invoke-Step "risk_scoring.py" { python -m secgraph.analysis.risk.risk_scoring }
 
 # ====================================================================
 # Buoc 6 — (tuy chon) Attack path demo. Chi doc graph; dung -SkipAttackPath de bo qua
 # ====================================================================
 if (-not $SkipAttackPath) {
     Write-Host "`n[Buoc 6/7] Attack path demo..." -ForegroundColor Yellow
-    Invoke-Step "attack_path.py" { python src/analysis/attack_path/attack_path.py }
+    Invoke-Step "attack_path.py" { python -m secgraph.analysis.attack_path.attack_path }
 } else {
     Write-Host "`n[Buoc 6/7] BO QUA (-SkipAttackPath)." -ForegroundColor DarkYellow
 }
@@ -158,7 +147,7 @@ if ($WithGraphRag) {
             exit 1
         }
     }
-    Invoke-Step "graphrag_demo.py --create-index" { python src/llm/graphrag/graphrag_demo.py --create-index }
+    Invoke-Step "graphrag_demo.py --create-index" { python -m secgraph.llm.graphrag.graphrag_demo --create-index }
 } else {
     Write-Host "`n[Buoc 7/7] BO QUA (them -WithGraphRag de bat; can env LLM/embedding)." -ForegroundColor DarkYellow
 }
@@ -166,7 +155,7 @@ if ($WithGraphRag) {
 Write-Host "`nPIPELINE XONG" -ForegroundColor Green
 Write-Host ""
 Write-Host "Buoc tiep theo (xem README.md, can env LLM cho text2cypher/graphrag/eval):" -ForegroundColor Cyan
-Write-Host "  python src/llm/text2cypher/text2cypher.py '<cau hoi>'"
-Write-Host "  python src/llm/graphrag/graphrag_demo.py '<cau hoi>'"
+Write-Host "  python -m secgraph.llm.text2cypher.text2cypher '<cau hoi>'"
+Write-Host "  python -m secgraph.llm.graphrag.graphrag_demo '<cau hoi>'"
 Write-Host "  python -m pytest                       # unit"
 Write-Host "  Neo4j Browser: http://localhost:7474   (khong can dang nhap)"

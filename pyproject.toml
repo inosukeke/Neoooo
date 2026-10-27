@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "secgraph"
+version = "0.1.0"
+description = "Đồ thị tri thức an ninh — demo VinSOC (Neo4j + GDS + LLM Text2Cypher/GraphRAG)"
+requires-python = ">=3.12"
+# Dependencies được pin trong requirements.txt (nguồn sự thật cho cả CI). Cài:
+#   pip install -r requirements.txt && pip install -e . --no-deps
+# Editable install chỉ để đưa package `secgraph` lên sys.path — hết cần sys.path hack.
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["secgraph*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "integration: cần Neo4j/OpenSearch/LLM thật đang chạy",
+]
+addopts = "-m \"not integration\""

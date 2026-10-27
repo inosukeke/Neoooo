@@ -20,6 +20,6 @@ def neo4j_driver():
 
 @pytest.fixture(scope="session")
 def os_client():
-    from os_client import make_client
+    from secgraph.search.os_client import make_client
 
     return make_client()

@@ -6,7 +6,8 @@ skip bởi pytest.ini addopts (-m "not integration") nếu không thêm -m integ
 """
 
 import pytest
-from search_alerts import (
+
+from secgraph.search.search_alerts import (
     daily_histogram,
     query_alerts,
     search_message,

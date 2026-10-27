@@ -1,6 +1,6 @@
 ---
 paths:
-  - "src/ingestion/**"
+  - "src/secgraph/ingestion/**"
 ---
 
 # Nguồn dữ liệu an ninh — parser tay

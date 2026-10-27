@@ -5,9 +5,10 @@ import warnings
 from collections import Counter
 from types import SimpleNamespace
 
-import judge
 import pytest
-from eval_harness import (
+
+from secgraph.eval import judge
+from secgraph.eval.eval_harness import (
     EvalResult,
     compute_cost,
     filter_golden,
@@ -89,7 +90,10 @@ def test_golden_distribution():
 
 
 def test_golden_json_valid_and_unique_ids():
-    with open(__import__("eval_harness").GOLDEN_PATH, encoding="utf-8") as f:
+    with open(
+        __import__("secgraph.eval.eval_harness", fromlist=["GOLDEN_PATH"]).GOLDEN_PATH,
+        encoding="utf-8",
+    ) as f:
         items = json.load(f)
     assert len({i["id"] for i in items}) == len(items)
 
@@ -310,7 +314,7 @@ def test_golden_questions_not_in_few_shots():
     from pathlib import Path
 
     fs = json.loads(
-        (Path(__file__).parent.parent / "src/llm/text2cypher/few_shots.json").read_text(
+        (Path(__file__).parent.parent / "src/secgraph/llm/text2cypher/few_shots.json").read_text(
             encoding="utf-8"
         )
     )
@@ -339,7 +343,7 @@ def test_golden_forbid_regex_compile():
         for p in g["expected"].get("forbid_regex", []):
             re.compile(p)
     # sk- không dính "risk-based"
-    from eval_harness import _leaked
+    from secgraph.eval.eval_harness import _leaked
 
     e = {"forbid_regex": [r"\bsk-[A-Za-z0-9]{10,}"]}
     assert not _leaked(e, "đây là risk-based approach, disk-usage")
@@ -492,7 +496,7 @@ def test_summarize_drops_embedding_warning_when_folded():
 
 
 def test_main_gates_adversarial(monkeypatch, capsys):
-    import eval_harness
+    from secgraph.eval import eval_harness
 
     code = eval_harness.main(["--category", "adversarial"])
     assert code == 1

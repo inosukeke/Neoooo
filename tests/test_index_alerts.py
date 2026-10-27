@@ -7,9 +7,10 @@ pytest.ini addopts (-m "not integration") khi không có OpenSearch chạy.
 from datetime import date
 
 import pytest
-from canonical import load_crosswalk
-from index_alerts import expand_log_sample, index_alerts, load_alerts
-from os_client import ALERTS_INDEX
+
+from secgraph.ingestion.canonical import load_crosswalk
+from secgraph.search.index_alerts import expand_log_sample, index_alerts, load_alerts
+from secgraph.search.os_client import ALERTS_INDEX
 
 
 def _alerts():

@@ -31,8 +31,9 @@ $RepoRoot = Split-Path -Parent $PSScriptRoot
 Set-Location $RepoRoot
 Write-Host "Working directory: $RepoRoot" -ForegroundColor Cyan
 
-# --- PYTHONPATH cho các module src/ ---
-$env:PYTHONPATH = "$RepoRoot\src;$RepoRoot\src\ingestion;$RepoRoot\src\ingestion\resolution;$RepoRoot\src\graph;$RepoRoot\src\graph\algo;$RepoRoot\src\search;$RepoRoot\src\llm\text2cypher"
+# --- Package secgraph: cai editable de import duoc (het can PYTHONPATH/sys.path) ---
+Write-Host "pip install -e . (editable, idempotent)..."
+python -m pip install -e . --no-deps -q
 
 # ====================================================================
 # Helper: in lệnh (DryRun) hoặc chạy thật, fail fast nếu exit != 0
@@ -93,9 +94,9 @@ Invoke-Step "Kiem tra OpenSearch..." {
 if (-not $SkipRegenerate) {
     Write-Host "`n[Buoc 2/6] Regenerate pipeline..." -ForegroundColor Yellow
 
-    Invoke-Step "gen_fixtures.py..." { python src/ingestion/gen_fixtures.py }
-    Invoke-Step "sources.py..." { python src/ingestion/sources.py }
-    Invoke-Step "entity_resolution.py..." { python src/ingestion/resolution/entity_resolution.py }
+    Invoke-Step "gen_fixtures.py..." { python -m secgraph.ingestion.gen_fixtures }
+    Invoke-Step "sources.py..." { python -m secgraph.ingestion.sources }
+    Invoke-Step "entity_resolution.py..." { python -m secgraph.ingestion.resolution.entity_resolution }
 } else {
     Write-Host "`n[Buoc 2/6] BO QUA (--SkipRegenerate)." -ForegroundColor DarkYellow
 }
@@ -107,7 +108,7 @@ Write-Host "`n[Buoc 3/6] --reset Neo4j + nap lai..." -ForegroundColor Yellow
 
 Invoke-Step "load_graph.py --reset..." {
     $env:ALLOW_DESTRUCTIVE_TESTS = "1"
-    python src/graph/load_graph.py --reset
+    python -m secgraph.graph.load_graph --reset
     if ($LASTEXITCODE -ne 0) {
         throw "load_graph.py --reset that bai"
     }
@@ -151,7 +152,7 @@ Invoke-Step "Query Neo4j: canonical_id phai co prefix ast-/usr-" {
 # ====================================================================
 Write-Host "`n[Buoc 5/6] Re-index OpenSearch..." -ForegroundColor Yellow
 
-Invoke-Step "index_alerts.py..." { python src/search/index_alerts.py }
+Invoke-Step "index_alerts.py..." { python -m secgraph.search.index_alerts }
 
 # ====================================================================
 # Bước 6 — Chạy test (optional)
@@ -178,6 +179,6 @@ Write-Host "  - IN_NETWORK 26 canh (21 that + 5 den unknown)"
 Write-Host "  - OpenSearch 1620 doc re-indexed"
 Write-Host ""
 Write-Host "Buoc tiep theo (manual):" -ForegroundColor Cyan
-Write-Host "  - Chay e2e Text2Cypher: python src/llm/text2cypher/text2cypher.py '...'"
+Write-Host "  - Chay e2e Text2Cypher: python -m secgraph.llm.text2cypher.text2cypher '...'"
 Write-Host "  - Chay integration test: python -m pytest tests/ -v -m integration"
 Write-Host "  - Neu muon visual: mo http://localhost:7474 (Neo4j Browser)"

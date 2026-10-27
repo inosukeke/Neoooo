@@ -27,6 +27,7 @@ jobs:
           python -m pip install --upgrade pip
           grep -v '^deepeval' requirements.txt > ci-requirements.txt
           pip install -r ci-requirements.txt
+          pip install -e . --no-deps   # package secgraph (editable) — thay PYTHONPATH
 
       - name: Ruff (lint)
         run: ruff check src/ tests/

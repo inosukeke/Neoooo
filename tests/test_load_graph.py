@@ -18,9 +18,10 @@ import os
 import subprocess
 import sys
 
-import load_graph
 import pytest
-from load_graph import EXPECT_NODES, EXPECT_RELS, guard_blocked, main
+
+from secgraph.graph import load_graph
+from secgraph.graph.load_graph import EXPECT_NODES, EXPECT_RELS, guard_blocked, main
 
 _destructive = pytest.mark.skipif(
     os.environ.get("ALLOW_DESTRUCTIVE_TESTS") != "1",
@@ -134,7 +135,7 @@ def test_main_blocked_when_crosswalk_hash_mismatched(monkeypatch):
     """Major #4: crosswalk.json đổi (hash lệch) từ lần nạp trước và KHÔNG --reset
     -> exit != 0, không ghi gì xuống DB (entity resolution có thể đã dịch số
     canonical_id — xem crosswalk_hash() trong load_graph.py)."""
-    from graph_rows import load_inputs
+    from secgraph.graph.graph_rows import load_inputs
 
     real_crosswalk = load_inputs()["crosswalk"]
     stale_hash = load_graph.crosswalk_hash(real_crosswalk) + "stale"
@@ -155,7 +156,7 @@ def test_main_blocked_when_crosswalk_hash_mismatched(monkeypatch):
 
 def test_main_not_blocked_when_crosswalk_hash_matches(monkeypatch):
     """Hash lưu KHỚP hash hiện tại -> không chặn vì lý do hash (vẫn tiếp tục nạp)."""
-    from graph_rows import load_inputs
+    from secgraph.graph.graph_rows import load_inputs
 
     real_crosswalk = load_inputs()["crosswalk"]
     matching_hash = load_graph.crosswalk_hash(real_crosswalk)
@@ -330,7 +331,7 @@ def test_delete_stale_connects_to_when_rule_removed(neo4j_driver, monkeypatch):
     CONNECTS_TO cũ sinh từ R6 phải biến mất (không còn là dương tính giả trên
     attack path graph). Khôi phục đầy đủ graph ở cuối test (finally) để không ảnh
     hưởng các test integration khác chạy cùng phiên Neo4j thật."""
-    import graph_rules as gr
+    import secgraph.graph.graph_rules as gr
 
     data = load_graph.load_inputs()
 
@@ -380,7 +381,7 @@ def test_delete_stale_has_vuln_when_rule_removed_entirely(neo4j_driver, monkeypa
     chính cạnh cần xóa. Code mới so theo CẶP (service, cve) + marker r.derived_by
     nên xóa đúng trong cả 2 trường hợp (đổi version HAY xóa hẳn rule). Khôi phục
     đầy đủ graph ở finally, xác nhận lại đúng 16 HAS_VULN/11 CVE sau cùng."""
-    import graph_rules as gr
+    import secgraph.graph.graph_rules as gr
 
     target_cve = "CVE-2021-21972"
     data = load_graph.load_inputs()

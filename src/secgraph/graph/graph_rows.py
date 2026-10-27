@@ -17,8 +17,12 @@ RESOLVED_DIR = os.path.normpath(os.path.join(BASE, "..", "ingestion", "resolved"
 
 # canonical.py và entity_resolution.py ở src/ingestion[/resolution] — pytest.ini
 # đã thêm src/ingestion + src/graph vào pythonpath, nên import thẳng OK.
-from canonical import asset_canonical_id, enrich_alert, user_canonical_id
-from entity_resolution import normalize_name
+from secgraph.ingestion.canonical import (
+    asset_canonical_id,
+    enrich_alert,
+    user_canonical_id,
+)
+from secgraph.ingestion.resolution.entity_resolution import normalize_name
 
 # Thứ tự ưu tiên nguồn khi gộp field xung đột (xem graph-schema.md).
 ASSET_SOURCE_PRIORITY = ("nmap", "log", "ad")

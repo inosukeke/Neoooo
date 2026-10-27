@@ -1,7 +1,7 @@
 """Unit test cho src/ingestion/resolution/entity_resolution.py — dùng dữ liệu
 thật trong src/ingestion/normalized/."""
 
-from entity_resolution import (
+from secgraph.ingestion.resolution.entity_resolution import (
     asset_score,
     build_crosswalk,
     cluster,
@@ -179,7 +179,7 @@ def test_main_sweep_output_includes_historical_thresholds():
     import io
     import sys
 
-    from entity_resolution import main
+    from secgraph.ingestion.resolution.entity_resolution import main
 
     # Capture stdout
     captured = io.StringIO()
@@ -223,7 +223,7 @@ def test_scored_pairs_includes_signals_and_alternatives():
 
 def test_match_signals_categories():
     """Signals phân loại theo score: exact (100), fuzzy_high (95-99), fuzzy_review (70-94), fuzzy_low (<70)."""
-    from entity_resolution import _match_signals
+    from secgraph.ingestion.resolution.entity_resolution import _match_signals
 
     assert _match_signals("web-01", "web-01", 100.0) == ["exact_name"]
     assert _match_signals("web-01", "web-01", 100.0) == ["exact_name"]  # post-normalize

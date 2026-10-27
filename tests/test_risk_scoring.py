@@ -6,7 +6,8 @@ import sys
 from pathlib import Path
 
 import pytest
-import risk_scoring as rs
+
+import secgraph.analysis.risk.risk_scoring as rs
 
 
 def _score(**kw):

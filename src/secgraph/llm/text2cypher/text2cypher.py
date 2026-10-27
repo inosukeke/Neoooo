@@ -23,7 +23,9 @@ from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Literal
 
-from llm_client import (
+from neo4j import GraphDatabase, Query
+
+from secgraph.llm.text2cypher.llm_client import (
     ConfigError,
     chat_fallback,
     check_model,
@@ -31,16 +33,19 @@ from llm_client import (
     make_client,
     model_chain,
 )
-from neo4j import GraphDatabase, Query
-from prompts import (
+from secgraph.llm.text2cypher.prompts import (
     build_generation_messages,
     build_interpret_messages,
     build_repair_messages,
     extract_cypher,
     to_jsonable,
 )
-from schema_text import GraphSchema, fetch_schema, render_schema_text
-from validator import ValidationError, validate_cypher
+from secgraph.llm.text2cypher.schema_text import (
+    GraphSchema,
+    fetch_schema,
+    render_schema_text,
+)
+from secgraph.llm.text2cypher.validator import ValidationError, validate_cypher
 
 FEW_SHOTS_PATH = Path(__file__).parent / "few_shots.json"
 

@@ -77,7 +77,7 @@ Cách nhanh nhất để dựng toàn bộ hạ tầng + nạp dữ liệu. **Ch
 
 ### Yêu cầu
 - Docker Desktop (Compose v2), ~2 GB RAM trống; lần đầu cần mạng (tải image + plugin GDS).
-- Python 3.x và deps: `pip install -r requirements.txt`.
+- Python 3.12+ và deps: `pip install -r requirements.txt` rồi `pip install -e .` (cài package `secgraph` ở chế độ editable — nhờ vậy mọi lệnh chạy bằng `python -m secgraph...` mà không cần `PYTHONPATH`/`sys.path`).
 - PowerShell 5.1+ (để chạy `scripts/run_pipeline.ps1`).
 
 ### 1. Cấu hình `.env`
@@ -104,14 +104,14 @@ Thứ tự: fixtures + chuẩn hóa nguồn (`gen_fixtures.py`, `sources.py`) �
 ### 4. Chạy từng module
 Các lệnh dưới cần Neo4j đã nạp (bước 3); Text2Cypher/GraphRAG/eval cần env LLM trong shell (set tay hoặc nạp `.env`).
 ```bash
-python src/llm/text2cypher/text2cypher.py "Máy nào chạy dịch vụ có lỗ hổng nằm trong KEV?"
-python src/llm/graphrag/graphrag_demo.py --create-index        # 1 lần (hoặc dùng -WithGraphRag ở trên)
-python src/llm/graphrag/graphrag_demo.py "<câu hỏi tiếng Việt>"
-python src/analysis/risk/risk_scoring.py --dry-run             # chỉ in bảng, không ghi cost
-python src/analysis/attack_path/attack_path.py --top 10
-python src/eval/eval_harness.py --pipeline all                 # gọi LLM thật, tốn token
+python -m secgraph.llm.text2cypher.text2cypher "Máy nào chạy dịch vụ có lỗ hổng nằm trong KEV?"
+python -m secgraph.llm.graphrag.graphrag_demo --create-index        # 1 lần (hoặc dùng -WithGraphRag ở trên)
+python -m secgraph.llm.graphrag.graphrag_demo "<câu hỏi tiếng Việt>"
+python -m secgraph.analysis.risk.risk_scoring --dry-run             # chỉ in bảng, không ghi cost
+python -m secgraph.analysis.attack_path.attack_path --top 10
+python -m secgraph.eval.eval_harness --pipeline all                 # gọi LLM thật, tốn token
 ```
-Nếu import lỗi (`ModuleNotFoundError`), đặt `PYTHONPATH` gồm các thư mục con `src/` như trong `scripts/run_pipeline.ps1`.
+Nếu import lỗi (`ModuleNotFoundError: secgraph`), chạy `pip install -e .` ở gốc repo (cài package `secgraph` editable).
 
 ### 5. Test
 ```bash
@@ -124,9 +124,9 @@ python -m pytest -m integration           # cần Neo4j + OpenSearch đang chạ
 ### 6. UI demo (Streamlit, tùy chọn)
 ```bash
 pip install streamlit          # không nằm trong requirements.txt (chỉ cho UI demo)
-streamlit run src/ui/app.py    # mở http://localhost:8501
+streamlit run src/secgraph/ui/app.py    # mở http://localhost:8501
 ```
-Giao diện hỏi-đáp tiếng Việt: chọn pipeline (Text2Cypher / GraphRAG), nhập câu hỏi → xem câu trả lời, Cypher sinh ra, kết quả, độ trễ + token. Cần Neo4j đã nạp pipeline (bước 3) + env LLM trong `.env`; GraphRAG cần vector index (`python src/llm/graphrag/graphrag_demo.py --create-index`).
+Giao diện hỏi-đáp tiếng Việt: chọn pipeline (Text2Cypher / GraphRAG), nhập câu hỏi → xem câu trả lời, Cypher sinh ra, kết quả, độ trễ + token. Cần Neo4j đã nạp pipeline (bước 3) + env LLM trong `.env`; GraphRAG cần vector index (`python -m secgraph.llm.graphrag.graphrag_demo --create-index`).
 
 ### 6b. UI web mới (Next.js + FastAPI, dựng từ thiết kế Figma)
 
@@ -134,7 +134,7 @@ Dashboard dark-theme đầy đủ sidebar/topbar với **cả 5 trang đã code*
 
 ```bash
 # 1) Backend FastAPI (cần Neo4j đã nạp pipeline + env LLM trong .env, giống bước 6)
-uvicorn main:app --reload --port 8000 --app-dir src/api
+uvicorn secgraph.api.main:app --reload --port 8000
 
 # 2) Frontend Next.js (terminal khác)
 cd web
@@ -181,7 +181,7 @@ pip install -r requirements.txt
 
 ### 3. Nạp dữ liệu & xác minh (schema v1)
 ```bash
-python src/graph/seed_graph.py
+python -m secgraph.graph.seed_graph
 ```
 Script tạo constraint, nạp schema v1 + dữ liệu mẫu (idempotent — chạy lại nhiều lần vẫn ra cùng số liệu), rồi in: số node/relationship theo nhãn/loại, danh sách user tới được `db-01` trong tối đa 3 và 5 bước, kết quả xác minh cú pháp quantified relationship/`SHORTEST`, và plan `PROFILE` để kiểm index.
 
@@ -191,7 +191,7 @@ Chạy lại lần hai để tự kiểm tính idempotent — số liệu phải
 
 Yêu cầu: đã chạy `seed_graph.py` ở trên (script kiểm 5 Asset trước khi chạy tiếp).
 ```bash
-python src/graph/model_v2.py
+python -m secgraph.graph.model_v2
 ```
 Migrate v1→v2: thêm `Group`/`Alert`, `MEMBER_OF`/`ADMIN_TO`/`AUTHENTICATED_TO`/`OWNS`/`TRIGGERED_ON`/`INVOLVES`, tách quyền "có thể làm" khỏi "đã quan sát". In kết quả 8 câu hỏi kiểm (mục 6.1 `docs/giai-doan-01-graph-foundations/mo-hinh-hoa-du-lieu.md`) và kiểm cấu trúc node/relationship (kỳ vọng 28/37). Idempotent — chạy lại nhiều lần vẫn ra cùng số liệu.
 
@@ -199,7 +199,7 @@ Migrate v1→v2: thêm `Group`/`Alert`, `MEMBER_OF`/`ADMIN_TO`/`AUTHENTICATED_TO
 
 Yêu cầu: Neo4j có GDS (`RETURN gds.version()` ra 2.13.x) và đã chạy `model_v2.py`.
 ```bash
-python src/graph/algo/algo_demo.py
+python -m secgraph.graph.algo.algo_demo
 ```
 Thêm 3 máy lab (vpn-01, jump-01, file-01) + gán `cost` 1–10 (nhỏ = dễ đi) cho 10 cạnh `CONNECTS_TO`, chiếu 2 đồ thị vào RAM (`attack` có hướng/có trọng số; `attack_u` vô hướng), rồi chạy & kiểm **BFS, Dijkstra, PageRank, Louvain, Leiden** theo bảng kết quả mong đợi (mục 6.1 `docs/giai-doan-01-graph-foundations/thuat-toan-do-thi.md`). In `OK/FAIL` từng mục.
 
@@ -209,8 +209,8 @@ Lưu ý: script đưa DB lên **8 Asset / 10 `CONNECTS_TO`**, nên `model_v2.py`
 
 Không cần Neo4j. Chỉ cần `pip install -r requirements.txt` (thêm `requests`). Xuất 7 file JSON chuẩn hóa vào `src/ingestion/normalized/` (chưa nạp Neo4j — việc đó sau Entity resolution).
 ```bash
-python src/ingestion/gen_fixtures.py   # (tùy chọn) sinh lại data/sample_nmap.xml + sample_logs.jsonl
-python src/ingestion/sources.py
+python -m secgraph.ingestion.gen_fixtures   # (tùy chọn) sinh lại data/sample_nmap.xml + sample_logs.jsonl
+python -m secgraph.ingestion.sources
 ```
 `gen_fixtures.py` sinh **toàn bộ dữ liệu nguồn giả** vào `data/` (tất định, đã commit): `sample_nmap.xml`, `sample_logs.jsonl`, `sample_ad.json` (AD view), `sample_hr.json` (HR view), `er_truth.json` (nhãn eval cho Module 2). `sources.py` chuẩn hóa mọi nguồn → 7 file, mỗi record có field `source`:
 - **Nmap** → asset + service; **Identity** (seed=42) → user/account/membership; **Log** → alert + quan sát asset; **AD/HR** → asset/user góc nhìn biến thể.
@@ -223,7 +223,7 @@ NVD không cần key (tự giới hạn 6s/CVE, ~28 CVE ≈ 3 phút lần đầu
 
 Cần `rapidfuzz` (đã trong `requirements.txt`). Đọc `normalized/{assets,users,alerts}.json`, xuất vào `src/ingestion/resolved/`.
 ```bash
-python src/ingestion/resolution/entity_resolution.py
+python -m secgraph.ingestion.resolution.entity_resolution
 ```
 **Thuần xử lý**: đọc `normalized/{assets,users}.json` (đã đa-nguồn từ Module 1) + `data/er_truth.json`, không tự sinh data. Gộp bản ghi nhiều nguồn về cùng thực thể → `canonical_id`:
 - **Asset — 3 nguồn** (nmap+ad+log) union-find gộp cả 3; **User — 2 nguồn** (idp+hr).
@@ -235,9 +235,9 @@ python src/ingestion/resolution/entity_resolution.py
 
 Thay thế toy graph Giai đoạn 01 bằng dữ liệu pipeline thật (26 Asset, 33 Service, 28 Vulnerability, 17 User, 16 Account, 5 Group, 30 Alert — khóa MERGE là `canonical_id`, idempotent). Cần đã chạy Module 1+2 ở trên.
 ```bash
-python src/graph/load_graph.py --reset
+python -m secgraph.graph.load_graph --reset
 ```
-`--reset` xóa sạch dữ liệu Neo4j hiện có (toy graph `seed_graph.py`/`model_v2.py`/`algo_demo.py`, kể cả GDS projection `attack`/`attack_u`) trước khi nạp — **chỉ chạy khi chắc chắn muốn bỏ dữ liệu cũ**. Không có `--reset`: nếu DB có Asset/User thiếu `canonical_id` (toy data cũ), script chặn và không ghi gì (an toàn khi chạy lại nhầm). Sau `--reset` lần đầu, các lần sau chạy `python src/graph/load_graph.py` (không cờ) để nạp lại idempotent.
+`--reset` xóa sạch dữ liệu Neo4j hiện có (toy graph `seed_graph.py`/`model_v2.py`/`algo_demo.py`, kể cả GDS projection `attack`/`attack_u`) trước khi nạp — **chỉ chạy khi chắc chắn muốn bỏ dữ liệu cũ**. Không có `--reset`: nếu DB có Asset/User thiếu `canonical_id` (toy data cũ), script chặn và không ghi gì (an toàn khi chạy lại nhầm). Sau `--reset` lần đầu, các lần sau chạy `python -m secgraph.graph.load_graph` (không cờ) để nạp lại idempotent.
 
 In số node/relationship theo nhãn/loại, kiểm khớp đúng 158 node / 243 relationship, `SHOW CONSTRAINTS` có `asset_canonical_id`/`user_canonical_id`, cảnh báo node "stale" (canonical_id không còn trong crosswalk). `ADMIN_TO`/CVE→`Service`/`CONNECTS_TO` suy diễn từ bảng rule viết tay trong `src/graph/graph_rules.py` (**giả định nghiệp vụ demo**, không phải dữ liệu đo thật — xem `docs/giai-doan-01-graph-foundations/mo-hinh-hoa-du-lieu.md`).
 
@@ -256,9 +256,9 @@ docker run -d --name opensearch-sec \
 ```
 `DISABLE_SECURITY_PLUGIN=true` chỉ cho demo local, bind `127.0.0.1`. Chờ container sẵn sàng (`curl http://localhost:9200`) rồi:
 ```bash
-python src/search/index_alerts.py    # nhân bản 30 alert gốc → 1653 doc (factor=50 + 120 burst + 33 scenario S2 D.3), bulk index
-python src/search/search_alerts.py   # 4 query bool DSL mẫu: top asset bị logon thất bại, date histogram, full-text, term text-vs-keyword
-python src/search/join_neo4j.py      # nối tay OpenSearch → Neo4j: top asset bị logon thất bại + CVE KEV của asset đó
+python -m secgraph.search.index_alerts    # nhân bản 30 alert gốc → 1653 doc (factor=50 + 120 burst + 33 scenario S2 D.3), bulk index
+python -m secgraph.search.search_alerts   # 4 query bool DSL mẫu: top asset bị logon thất bại, date histogram, full-text, term text-vs-keyword
+python -m secgraph.search.join_neo4j      # nối tay OpenSearch → Neo4j: top asset bị logon thất bại + CVE KEV của asset đó
 ```
 `index_alerts.py` idempotent (`_id` tất định, chạy lại không tăng số doc). `join_neo4j.py` cần cả OpenSearch và Neo4j (Module Loader ở trên) đã chạy.
 
@@ -274,9 +274,9 @@ TEXT2CYPHER_MODEL=<tên model gateway hỗ trợ, vd gpt-4o-mini>
 ```
 Đặt trong `.env` (không commit) rồi `export $(...)`/`source` vào shell trước khi chạy, hoặc set trực tiếp. Chạy:
 ```bash
-python src/llm/text2cypher/text2cypher.py --check-model        # xác nhận model khả dụng qua gateway
-python src/llm/text2cypher/text2cypher.py "Máy nào chạy dịch vụ có lỗ hổng nằm trong KEV?"
-python src/llm/text2cypher/text2cypher.py "<câu hỏi>" --json    # output JSON (Text2CypherResult)
+python -m secgraph.llm.text2cypher.text2cypher --check-model        # xác nhận model khả dụng qua gateway
+python -m secgraph.llm.text2cypher.text2cypher "Máy nào chạy dịch vụ có lỗ hổng nằm trong KEV?"
+python -m secgraph.llm.text2cypher.text2cypher "<câu hỏi>" --json    # output JSON (Text2CypherResult)
 ```
 Cần Neo4j đã nạp dữ liệu pipeline (Module Loader ở trên) — schema text sinh từ dữ liệu thật, few-shot (`src/llm/text2cypher/few_shots.json`, 13 cặp) viết dựa trên dữ liệu đã nạp.
 
@@ -316,7 +316,7 @@ Sau khi script chạy xong, verify cuối:
 ```bash
 python -m pytest tests/ -v                    # 221 unit test
 python -m pytest tests/ -v -m integration     # cần service thật
-python src/llm/text2cypher/text2cypher.py "Máy nào chạy dịch vụ có lỗ hổng KEV?"
+python -m secgraph.llm.text2cypher.text2cypher "Máy nào chạy dịch vụ có lỗ hổng KEV?"
 ```
 
 Nếu gặp HĐ 04 attack path / risk scoring sau này — cần áp dụng Phương án 2 (role từ Nmap service) đã chốt cho commit `C.3`.

@@ -5,8 +5,9 @@ L2, hoặc raise Exception để test fail L2). GraphSchema giả dựng tay.
 """
 
 import pytest
-from schema_text import GraphSchema
-from validator import (
+
+from secgraph.llm.text2cypher.schema_text import GraphSchema
+from secgraph.llm.text2cypher.validator import (
     ValidationError,
     check_readonly,
     check_schema,

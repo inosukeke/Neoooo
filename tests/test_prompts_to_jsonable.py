@@ -2,7 +2,8 @@
 neo4j.time / neo4j.spatial types (S5.4). Không cần DB — chỉ test format."""
 
 import neo4j.time as neo4j_time
-from prompts import to_jsonable
+
+from secgraph.llm.text2cypher.prompts import to_jsonable
 
 
 # ---------- neo4j.time temporal types ----------

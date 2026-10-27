@@ -3,7 +3,11 @@
 Dùng GraphSchema giả dựng tay — không cần Neo4j thật.
 """
 
-from schema_text import GraphSchema, fetch_schema, render_schema_text
+from secgraph.llm.text2cypher.schema_text import (
+    GraphSchema,
+    fetch_schema,
+    render_schema_text,
+)
 
 
 def _sample_schema() -> GraphSchema:

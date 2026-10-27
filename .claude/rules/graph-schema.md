@@ -1,7 +1,7 @@
 ---
 paths:
-  - "src/graph/**"
-  - "src/pipeline/**"
+  - "src/secgraph/graph/**"
+  - "src/secgraph/pipelines/**"
 ---
 
 # Schema đồ thị (v2) — nguồn sự thật

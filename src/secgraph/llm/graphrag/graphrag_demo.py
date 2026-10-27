@@ -21,7 +21,6 @@ import sys
 import time
 from collections.abc import Callable
 from dataclasses import asdict, dataclass
-from pathlib import Path
 
 EMPTY_ANSWER = "Không tìm thấy dữ liệu phù hợp trong đồ thị."
 DEFAULT_TOP_K = 5
@@ -320,13 +319,10 @@ def main(argv=None) -> int:
         parser.error("--top-k phải >= 1")
 
     # Tái dùng llm_client của text2cypher (cùng gateway).
-    here = Path(__file__).resolve().parent
-    for extra in (here, here.parent / "text2cypher"):
-        if str(extra) not in sys.path:
-            sys.path.insert(0, str(extra))
-    import embeddings
-    import llm_client
     from neo4j import GraphDatabase
+
+    from secgraph.llm.graphrag import embeddings
+    from secgraph.llm.text2cypher import llm_client
 
     try:
         emb_cfg = embeddings.load_embedding_config()

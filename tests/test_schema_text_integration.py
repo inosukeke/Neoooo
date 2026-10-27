@@ -5,7 +5,8 @@ Dùng fixture `neo4j_driver` (session scope) có sẵn trong `tests/conftest.py`
 """
 
 import pytest
-from schema_text import fetch_schema, render_schema_text
+
+from secgraph.llm.text2cypher.schema_text import fetch_schema, render_schema_text
 
 EXPECTED_LABELS = {
     "Asset",

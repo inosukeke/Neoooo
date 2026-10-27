@@ -8,7 +8,8 @@ from pathlib import Path
 from unittest.mock import MagicMock
 
 import pytest
-from llm_client import (
+
+from secgraph.llm.text2cypher.llm_client import (
     ConfigError,
     chat,
     chat_fallback,
@@ -68,7 +69,7 @@ def test_load_llm_config_missing_model(monkeypatch):
 
 
 def test_make_client_passes_base_url_explicitly(monkeypatch):
-    from llm_client import LLMConfig
+    from secgraph.llm.text2cypher.llm_client import LLMConfig
 
     cfg = LLMConfig(
         api_key="key-123", base_url="https://gateway.example.com/v1", model="m"
@@ -131,7 +132,7 @@ def test_check_model_list_not_supported():
 def test_no_hardcoded_model_name_or_legacy_env_var():
     source = (
         Path(__file__)
-        .parent.parent.joinpath("src", "llm", "text2cypher", "llm_client.py")
+        .parent.parent.joinpath("src", "secgraph", "llm", "text2cypher", "llm_client.py")
         .read_text(encoding="utf-8")
     )
     assert '"gpt-' not in source

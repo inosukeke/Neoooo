@@ -1,7 +1,7 @@
 ---
 paths:
-  - "src/analysis/attack_path/**"
-  - "src/analysis/risk/**"
+  - "src/secgraph/analysis/attack_path/**"
+  - "src/secgraph/analysis/risk/**"
 ---
 
 # Attack path & risk scoring — quy tắc

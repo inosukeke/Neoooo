@@ -5,7 +5,13 @@ bởi pytest.ini addopts (-m "not integration") khi không có OpenSearch chạy
 """
 
 import pytest
-from os_client import ALERTS_INDEX, ALERTS_MAPPING, ensure_index, make_client
+
+from secgraph.search.os_client import (
+    ALERTS_INDEX,
+    ALERTS_MAPPING,
+    ensure_index,
+    make_client,
+)
 
 
 def test_computer_is_text_with_keyword_subfield():
@@ -71,7 +77,7 @@ def test_no_http_auth_in_make_client(monkeypatch):
         def __init__(self, **kwargs):
             captured.update(kwargs)
 
-    monkeypatch.setattr("os_client.OpenSearch", FakeOpenSearch)
+    monkeypatch.setattr("secgraph.search.os_client.OpenSearch", FakeOpenSearch)
     make_client()
     assert "http_auth" not in captured
     assert captured["use_ssl"] is False
@@ -86,7 +92,7 @@ def test_make_client_reads_env(monkeypatch):
         def __init__(self, **kwargs):
             captured.update(kwargs)
 
-    monkeypatch.setattr("os_client.OpenSearch", FakeOpenSearch)
+    monkeypatch.setattr("secgraph.search.os_client.OpenSearch", FakeOpenSearch)
     monkeypatch.setenv("OPENSEARCH_HOST", "myhost")
     monkeypatch.setenv("OPENSEARCH_PORT", "9999")
     make_client()

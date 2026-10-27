@@ -1,6 +1,6 @@
 ---
 paths:
-  - "src/llm/text2cypher/**"
+  - "src/secgraph/llm/text2cypher/**"
 ---
 
 # Text2Cypher — quy tắc bắt buộc

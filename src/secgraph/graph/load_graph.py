@@ -21,20 +21,9 @@ import logging
 import os
 import sys
 
-# Cho phép chạy standalone (`python src/graph/load_graph.py`): thêm các thư mục
-# sibling lên sys.path để import graph_rows/graph_rules (src/graph) và canonical
-# (src/ingestion, graph_rows cần). Khi chạy qua pytest/run_pipeline.ps1 thì
-# PYTHONPATH đã có sẵn — insert này idempotent (bỏ qua nếu đã có).
-_SRC = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-for _p in (
-    os.path.join(_SRC, "graph"),
-    os.path.join(_SRC, "ingestion"),
-    os.path.join(_SRC, "ingestion", "resolution"),
-):
-    if _p not in sys.path:
-        sys.path.insert(0, _p)
+from neo4j import GraphDatabase
 
-from graph_rows import (
+from secgraph.graph.graph_rows import (
     build_account_rows,
     build_alert_rows,
     build_asset_rows,
@@ -45,14 +34,13 @@ from graph_rows import (
     build_vuln_rows,
     load_inputs,
 )
-from graph_rules import (
+from secgraph.graph.graph_rules import (
     asset_role,
     derive_admin_to,
     derive_connects_to,
     map_service_vulns,
     network_zone,
 )
-from neo4j import GraphDatabase
 
 logger = logging.getLogger(__name__)
 

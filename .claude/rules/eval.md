@@ -1,6 +1,6 @@
 ---
 paths:
-  - "src/eval/**"
+  - "src/secgraph/eval/**"
 ---
 
 # Eval cho lớp LLM — quy tắc

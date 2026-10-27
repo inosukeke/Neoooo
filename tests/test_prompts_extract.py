@@ -1,7 +1,7 @@
 """Unit test cho src/llm/text2cypher/prompts.py — extract_cypher() edge cases
 (S5.3). Không gọi LLM thật — test logic regex."""
 
-from prompts import extract_cypher
+from secgraph.llm.text2cypher.prompts import extract_cypher
 
 
 def test_extract_strips_cypher_fence():
